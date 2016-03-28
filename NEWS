@@ -1,0 +1,141 @@
+*******************
+***  R rmcfs    ***
+*******************
+1.1.0
+  		first official CRAN release
+  		functionality of the package is highly simplified - available 12 basic functions
+  		new names of functions: save.result()/read.result() are now export.result()/import.result(); build.ID.graph() is now build.idgraph()
+  		removed useles prefix 'mcfs.' from input params in function mcfs()
+  		function fix.data() combines all functionality of: fix.data.values(), fix.data.names() and fix.data.types()
+  		function mcfc() returns 'mcfs' object - one plot() function (parameter 'type') and one print() function for 'mcfs' object
+  		function build.idgraph() returns 'idgraph' object - new plot() function for 'idgraph' object
+  		function plot(type="ri") implements plot.permutations functionality - now it shows maxRI values(if 'plot_permutations' = TRUE)
+  		fixed margins in plot.idgraph() - now idgraph uses entire plot space
+  		removed curved_edges param from plot.idgraph() - curved_edges are always on
+  		plot.idgraph() has new parameter label.dist() that defines distance of labels to corresponding nodes
+  		build.idgraph() implements get.min.ID() functionality - get.min.ID() is not visible
+  		new function 'artificial.data(1000)' that creates example data used in JSS paper
+		  many minor fixes to meet CRAN rules
+		  RD files updated by artificial.data example
+		  function mcfc() has new seed parameter - now it is possible to replicate the result
+		  dmLab.jar version 2.1.0
+
+1.0.6
+  		function write.adx is reiplemented and now it uses a smart exporting (chunk based) for huge datasets
+  		function write.arff is reiplemented and now it uses a smart exporting (chunk based) for huge datasets
+		  function info() extended and changed - better for huge data.frames
+  		function fix.data.names added (colNames are cleaned from various unwanted chars e.g. "|", "#", ",")
+  		fix.data.types and fix.data.values works much faster on huge data
+  		fixed plot.distances (x axis shows correct values projections(s))
+  		dmLab.jar version 2.0.6
+  		      
+1.0.5
+    	useless parameter 'iType' is removed from plot.ID.graph function
+    	in mcfs function removed parameter 'splitSetSizeLimit' splitSetSize does the job
+    	new parameter in mcfs function 'cutoffMethod'
+    	fix of helps (mcfs, build.ID.graph, plot.ID.graph)
+    	running mcfs on one class data is not allowed
+    	function 'model.frame' replaced by faster and more stable own implementation
+    	updated and improved help *.rd files
+		  dmLab.jar version 2.0.5
+    	
+1.0.4
+    	new parameter in plot.permutations (parameter 'type')
+    	cleaning of temporary files after reading result by mcfs function
+    	dmLab.jar version 2.0.4
+
+1.0.3
+    	parameters u & v are available in mcfs function
+
+1.0.2
+		new parameter in plot.ID.graph (curved.edges=T)
+	  	refactoring: importances -> RI, interactions -> ID [plot.ID.graph, build.ID.graph, plot.RI, plot.ID]
+  	
+1.0.1
+	  	new function build.rules
+	  	updated help *.rd files (in mcfs introduced parameters s,t according to official papers about MCFS-ID)	
+
+1.0.0
+		first version of rmcfs
+
+
+***********************
+***   Java dmLab    ***
+***********************
+2.1.0
+		huge source code refactoring and cleaning
+		ADXClassifier works on nominal and numeric data (discretization is built-in now)
+		removed useless 'discretizeData' parameter that control discretization in MCFS (never used)
+		cleaning in Params and in all inherit classes 
+		cleaning in Classification & removed useless discretization from there
+		removed useless parameters 'split', 'project', 'testFileName'
+		fixed AttributesRI fixed measures projecions, freq (and changed its name to classifiers) now _RI.csv file is more readable  		
+		removed cloudgarden Layouts
+		new seed parameter - it helps to repeat MCFS-ID results
+		random reordering of input columns before the split - decision tree bias removed
+2.0.6
+		huge source code refactoring and cleaning
+		reimplementation of base Array classes and functions (Container replaced by Array, FArray, SArray)
+		cleaning in classes Attribute, Domain (ADXDomain, SDomain, FDomain), Discretization
+		cleaning in DiscFunctions, ExtFunctions, SelectFunctions that operate on Array/FArray/SArray
+		Array/FArray/SArray need less memory				
+2.0.5		
+		parameter splitSetSizeLimit removed
+		parameter balanceClasses removed, balancing is turned off as default
+		fix in print information
+		parameter mcfs.topRankingMethod replaced by mcfs.cutoffMethod 
+2.0.4
+		shapiro replaced by anderson darling
+		during permutations experiment normality of each attribute (pval) is calc as well as student_t (pval)
+		refactoring of parameters mcfs.progressShow and mcfs.progressInterval
+		added distlib-0.4.1-bin.jar
+		fix in main panel set inputFiles as well as inputFileName		 
+2.0.3
+		final rules are created on full data but there is cross validation result added instead as re classification of training dataset
+		confMatrix printing change
+		rename of result files: importances -> ri, connections -> id 
+2.0.2
+		all headers updated in source code
+		fix in finding number of attributes to feed CV experiment (now getCutoffValues always returns 5 values) 
+2.0.1
+		mcfs works on multiple input files it runs experiments one by one on the same parameters
+2.0.0
+		final cv is based on all determined cutoff values. Additionally [0.25,0.5,0.75] * min(cutoff) and [1.25,1.5,2]*max(cutoff)
+		JRIP added to CV
+		JRIP rules created on topRankingMethod(cutoff) attributes and entire input dataset
+		attribute name in ADX can contain any character but must be quoted  
+		minor improvements and fixes
+1.9.9
+		Stability improvements
+		WekaClassifier in memory mode is default - speed up for about 30% for some data and configurations
+		New rewritten AttributesConnection		
+		1 result from all cut off methods
+		Contrast Attributes as permutation of originals 
+		parameter topRankingSize=projectionSize
+		final CV experiment is added. Now you may test classification accuracy based on top ranking features. Classifiers: c4.5, nb, svm, knn, logistic regression.
+				
+		cutpoint -> cutoff experiment now it is integrated with MCFS. If cutoffPermutations=0 then 
+			classic MCFS without permutation will be run.
+		plenty minor changes
+		refactoring
+		graph viewer upgraded to v 2.0 now it presents directed graphs
+1.9.4
+		new cutoff methods
+1.9.3
+		fix in matrix saving
+1.9.2
+		refactoring and source code cleaning
+		confusion matrix added
+1.9.1
+		ID grapph ignores contrast features
+1.9.0
+		parameter useInfoGain=false replaced by useGainRatio=true
+		new method addConnectionsDirected()
+		parameter maxConnectionLevel replaced by maxConnectionDepth
+		
+************************
+***  Known Problems  ***
+************************
+		contrastAttributes functionality is not fully implemented and tested (keep mcfs.contrastAttr = false)		  	
+  	XML import and export in graphViewer does not work correctly
+  	ADXClassifier does not perform very well as it used years ago it needs review

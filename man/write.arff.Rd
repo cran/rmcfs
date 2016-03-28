@@ -1,0 +1,28 @@
+\name{write.arff}
+\alias{write.arff}
+\title{Writes data to ARFF}
+\description{
+  Exports data into ARFF format. This format is used by Weka 
+  Data Mining software \url{http://www.cs.waikato.ac.nz/ml/weka/}.
+}
+\usage{write.arff(x, file = "", target = NA, chunk.size=100000)}
+\arguments{
+  \item{x}{data frame with data}
+  \item{file}{exported filename}
+  \item{target}{sets target attribute in ARFF format. Default value is NA what refers to the last column.}
+  \item{chunk.size}{it defines size of chunk (number of cells) that are processed and exported. The bigger the value, the function is faster for small data and slower for big data.}
+}
+
+\examples{
+  # Load rmcfs library.
+  library(rmcfs)
+  
+  # Load alizadeh dataset.
+  data(alizadeh)
+  d <- alizadeh
+  
+  #Fix input data to be consistent with ARFF and ADX formats. 
+  #It is not necessary but for some data can help to export in proper format.
+  d <- fix.data(d)
+  write.arff(d, file = paste0(tempdir(), "/alizadeh.arff"), target = "class")
+}

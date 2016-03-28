@@ -1,0 +1,10 @@
+[PropertyInfo]
+currentNode,Node,false,false, , ,false,<default>
+root,Node,false,false, , ,true,<default>
+treeBuildingTime,float,false,false, , ,false,<default>
+treePrunningTime,float,false,false, , ,false,<default>
+[IconNames]
+
+
+
+
