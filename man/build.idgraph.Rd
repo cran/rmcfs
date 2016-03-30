@@ -32,11 +32,11 @@ The number of top features included and the number of ID-Graph edges can be cust
   
   # create input data
   adata <- artificial.data(rnd.features = 10)
-  info(adata)
+  showme(adata)
   
   # Parametrize and run MCFS-ID procedure
-  result <- mcfs(class~., adata, projections = 200, projectionSize = 4, 
-                 cutoffPermutations = 5, finalCV = FALSE, finalRuleset = FALSE, 
+  result <- mcfs(class~., adata, projections = 300, projectionSize = 4, 
+                 cutoffPermutations = 0, finalCV = FALSE, finalRuleset = FALSE, 
                  threadsNumber = 2)
 
   # build interdependencies graph (all default parameters).

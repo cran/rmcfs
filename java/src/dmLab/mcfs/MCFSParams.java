@@ -113,19 +113,19 @@ public class MCFSParams extends ExperimentParams
 		outputFileName = null;
 
 		seed = System.currentTimeMillis();
-		threadsNumber=8;
-		progressInterval=10;
-		progressShow=true;
+		threadsNumber = 8;
+		progressInterval = 10;
+		progressShow = true;
 
-		classifier=Classifier.J48;
+		classifier = Classifier.J48;
 
 		projections = 2000; 
 		projectionSize = 0.05f;
 
 		splits = 5;
 		splitRatio = 0.66f;
-		balanceRatio=1;
-		splitSetSize=1000;
+		balanceRatio = 1;
+		splitSetSize = 1000;
 		u=1f;
 		v=1f;
 
@@ -135,21 +135,21 @@ public class MCFSParams extends ExperimentParams
 		finalCVSetSize = 1000;
 		finalCVRepetitions = 3;
 
-		cutoffPermutations=20;
-		cutoffAlpha=0.05f;
+		cutoffPermutations = 20;
+		cutoffAlpha = 0.05f;
 
 		contrastAttr=false;    
-		contrastAttrThreshold=5;            
-		cutoffAngle=0.01f;
+		contrastAttrThreshold = 5;            
+		cutoffAngle = 0.01f;
 
 		cutoffMethod = "mean";
 
 		//specific configuration of classifiers
-		maxConnectionDepth=5;
-		useGainRatio=true;
-		qMethod=2;
-		useComplexQuality=true;      
-		useDiversityMeasure=true;
+		maxConnectionDepth = 5;
+		useGainRatio = true;
+		qMethod = 2;
+		useComplexQuality = true;      
+		useDiversityMeasure = true;
 
 		//wekaClassifier mode MEMORY/FILE
 		wekaClassifierMode = WekaClassifier.MEMORY;
@@ -256,36 +256,40 @@ public class MCFSParams extends ExperimentParams
 			return false;
 
 		if(splits<=0){
-			System.err.println("Error! Incorrect value of splits: "+splits);
-			return false;
+			System.err.println("Warning! Incorrect value of splits: "+splits+" Using default value = 5.");
+			splits = 5;
 		}
 		if(projections<=0){
-			System.err.println("Error! Incorrect value of projections: "+projections);
-			return false;
+			System.err.println("Warning! Incorrect value of projections: "+projections+" Using default value = 3000.");
+			projections = 3000;
 		}        
 		if(projectionSize<=0){
-			System.err.println("Error! Incorrect value of projectionSize: "+projectionSize);
-			return false;
+			System.err.println("Warning! Incorrect value of projectionSize: "+projectionSize+" Using default value = 0.05.");
+			projectionSize = 0.05f;
 		}
-		if(splitRatio<=0 || splitRatio>=1){
-			System.err.println("Error! Incorrect value of splitRatio: "+splitRatio);
-			return false;
+		if(splitRatio <= 0 || splitRatio >= 1){
+			System.err.println("Warning! Incorrect value of splitRatio: "+splitRatio+" Using default value = 0.66.");
+			splitRatio = 0.66f;
 		}
-		if(balanceRatio<0){
-			System.err.println("Error! Incorrect value of balanceRatio: "+balanceRatio);
-			return false;
+		if(balanceRatio < 0){
+			System.err.println("Warning! Incorrect value of balanceRatio: "+balanceRatio+" Using default value = 1.");
+			balanceRatio = 1;
 		}
-		if(cutoffPermutations<0){
-			System.err.println("Error! Incorrect value of cutoffPermutations: "+cutoffPermutations);
-			return false;
+		if(cutoffPermutations!=0 && cutoffPermutations < 3){
+			System.err.println("Warning! Incorrect value of cutoffPermutations: "+cutoffPermutations+" Using minimum value = 3.\n");
+			cutoffPermutations = 3;
 		}
-		if(cutoffAlpha<=0){
-			System.err.println("Error! Incorrect value of cutPointAlpha: "+cutoffAlpha);
-			return false;
+		if(cutoffPermutations==0 && cutoffMethod.equalsIgnoreCase("permutations")){
+			System.err.println("Warning! Value of cutoffPermutations = "+cutoffPermutations+" and cutoffMethod = '"+cutoffMethod+"'. Using cutoffMethod = 'mean'.\n");
+			cutoffMethod = "mean";
+		}
+		if(cutoffAlpha <= 0){
+			System.err.println("Warning! Incorrect value of cutPointAlpha: "+cutoffAlpha+" Using default value = 0.05.\n");
+			cutoffAlpha = 0.05f;
 		}        
 		if(classifier!=Classifier.RND && classifier!=Classifier.J48 &&
 				classifier!=Classifier.ADX && classifier!=Classifier.SLIQ){
-			System.err.println("Error! Incorrect value of classifier:"+classifier);
+			System.err.println("Error! Incorrect classifier: "+classifier);
 			return false;
 		}
 		if(array!=null){
@@ -293,8 +297,8 @@ public class MCFSParams extends ExperimentParams
 				return false;
 		}
 		if(!StringUtils.stringsEquals(cutoffMethod,CUTOFF_METHODS)){
-			System.out.println("Warrning! Incorrect value of cutoffMethod:'"+cutoffMethod +"'. Replaced by 'mean'");
-			cutoffMethod = "mean";        	
+			System.err.println("Error! Incorrect cutoffMethod: '"+cutoffMethod +"'");
+			return false;
 		}        	
 		return true;    	    	
 	}
@@ -352,13 +356,20 @@ public class MCFSParams extends ExperimentParams
 		projectionSizeAttr=(int)projectionSize;
 
 		//if projectionSize<=1 it means fraction of attributes
-		if(projectionSize<=1)    
-			projectionSizeAttr=(int)(attributes*projectionSize);
+		if(projectionSize<=1)
+			projectionSizeAttr = (int)(attributes * projectionSize);
 
-		if(projectionSizeAttr>=attributes){
-			System.err.println("Error parameters! projectionSizeAttr >= number of attributes");
-			return false;
+		if(projectionSizeAttr >= attributes){
+			System.err.println("Warning! projectionSizeAttr (m) >= number of attributes. Using maximum value = " + (attributes - 1));
+			projectionSizeAttr = attributes - 1;
+			return true;
 		}
+		
+		if(projectionSizeAttr < 2){
+			System.err.println("Warning! projectionSizeAttr < 2. Using minimum value = 2.");
+			projectionSizeAttr = 2;
+			return true;
+		}		
 
 		return true;
 	}

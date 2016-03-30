@@ -18,5 +18,5 @@
 
 \examples{
   d <- artificial.data(rnd.features = 500)
-  info(d)
+  showme(d)
 }

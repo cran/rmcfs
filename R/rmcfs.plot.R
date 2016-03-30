@@ -211,7 +211,9 @@ mcfs.plot.features <- function(mcfs_result, size=NA, cex=0.8, l_margin=10)
 {    
   if(is.na(size))
     size <- nrow(mcfs_result$RI)
-  
+  if(size <=0)
+    stop("'size' <= 0")
+    
   ranking <- head(mcfs_result$RI, size)
   
   highNum <- size
@@ -227,8 +229,10 @@ mcfs.plot.features <- function(mcfs_result, size=NA, cex=0.8, l_margin=10)
   names(t) <- rev(attr)
   t <- rbind(t,t)
   rownames(t) <- c("important","not important")
-  
-  if(highNum >= size){
+
+  if(highNum == 0){
+    t[1,] <- 0
+  }else if(highNum >= size){
     t[2,] <- 0
   }else{
     t[1,1:(ncol(t)-highNum)] <- 0

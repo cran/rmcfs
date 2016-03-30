@@ -35,12 +35,12 @@ mcfs(formula, data,
   \item{formula}{specifies decision attribute and relation between class and other attributes (e.g. \code{class~.}).}
   \item{data}{defines input \emph{data.frame} containing all features with decision attribute included. This data.frame must contain proper types of columns. Columns \code{character}, \code{factor}, \code{Date}, \code{POSIXct}, \code{POSIXt} are treated as nominal/categorical and remaining columns as numerical/continuous. Decision attribute defined by \code{formula} must be nominal.}
   \item{projections}{defines the number of subsets (projections) with randomly selected features. This parameter is usually set to a few thousands and is denoted in the paper as \emph{s}.}
-  \item{projectionSize}{defines the number of features in one subset. It can be defined by an absolute value (e.g. 100 denotes 100 randomly selected features) or by a fraction of input attributes (e.g. 0.05 denotes 5\% of input features). This parameter is denoted in the paper as \emph{m} and by default is set to 5\%.}
+  \item{projectionSize}{defines the number of features in one subset. It can be defined by an absolute value (e.g. 100 denotes 100 randomly selected features) or by a fraction of input attributes (e.g. 0.05 denotes 5\% of input features). This parameter is denoted in the paper as \emph{m} and by default is set to 5\%. Minimum number of features in one subset is 2.}
   \item{splits}{defines the number of splits of each subset. This parameter is denoted in the paper as \emph{t}.}
   \item{splitRatio}{defines the size of the training set as a fraction of objects in the input subset.}
   \item{balanceRatio}{determines the way to balance classes. It should be set to 2 or higher if input dataset contains heavily unbalanced classes. Each subset \emph{s} will contain all the objects from the least frequent class and randomly selected set of objects from each of the remaining classes. This option helps to select features that are important for discovering a relatively rare class. The parameter defines the maximal imbalance ratio. If the ratio is set to 2, then subset \emph{s} will contain the number of objects from each class (but the least frequent one) proportional to the square root of the class size \eqn{size(c)^{1/2}}. If \code{balanceRatio = 0} then balancing is turned off. If \code{balanceRatio = 1} it is on but does not change the size of classes. Default value is 1.}
   \item{splitSetSize}{determines whether to limit input dataset size. It helps to speedup computation for data sets with a large number of objects. If the parameter is larger than 1, it determines the number of objects that are drawn at random for each of the \eqn{s \cdot t} decision trees. If \code{splitSetSize = 0} then the mcfs uses all objects in each iteration.}
-  \item{cutoffPermutations}{determines the number of permutation runs. It needs at least 20 permutations (\code{cutoffPermutations = 20}) for a statistically significant result.}
+  \item{cutoffPermutations}{determines the number of permutation runs. It needs at least 20 permutations (\code{cutoffPermutations = 20}) for a statistically significant result. Minimum value of this parameter is 3, however if it is 0 then permutations method is turned off.}
  \item{cutoffMethod}{determines the final cutoff method. Default value is 'permutations'.
  The methods of finding cutoff value between important and unimportant attributes are the following:
     \itemize{
@@ -86,13 +86,13 @@ mcfs(formula, data,
   ### Set up java parameter and load rmcfs package
   options(java.parameters = "-Xmx4g")
   library(rmcfs)
-  
+
   # create input data
   adata <- artificial.data(rnd.features = 10)
-  info(adata)
+  showme(adata)
   
-  result <- mcfs(class~., adata, projections = 300, projectionSize = 4, 
-                 cutoffPermutations = 5, finalCV = TRUE, finalRuleset = TRUE, 
+  result <- mcfs(class~., adata, projections = 100, projectionSize = 4, 
+                 cutoffPermutations = 3, finalCV = FALSE, finalRuleset = TRUE, 
                  threadsNumber = 2)
 
   # Print basic information about mcfs result.
@@ -127,7 +127,7 @@ mcfs(formula, data,
   
   # Plot cv classification result obtained on top features.
   # In the middle of x axis red label denotes cutoff_value.
-  plot(result, type = "cv", measure = "wacc", cex = 0.8)
+  # plot(result, type = "cv", measure = "wacc", cex = 0.8)
   
   # Plot & print out confusion matrix. This matrix is the result of 
   # all classifications performed by all decision trees on all s*t datasets.
@@ -157,7 +157,7 @@ mcfs(formula, data,
   ####################################
   # Load Alizadeh dataset.
   data(alizadeh)
-  info(alizadeh)
+  showme(alizadeh)
   
   # Fix data types and data values - replace characters such as "," " " "/" etc. 
   # from values and column names and fix data types
@@ -167,10 +167,25 @@ mcfs(formula, data,
   # Parametrize and run MCFS-ID procedure, projectionSize (m) is set at 5 percent 
   # of input columns. For larger data (thousands of features) default settings are good enough.
   # This example may take few minutes but this one is a real dataset
-  result <- mcfs(class~., alizadeh, projections = 3000, projectionSize = 0.05, 
-                  cutoffPermutations = 20, threadsNumber = 8)
-
+  result <- mcfs(class~., alizadeh, projections = 2000, projectionSize = 0.05, 
+                 cutoffPermutations = 10, finalCV = TRUE, finalRuleset = TRUE,
+                 threadsNumber = 4)
+  
   # Print basic information about mcfs result.
   print(result)
+  
+  # Plot & print out distances between subsequent projections. 
+  plot(result, type="distances")
+  
+  # Show max RI values from permutation experiment.
+  plot(result, type = "ri", size = 500, plot_permutations = TRUE)
+  
+  # build interdependencies graph.
+  gid <- build.idgraph(result, size = 20)
+  plot.idgraph(gid, label.dist = 0.3)
+  
+  # Plot cv classification result obtained on top features.
+  # In the middle of x axis red label denotes cutoff_value.
+  plot(result, type = "cv", measure = "wacc", cex = 0.8)
   }
 }

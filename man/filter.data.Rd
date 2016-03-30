@@ -20,12 +20,12 @@
   
   # create input data
   adata <- artificial.data(rnd.features = 10)
-  info(adata)
+  showme(adata)
   
   # Parametrize and run MCFS-ID procedure
-  result <- mcfs(class~., adata, projections = 200, projectionSize = 4, 
-                cutoffPermutations = 5, finalCV = FALSE, finalRuleset = FALSE, 
-                threadsNumber = 2)
+  result <- mcfs(class~., adata, projections = 100, projectionSize = 4, 
+                 cutoffPermutations = 3, finalCV = FALSE, finalRuleset = FALSE, 
+                 threadsNumber = 2)
   
   filter.data(adata, result, size = result$cutoff_value)
 }

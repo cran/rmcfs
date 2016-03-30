@@ -99,13 +99,14 @@ public abstract class MCFSFramework implements Runnable
 	//*************************************
 	public abstract void run();
 //  *************************************
-    public void run(MCFSParams mcfsParams)
+    public boolean run(MCFSParams mcfsParams)
     {
     	this.mcfsParams=mcfsParams.clone(); 	
         if(!loadArrays())
-        	return;
+        	return false;
         
-        run();  
+        run();
+        return true;
     }
 	//***************************************
     public ConfusionMatrix runExperiment() 

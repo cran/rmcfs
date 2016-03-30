@@ -1,17 +1,17 @@
 ###############################
-#info
+#showme
 ###############################
-info <- function(x, size=10, show=c("cells","head","tail","none")){
+showme <- function(x, size=10, show=c("tiles","head","tail","none")){
   show <- show[1]
-  if(show=="cells"){
+  if(show == "tiles"){
     print(x[1:size,1:size])
     cat("\n\n")
     print(x[(nrow(x)-size):nrow(x), (ncol(x)-size):ncol(x)])
-  }else if(show=="head"){
+  }else if(show == "head"){
     print(head(x,size))
-  }else if(show=="tail"){
+  }else if(show == "tail"){
     print(tail(x,size))
-  }else if(show=="none"){
+  }else if(show == "none"){
     #nothing
   }else
     stop(paste0("Parameter 'show' is incorrect: ", show))
@@ -25,8 +25,8 @@ info <- function(x, size=10, show=c("cells","head","tail","none")){
 get.size.param <- function(size, default_value){
   if(is.na(size))
     size <- default_value
-  if(is.na(size) | size==0){
-    stop(paste0("Size parameter is NA or 0."))
+  if(is.na(size) | size <= 0){
+    stop(paste0("'size' is NA or <= 0"))
   }
   return(size)
 }

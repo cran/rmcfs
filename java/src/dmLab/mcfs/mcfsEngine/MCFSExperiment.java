@@ -83,7 +83,8 @@ public class MCFSExperiment implements Runnable
             mcfs = new MCFSPermutation(random);
             ((MCFSPermutation)mcfs).permPrefix = ((MCFSPermutation)mcfs).permPrefix+(i+1)+"_";
             permPrefix.add(((MCFSPermutation)mcfs).permPrefix);
-            mcfs.run(mcfsParams);
+            if(!mcfs.run(mcfsParams))
+            	return;
             AttributesRI imp = mcfs.globalStats.getAttrImportances()[0];
             if(permutationRIValues==null)
             	permutationRIValues = createPermutationResult(mcfs.mcfsArrays.sourceArray, mcfsParams);
@@ -98,7 +99,8 @@ public class MCFSExperiment implements Runnable
         
         //run classic MCFS procedure
         mcfs = new MCFSClassic(random);        
-        mcfs.run(mcfsParams);
+        if(!mcfs.run(mcfsParams))
+        	return;
         AttributesRI importancesClassic = mcfs.globalStats.getAttrImportances()[0];
         
         //finish cutoff calculation
@@ -163,8 +165,10 @@ public class MCFSExperiment implements Runnable
             }
         }
         //RUN FinalCV
-    	int topRankingSize = (int)mcfs.globalStats.getCutoff().getCutoffValue(mcfs.mcfsParams.cutoffMethod);
-        if(mcfsParams.finalCV && topRankingSize>0){
+        if(mcfsParams.finalCV){
+        	int topRankingSize = (int)mcfs.globalStats.getCutoff().getCutoffValue(mcfs.mcfsParams.cutoffMethod);
+        	if(topRankingSize == 0)
+        		topRankingSize = 8;
         	MCFSFinalCV simpleCV = new MCFSFinalCV(new int[]{Classifier.J48,Classifier.NB,Classifier.SVM,Classifier.KNN,Classifier.LOGISTIC,Classifier.RIPPER},random);
         	//int[] cutoffValues = getCutoffValues(ArrayUtils.double2int(mcfs.globalStats.getCutoff().getCutoffValues()));
         	int[] cutoffValues = getCutoffValues(new int[]{topRankingSize});
@@ -177,12 +181,15 @@ public class MCFSExperiment implements Runnable
         }
         
         //RUN Final Rules
-        if(mcfsParams.finalRuleset && topRankingSize>0){
+        if(mcfsParams.finalRuleset){
+        	int topRankingSize = (int)mcfs.globalStats.getCutoff().getCutoffValue(mcfs.mcfsParams.cutoffMethod);
+        	if(topRankingSize == 0)
+        		topRankingSize = 2;
+
             System.out.println("");
         	System.out.println("*** Building RIPPER ruleset on top "+ topRankingSize +" attributes ***");
 			FArray topRankingArray = (FArray)SelectFunctions.selectColumns(mcfs.mcfsArrays.sourceArray, mcfs.globalStats.getAttrImportances()[0], topRankingSize);
-			
-			
+						
 			ClassificationBody classification = new ClassificationBody(random);
 			classification.setParameters(new ClassificationParams());
 			classification.classParams.debug = false;

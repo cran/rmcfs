@@ -20,6 +20,10 @@ mcfs <- function(formula, data,
                          seed = NA,
                          threadsNumber = 2)
 { 
+  if(!cutoffMethod[1] %in% c("permutations", "criticalAngle", "kmeans", "mean")){
+    stop(paste0("Incorrect 'cutoffMethod' = ", cutoffMethod[1]))
+  }
+  
   start.time <- Sys.time()
   cat("Checking input data...\n")
   label <- "input"
@@ -75,6 +79,7 @@ mcfs <- function(formula, data,
   cat("Running MCFS-ID...\n")
   cdir <- getwd()
   setwd(libdir)
+  #jri.prepare()
   .jcall("dmLab/mcfs/MCFS", returnSig="V", "main",
          .jarray(config_file))
   .jcheck(silent = FALSE)
@@ -98,6 +103,25 @@ mcfs <- function(formula, data,
 
   class(mcfsResult) <- "mcfs"
   return(mcfsResult)
+}
+
+###############################
+#jri.prepare
+###############################
+jri.prepare <- function(){
+  .jaddClassPath(system.file("jri",c("JRI.jar"), package="rJava"))
+  
+  .jcall("java/lang/System", returnSig="V", "setOut",
+         .jnew("java/io/PrintStream",
+               .jcast(.jnew("org/rosuda/JRI/RConsoleOutputStream",
+                            .jengine(TRUE), as.integer(0)),
+                      "java/io/OutputStream")))
+  
+  .jcall("java/lang/System", returnSig="V", "setErr",
+         .jnew("java/io/PrintStream",
+               .jcast(.jnew("org/rosuda/JRI/RConsoleOutputStream",
+                            .jengine(TRUE), as.integer(1)),
+                      "java/io/OutputStream")))
 }
 
 ###############################
@@ -427,11 +451,11 @@ fix.matrix <- function(m){
 # x$mydate <- as.Date("2007-06-22")
 # x$myposix <- as.POSIXct(x$mydate)
 # x$diff <- x$mydate - as.Date("2010-06-22")
-# info(x)
+# showme(x)
 # reshape2::melt(lapply(x, class))
 # x <- fix.data(x)
 # reshape2::melt(lapply(x, class))
-# info(x) 
+# showme(x) 
 fix.data <- function(x, type = c("all", "names", "values", "types"), 
                      source.chars=c(" ",",","/","|","#"), 
                      destination.char = "_", 
@@ -704,7 +728,11 @@ import.result <- function(path, label){
   mcfsResult$distances <- dist
   mcfsResult$cmatrix <- cmatrix
   mcfsResult$cutoff <- cutoff
-  mcfsResult$cutoff_value <- topRanking[nrow(topRanking),]$position
+  if(nrow(topRanking)==0){
+    mcfsResult$cutoff_value <- 0
+  }else{
+    mcfsResult$cutoff_value <- topRanking[nrow(topRanking),]$position
+  }
   mcfsResult$cv_accuracy <- cv_accuracy
   mcfsResult$permutations <- permutations
   mcfsResult$jrip <- jrip
@@ -927,14 +955,14 @@ print.mcfs <- function(x, ...){
   writeLines(paste0("Target feature: '",mcfs_result$target,"'"))
   writeLines("")
   writeLines(paste0("Top ",mcfs_result$cutoff_value," features:"))
-  print(head(mcfs_result$RI,mcfs_result$cutoff_value), row.names = F)
+  print(head(mcfs_result$RI[,c("position", "attribute", "RI_norm")], mcfs_result$cutoff_value), row.names = F)
   writeLines("")
   writeLines("#################################")
   writeLines("Cutoff values:")
   print(mcfs_result$cutoff, row.names = F)
   writeLines("")
   writeLines("#################################")
-  writeLines("Confusion matrix obtained on randomly selected (st) samples:")
+  writeLines("Confusion matrix obtained on randomly selected (st) datasets:")
   print.cmatrix(mcfs_result$cmatrix)
   writeLines("")
   if(any(names(mcfs_result) %in% c("jrip"))){

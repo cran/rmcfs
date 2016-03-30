@@ -74,9 +74,10 @@ public abstract class FileLoader
 	{
 		myArray=array;
 		
-		openFile(inputFileName);
-		if(parseInputFile(fileReader)==false)
-		{
+		if(!openFile(inputFileName))
+			return false;
+		
+		if(parseInputFile(fileReader)==false){
 			System.err.println("Error Parsing file. File: "+fileName);
 			closeFile();
 			return false;
@@ -90,9 +91,10 @@ public abstract class FileLoader
 		myArray.init(attributesNumber,eventsNumber);
 		ignoredAttributeMask=new boolean [attributesNumber+ignoredAttributesNumber];
 		
-		openFile(inputFileName);
-		if(readInputFile(fileReader)==false)
-		{
+		if(!openFile(inputFileName))
+			return false;
+		
+		if(readInputFile(fileReader)==false){
 			System.err.println("Error reading file. File: "+fileName);
 			closeFile();
 			return false;

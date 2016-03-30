@@ -37,11 +37,11 @@
   
   # create input data
   adata <- artificial.data(rnd.features = 10)
-  info(adata)
+  showme(adata)
   
   # Parametrize and run MCFS-ID procedure
-  result <- mcfs(class~., adata, projections = 300, projectionSize = 4, 
-                 cutoffPermutations = 5, finalCV = TRUE, finalRuleset = TRUE, 
+  result <- mcfs(class~., adata, projections = 100, projectionSize = 4, 
+                 cutoffPermutations = 3, finalCV = FALSE, finalRuleset = TRUE, 
                  threadsNumber = 2)
 
   # Plot & print out distances between subsequent projections. 
@@ -67,7 +67,7 @@
   
   # Plot cv classification result obtained on top features.
   # In the middle of x axis red label denotes cutoff_value.
-  plot(result, type = "cv", measure = "wacc", cex = 0.8)
+  # plot(result, type = "cv", measure = "wacc", cex = 0.8)
   
   # Plot & print out confusion matrix. This matrix is the result of 
   # all classifications performed by all decision trees on all s*t datasets.
