@@ -189,23 +189,23 @@ public class ConfusionMatrix
 	public String statsToString(int precision)
 	{
 		StringBuffer tmp=new StringBuffer();   
-		tmp.append("Accuracy = "+ GeneralUtils.format(AccuracyMeasure.calcAcc(confusionMatrix),precision)).append("\n");
-		tmp.append("WeightedAccuracy = "+ GeneralUtils.format(AccuracyMeasure.calcWAcc(confusionMatrix),precision)).append("\n");
+		tmp.append("Accuracy = "+ GeneralUtils.format(QualityMeasure.calcAcc(confusionMatrix),precision)).append("\n");
+		tmp.append("WeightedAccuracy = "+ GeneralUtils.format(QualityMeasure.calcWAcc(confusionMatrix),precision)).append("\n");
 		tmp.append("True Positive Rate").append("\n");
 		for(int i=0;i<decValuesStr.length;i++)
-			tmp.append("\t"+decValuesStr[i]+": "+ GeneralUtils.format(AccuracyMeasure.calcTPRate(confusionMatrix,i),precision)).append("\n");
+			tmp.append("\t"+decValuesStr[i]+": "+ GeneralUtils.format(QualityMeasure.calcTPRate(confusionMatrix,i),precision)).append("\n");
 		tmp.append("False Positive Rate").append("\n");
 		for(int i=0;i<decValuesStr.length;i++)
-			tmp.append("\t"+decValuesStr[i]+": "+ GeneralUtils.format(AccuracyMeasure.calcFPRate(confusionMatrix,i),precision)).append("\n");
+			tmp.append("\t"+decValuesStr[i]+": "+ GeneralUtils.format(QualityMeasure.calcFPRate(confusionMatrix,i),precision)).append("\n");
 		return tmp.toString();
 	}
 	//**************************************
 	public float calcMeasure(int measure)
 	{
-		if(measure == AccuracyMeasure.ACC)
-			return (float) AccuracyMeasure.calcAcc(confusionMatrix);
-		else if(measure == AccuracyMeasure.WACC)
-			return (float) AccuracyMeasure.calcWAcc(confusionMatrix);
+		if(measure == QualityMeasure.ACC)
+			return (float) QualityMeasure.calcAcc(confusionMatrix);
+		else if(measure == QualityMeasure.WACC)
+			return (float) QualityMeasure.calcWAcc(confusionMatrix);
 		else
 			return Float.NaN;
 

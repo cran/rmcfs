@@ -44,7 +44,7 @@ public class RandomForestClassifier extends WekaClassifier {
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[RF];
-        type=RF;
+        model=RF;
         params=new RandomForestParams();
         cfg=(RandomForestParams)params;
     }
@@ -69,7 +69,7 @@ public class RandomForestClassifier extends WekaClassifier {
     }
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) 
+    public boolean add_RI(AttributesRI[] importances) 
     {
         return false;
     }

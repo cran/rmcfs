@@ -8,7 +8,7 @@
   \method{plot}{mcfs}(x, type = c("ri", "id", "distances", "features", "cv", "cmatrix"), 
         size = NA, 
         plot_permutations = F, 
-        measure = c("acc", "wacc"),
+        measure = c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"),
         l_margin = 10,
         cex = 1, \dots)}
 \arguments{
@@ -24,7 +24,7 @@
   }}
   \item{size}{number of features to plot.}
   \item{plot_permutations}{if \code{type = "ri"} and \code{plot_permutations = T}, then it additionally shows horizontal lines that correspond to max RI values obtained from each single permutation experiment.}
-  \item{measure}{if \code{type="cv"}, then it determines the type of accuracy shown in the plot: weighted or unweighted accuracy ("wacc" or "acc").}
+  \item{measure}{if \code{type="cv"}, then it determines the type of accuracy shown in the plot: weighted or unweighted accuracy ("wacc" or "acc"). If target attribute is numeric it is possible to review one of the following prediction quality measures: ("pearson", "MAE", "RMSE", "SMAPE")}
   \item{cex}{size of fonts.}
   \item{l_margin}{if \code{type = "features"}, then it determines the size of the left margin of the plot.}
   \item{...}{additional plotting parameters.}

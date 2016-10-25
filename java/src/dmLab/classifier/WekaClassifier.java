@@ -46,12 +46,19 @@ public abstract class WekaClassifier extends Classifier {
     public static final int FILE=1;
     
     protected weka.classifiers.Classifier wekaClassifier;
-//******************************************
+  //******************************************
     protected abstract void setParams();
-//******************************************
+	//*****************************************
+	public void beforeTrain(){		
+	}
+  //******************************************
     @Override
     public boolean train(FArray trainArray) 
     {
+    	if(!checkTargetAttr(trainArray))
+    		return false;
+    	
+    	beforeTrain();
     	if(mode == MEMORY)
     		return train_memory(trainArray);
     	else
@@ -61,6 +68,9 @@ public abstract class WekaClassifier extends Classifier {
     @Override
     public boolean test(FArray testArray) 
     {
+    	if(!checkTargetAttr(testArray))
+    		return false;
+
     	if(mode == MEMORY)
     		return test_memory(testArray);
     	else
@@ -80,8 +90,7 @@ public abstract class WekaClassifier extends Classifier {
         
         try{
             wekaClassifier.buildClassifier(wekaTrainInstances);
-        }
-        catch (Exception e){
+        }catch (Exception e){
         	System.err.println(getMyName()+" Error: Training Classifier!");
             e.printStackTrace();
             return false;
@@ -108,9 +117,7 @@ public abstract class WekaClassifier extends Classifier {
             arffLoader.reset();
             wekaTrainInstances.setClassIndex(trainArray.getDecAttrIdx());
             trainFile.delete();
-        }
-        catch (Exception e)
-		{
+        }catch (Exception e){
         	System.err.println(getMyName()+" Error: Loading Arff files!");
         	e.printStackTrace();
 			return false;
@@ -118,8 +125,7 @@ public abstract class WekaClassifier extends Classifier {
         
         try{
             wekaClassifier.buildClassifier(wekaTrainInstances);
-        }
-        catch (Exception e){
+        }catch (Exception e){
             System.err.println(getMyName()+" Error: Training Classifier!");
             e.printStackTrace();
             return false;
@@ -136,14 +142,18 @@ public abstract class WekaClassifier extends Classifier {
         setParams();
         Instances wekaTestInstances;
         int testSetSize=testArray.rowsNumber();
-        predictions=new Prediction[testSetSize];
+        predResult.predictions=new Prediction[testSetSize];
                
         wekaTestInstances = Array2Instances.convert(testArray);
         wekaTestInstances.setClassIndex(testArray.getDecAttrIdx());
         //System.out.println("@@@ MDR DEBUG: \n"+wekaTestInstances.toString()+"\n");
         
-        confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
-        		testArray.getDecValuesStr());
+        if(modelType==MODEL_CLASSIFIER){
+        	predResult.confusionMatrix = new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()], testArray.getDecValuesStr());
+        }else{
+        	predResult.confusionMatrix = null;
+        }
+        
         classifyInstances(wekaTestInstances);
         stop=System.currentTimeMillis();
         testingTime=(float)((stop-start)/1000.0);
@@ -159,7 +169,7 @@ public abstract class WekaClassifier extends Classifier {
         String testFilePath = getTmpFilePath(ARFF_TEST_FILE);
         array2File.saveFile(testArray, testFilePath);
         int testSetSize=testArray.rowsNumber();
-        predictions=new Prediction[testSetSize];
+        predResult.predictions=new Prediction[testSetSize];
         File testFile=new File(testFilePath);
         try{
             arffLoader.setFile(testFile);
@@ -173,8 +183,12 @@ public abstract class WekaClassifier extends Classifier {
             e.printStackTrace();
             return false;
         }
-        confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
-        		testArray.getDecValuesStr());
+        if(modelType==MODEL_CLASSIFIER){
+        	predResult.confusionMatrix = new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()], testArray.getDecValuesStr());
+        }else{
+        	predResult.confusionMatrix = null;
+        }
+        
         classifyInstances(wekaTestInstances);
         stop=System.currentTimeMillis();
         testingTime=(float)((stop-start)/1000.0);
@@ -183,20 +197,25 @@ public abstract class WekaClassifier extends Classifier {
   //******************************************
     private boolean classifyInstances(Instances instances){
         final int size=instances.numInstances();
-        for(int k=0;k<size;k++)
-        {
+        for(int k=0;k<size;k++){
             try{
-                String className = instances.instance(k).stringValue(instances.classIndex());
-                //System.out.println(className);                
-                //wekaTrainInstances.classAttribute has proper order of values
-                //double[] predictedDistribution = wekaClassifier.distributionForInstance(instances.instance(k));
-            	//System.out.println(Arrays.toString(predictedDistribution));
-                double predictedClassIndex = wekaClassifier.classifyInstance(instances.instance(k));
-                String predictedClassName = wekaTrainInstances.classAttribute().value((int)predictedClassIndex);
-                //System.out.println(className +" - "+ predictedClassName);
-                
-                predictions[k] = new Prediction(predictedClassName, null);
-                confusionMatrix.add(className, predictedClassName);
+            	if(modelType == MODEL_CLASSIFIER){
+	                String className = instances.instance(k).stringValue(instances.classIndex());
+	                //System.out.println(className);                
+	                //wekaTrainInstances.classAttribute has proper order of values
+	                //double[] predictedDistribution = wekaClassifier.distributionForInstance(instances.instance(k));
+	            	//System.out.println(Arrays.toString(predictedDistribution));
+	                double predictedClassIndex = wekaClassifier.classifyInstance(instances.instance(k));
+	                String predictedClassName = wekaTrainInstances.classAttribute().value((int)predictedClassIndex);
+	                //System.out.println(className +" - "+ predictedClassName);                
+	                predResult.predictions[k] = new Prediction(className, predictedClassName, null);
+	                predResult.confusionMatrix.add(className, predictedClassName);
+            	}else{
+	                double realValue = instances.instance(k).value(instances.classIndex());	                
+            		double predictedValue = wekaClassifier.classifyInstance(instances.instance(k));
+            		//System.out.println(predictedValue);
+            		predResult.predictions[k] = new Prediction((float)realValue, (float)predictedValue);
+            	}
             }
             catch(Exception e){
             	e.printStackTrace();
@@ -246,7 +265,7 @@ public abstract class WekaClassifier extends Classifier {
 //**************************************
     private String getTmpFilePath(String fileName)
     {
-    	return tmpPath + "C" + classifierID + "_" +fileName;
+    	return tmpPath + "C" + id + "_" +fileName;
     }    
 //**************************************
     @Override

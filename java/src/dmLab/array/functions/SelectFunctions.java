@@ -251,7 +251,10 @@ public class SelectFunctions
 	//splitMask: value 1 - train set; value 0 - test set
 	public int[] getSplitMaskUniform(FArray srcArray, double splitRatio)
 	{
-		final float decColumn[]=srcArray.getColumn(srcArray.getDecAttrIdx());
+		if(srcArray.attributes[srcArray.getDecAttrIdx()].type != Attribute.NOMINAL)
+			return getSplitMaskRandom(srcArray, splitRatio);
+			
+		final float decColumn[]=srcArray.getColumn(srcArray.getDecAttrIdx());		
 		final int srcRows=srcArray.rowsNumber();
 		final float decValues[]=srcArray.getDecValues();
 		final int distribution[]=ArrayUtils.distribution(decColumn, decValues, splitRatio);

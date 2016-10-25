@@ -45,7 +45,7 @@ import dmLab.discretizer.DiscretizerParams;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.ExperimentIndicators;
 import dmLab.utils.cmatrix.ConfusionMatrix;
-import dmLab.utils.cmatrix.AccuracyMeasure;
+import dmLab.utils.cmatrix.QualityMeasure;
 
 public class ADXClassifier extends Classifier
 {   
@@ -60,7 +60,7 @@ public class ADXClassifier extends Classifier
 	{
 		super();
 		label=labels[ADX];
-		type=ADX;
+		model=ADX;
 		params=new ADXParams();
 		cfg=(ADXParams)params;
 		
@@ -70,6 +70,9 @@ public class ADXClassifier extends Classifier
 	@Override
     public boolean train(FArray trainArray)
 	{
+    	if(!checkTargetAttr(trainArray))
+    		return false;
+
 		if(params.verbose)
 			System.out.println(" Testing...");
 		long start,stop;
@@ -131,6 +134,9 @@ public class ADXClassifier extends Classifier
 	@Override
     public boolean test(FArray testArray)
 	{
+    	if(!checkTargetAttr(testArray))
+    		return false;
+
 		if(params.verbose)
 			System.out.println(" Testing...");
 
@@ -139,7 +145,7 @@ public class ADXClassifier extends Classifier
 		
 		long start,stop;
 		start=System.currentTimeMillis();   		
-		confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
+		predResult.confusionMatrix = new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
 				testArray.getDecValues(),testArray.getDecValuesStr());
 		
 		float predictedDecision;
@@ -147,19 +153,20 @@ public class ADXClassifier extends Classifier
 		final int testEventsNumber=testArray.rowsNumber();
 		final int interval=(int)Math.ceil(0.1*testEventsNumber);
 		int threshold=interval;
-        predictions=new Prediction[testEventsNumber];        
+		predResult.predictions=new Prediction[testEventsNumber];        
         
 		final int decAttrIndex=testArray.getDecAttrIdx();
         
         ruleFamily.prepareClassification();
 		for(int i=0;i<testEventsNumber;i++)
 		{
-            predictedDecision=ruleFamily.classifyEvent2(testArray,i);
-			realDecision=testArray.readValue(decAttrIndex,i);
-			confusionMatrix.add(realDecision,predictedDecision);
-
-            String predictedClassName=testArray.dictionary.toString(predictedDecision);
-            predictions[i]=new Prediction(predictedClassName,ruleFamily.getLastScores());
+            predictedDecision = ruleFamily.classifyEvent2(testArray,i);
+			realDecision = testArray.readValue(decAttrIndex,i);
+			predResult.confusionMatrix.add(realDecision,predictedDecision);
+			
+            String realClassName = testArray.dictionary.toString(realDecision);
+            String predictedClassName = testArray.dictionary.toString(predictedDecision);            
+            predResult.predictions[i]=new Prediction(realClassName,predictedClassName,ruleFamily.getLastScores());
             
 			if(i>threshold && threshold!=0){
 				threshold+=interval;
@@ -281,14 +288,14 @@ public class ADXClassifier extends Classifier
 	}
 	//*****************************************       
     @Override
-    public boolean addImportances(AttributesRI importances[])
+    public boolean add_RI(AttributesRI importances[])
     {
         attrSet=new HashSet<String>();
         
         ADXSelectorIndicators selectorIndicators=new ADXSelectorIndicators();
         ExperimentIndicators experimentIndicators=new ExperimentIndicators();
         experimentIndicators.eventsNumber=trainSetSize;
-        experimentIndicators.predictionQuality=AccuracyMeasure.calcWAcc(confusionMatrix.getMatrix());
+        experimentIndicators.predictionQuality=QualityMeasure.calcWAcc(predResult.confusionMatrix.getMatrix());
         
         final int rulesets=ruleFamily.ruleSets();
         for(int f=0; f<rulesets; f++) //over all rulesets           

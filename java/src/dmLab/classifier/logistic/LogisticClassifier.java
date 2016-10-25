@@ -45,7 +45,7 @@ public class LogisticClassifier extends WekaClassifier {
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[LOGISTIC];
-        type=LOGISTIC;
+        model=LOGISTIC;
         params=new LogisticParams();
         cfg=(LogisticParams)params;
     }
@@ -68,7 +68,7 @@ public class LogisticClassifier extends WekaClassifier {
     }    
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) {
+    public boolean add_RI(AttributesRI[] importances) {
         return false;
     }
 //  ****************************************************

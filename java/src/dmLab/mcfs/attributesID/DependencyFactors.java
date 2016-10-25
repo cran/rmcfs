@@ -50,10 +50,11 @@ public class DependencyFactors implements Comparable<DependencyFactors>
 	//************************
     public int compareTo(DependencyFactors conn) 
     {
-        float result=conn.weight-weight;
-        if(result>0.0)                    
+        //TODO tu trzeba obsluge NA dodac
+    	float result = conn.weight - weight;        
+        if(result > 0.0)
             return 1;
-        else if(result<0.0)                    
+        else if(result < 0.0)                    
             return -1;
         else
             return 0;

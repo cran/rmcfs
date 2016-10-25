@@ -45,9 +45,9 @@ mcfs <- function(formula, data,
   input_file_name <- paste0(label, ".adx")
   
   params <- default.params
-  params$inputFileName=input_file_name
-  params$inputFilesPATH=tmp_dir
-  params$resFilesPATH=tmp_dir
+  params$inputFileName = input_file_name
+  params$inputFilesPATH = tmp_dir
+  params$resFilesPATH = tmp_dir
   params$mcfs.projections = projections
   params$mcfs.projectionSize = projectionSize
   params$mcfs.splits = splits
@@ -92,7 +92,7 @@ mcfs <- function(formula, data,
   #cat("Cleaning temporary files...\n")
   out.files <- get.files.names(tmp_dir, filter=label, ext=c('.csv','.txt','.adx'), fullNames=T, recursive=F)
   for(i in 1:length(out.files)){
-    if(file.exists(out.files[i])){
+    if(File.exists(out.files[i])){
       #cat(paste0("remove ", out.files[i]))
       file.remove(out.files[i])
     }
@@ -177,7 +177,7 @@ default.params <- list(verbose = "false", debug = "false", mcfs.progressShow = "
                        mcfs.u = 1, mcfs.v = 1,
                        mcfs.threadsNumber = 4,
                        mcfs.seed = NA,
-                       mcfs.progressInterval = 10, mcfs.classifier = "j48", 
+                       mcfs.progressInterval = 10, mcfs.model = "auto", 
                        j48.useGainRatio = "true", j48.maxConnectionDepth = 5,
                        adx.useComplexQuality = "true", adx.qMethod = 2, 
                        sliq.useDiversityMeasure = "true"
@@ -260,7 +260,7 @@ write.adx <- function(x, file = "", target = NA, chunk.size = 100000)
   attrHeader[,1] <- paste0(" '",names.x,"'")
   attrHeader[numeric.cols, 2] <- " numeric"
   attrHeader[!numeric.cols, 2] <- " nominal"
-  attrHeader[target,3] <- " decision(all)"
+  attrHeader[target,3] <- " decision"
   attrHeader[is.na(attrHeader[,3]),3] <- ""
   l <- apply(attrHeader, 1, paste, collapse="")
   cat(l, file=file, sep="\n")
@@ -326,7 +326,6 @@ write.adx <- function(x, file = "", target = NA, chunk.size = 100000)
 # d[5,3] <- NA
 # d[7,4] <- NA
 # write.arff(x, file="~/ali_test.arff", chunk.size=2000)
-
 write.arff <- function(x, file = "", target = NA, chunk.size = 100000)
 {
   if(file == "")
@@ -380,7 +379,9 @@ write.arff <- function(x, file = "", target = NA, chunk.size = 100000)
   attrHeader[,1] <- "@attribute"
   attrHeader[,2] <- paste0(" '",names.x,"'")
   attrHeader[numeric.cols, 3] <- " real"
-  attrHeader[!numeric.cols, 3] <-   sapply(x[,!numeric.cols, drop=F], function(x) paste0(" {", paste(unique(x), collapse=","),"}")) 
+  if(any(!numeric.cols)){
+    attrHeader[!numeric.cols, 3] <- sapply(x[,!numeric.cols, drop=F], function(x) paste0(" {", paste(unique(x), collapse=","),"}"))
+  }
   attrHeader[is.na(attrHeader[,3]),3] <- ""
   l <- apply(attrHeader, 1, paste, collapse="")
   cat(l, file=file, sep="\n")
@@ -494,6 +495,7 @@ fix.data <- function(x, type = c("all", "names", "values", "types"),
 # fix.data.values(d)
 fix.data.values <- function(x, sourceChars = c(" ",",","/","|","#"), destinationChar = "_")
 {
+  x[x == "?"] <- NA
   nominal.class <- c("character", "factor", "Date", "POSIXct", "POSIXt")
   df.class <- reshape2::melt(lapply(x, class))
   colnames(df.class) <- c("classname", "colname")
@@ -567,7 +569,7 @@ filter.data <- function(data, mcfs_result, size = NA){
 ###############################
 read.ID <- function(fileName){
   interdeps <- NULL
-  if(file.exists(fileName)){
+  if(File.exists(fileName)){
       file.header <- readLines(fileName, n = 1, warn = FALSE)
       header.vector <- string.replace(unlist(strsplit(file.header, ",")), c("\""),"")
       if(all(c("edge_a","edge_b") %in% header.vector)){
@@ -575,7 +577,10 @@ read.ID <- function(fileName){
       }else{
         interdeps <- read.ID.list(fileName)
       }
+  }else{
+    stop(paste0("File: '",fileName,"' does not exists."))
   }
+  
   return(interdeps)
 }
 
@@ -617,15 +622,18 @@ read.ID.list <- function(fileName) {
 #read.cmatrix
 ###############################
 read.cmatrix <- function(fileName){
-  cmatrix <- read.table(fileName, sep=",", header = TRUE, stringsAsFactors = FALSE)
-  cmatrix <- as.matrix(cmatrix[,2:ncol(cmatrix)])
-  if(any(colnames(cmatrix) %in% c("other"))){
-    otherIdx <- which(colnames(cmatrix) == c("other"))
-    cmatrix <- cmatrix[-otherIdx,-otherIdx]
+  cmatrix <- NULL
+  if(File.exists(fileName)){
+    cmatrix <- read.table(fileName, sep=",", header = TRUE, stringsAsFactors = FALSE)
+    cmatrix <- as.matrix(cmatrix[,2:ncol(cmatrix)])
+    if(any(colnames(cmatrix) %in% c("other"))){
+      otherIdx <- which(colnames(cmatrix) == c("other"))
+      cmatrix <- cmatrix[-otherIdx,-otherIdx]
+    }
+    rownames(cmatrix) <- as.character(colnames(cmatrix))
+    
+    class(cmatrix) <- append("cmatrix", class(cmatrix))
   }
-  rownames(cmatrix) <- as.character(colnames(cmatrix))
-  
-  class(cmatrix) <- append("cmatrix", class(cmatrix))
   return (cmatrix)
 }
 
@@ -633,8 +641,11 @@ read.cmatrix <- function(fileName){
 #read.target
 ###############################
 read.target <- function(fileName){
-  matrix <- read.csv.result(fileName)
-  target <- colnames(matrix)[1]
+  target <- NULL
+  if(File.exists(fileName)){
+    matrix <- read.csv.result(fileName)
+    target <- colnames(matrix)[1]
+  }
   return (target)
 }
 
@@ -642,6 +653,8 @@ read.target <- function(fileName){
 #read.RI
 ###############################
 read.RI <- function(fileName){
+  ranking <- NULL
+  if(File.exists(fileName)){
   ranking <- read.table(fileName, sep=",", header = TRUE, stringsAsFactors = FALSE)
   ranking <- ranking[, names(ranking) %in% c('attribute', 'projections', 'classifiers', 'crudeRI', 'nodes', 'RI_norm')]
   # crudeRI is now nodes
@@ -649,6 +662,10 @@ read.RI <- function(fileName){
   ranking <- ranking[order(-ranking$RI_norm),]
   position <- 1:nrow(ranking)
   ranking <- cbind(position,ranking)
+  }else{
+    stop(paste0("File: '",fileName,"' does not exists."))
+  }
+    
   return (ranking)
 }
 
@@ -657,9 +674,8 @@ read.RI <- function(fileName){
 ###############################
 read.csv.result <- function(fileName){
   resultDataFrame <- NULL
-  if(file.exists(fileName))
-    resultDataFrame <- read.table(fileName, sep=",", header = TRUE, stringsAsFactors = FALSE)
-  
+  if(File.exists(fileName))
+    resultDataFrame <- read.table(fileName, sep=",", header = TRUE, na.strings = c("NA", "?", "NaN"), stringsAsFactors = FALSE)
   return (resultDataFrame)
 }
 
@@ -668,7 +684,7 @@ read.csv.result <- function(fileName){
 ###############################
 read.jrip <- function(fileName){
   resultText <- NULL
-  if(file.exists(fileName))
+  if(File.exists(fileName))
     resultText <- readChar(fileName, file.info(fileName)$size)
   
   return(resultText)
@@ -679,7 +695,7 @@ read.jrip <- function(fileName){
 ###############################
 read.params <- function(fileName){
   params <- NULL
-  if(file.exists(fileName)){
+  if(File.exists(fileName)){
     paramsTXT <- readChar(fileName, file.info(fileName)$size)
     paramsTXT <- string.replace(paramsTXT, c("="), " : ")
     params <- yaml.load(paramsTXT)
@@ -692,6 +708,11 @@ read.params <- function(fileName){
 ###############################
 import.result <- function(path, label){
   
+  if(!dir.exists(file.path(path))){
+    stop(paste0("Path does not exist. Path: ", path))
+  }
+  
+  #print(paste0("Loading '",label,"' results..."))
   ri_file <- file.path(path, paste0(label, "__importances.csv"))
   if(!File.exists(ri_file))
     ri_file <- file.path(path, paste0(label, "__RI.csv"))
@@ -707,38 +728,49 @@ import.result <- function(path, label){
   permutations_file <- file.path(path, paste0(label, "_permutations.csv"))
   topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
   jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
+  predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
   params_file <- file.path(path, paste0(label, ".run"))
   
-  ri <- read.RI(ri_file)
-  id <- read.ID(id_file)
-  cmatrix <- read.cmatrix(matrix_file)
-  target <- read.target(matrix_file)
-  dist <- read.csv.result(distances_file)
-  cutoff <- read.csv.result(cutoff_file)
-  cv_accuracy <- read.csv.result(cv_file)
-  permutations <- read.csv.result(permutations_file)
-  topRanking <- read.csv.result(topRanking_file)
-  jrip <- read.jrip(jrip_file)
-  params <- read.params(params_file)
-  
   mcfsResult <- list()
-  mcfsResult$target <- target
-  mcfsResult$RI <- ri
-  mcfsResult$ID <- id
-  mcfsResult$distances <- dist
-  mcfsResult$cmatrix <- cmatrix
-  mcfsResult$cutoff <- cutoff
-  if(nrow(topRanking)==0){
+  
+  params <- read.params(params_file)
+  if(File.exists(matrix_file)){
+    mcfsResult$target <- read.target(matrix_file)
+  }else{
+    mcfsResult$target <- params$target
+  }
+  mcfsResult$RI <- read.RI(ri_file)
+  
+  if(File.exists(id_file)){
+    mcfsResult$ID <- read.ID(id_file)
+  }
+  mcfsResult$distances <- read.csv.result(distances_file)
+  mcfsResult$cmatrix <- read.cmatrix(matrix_file)
+  mcfsResult$cutoff <- read.csv.result(cutoff_file)
+  topRanking <- read.csv.result(topRanking_file)
+  if(is.null(topRanking)){
+    mcfsResult$cutoff_value <- 0
+  }else if(nrow(topRanking)==0){
     mcfsResult$cutoff_value <- 0
   }else{
     mcfsResult$cutoff_value <- topRanking[nrow(topRanking),]$position
   }
-  mcfsResult$cv_accuracy <- cv_accuracy
-  mcfsResult$permutations <- permutations
-  mcfsResult$jrip <- jrip
-  mcfsResult$params <- params
   
-  class(mcfsResult) <- "mcfs"
+  mcfsResult$cv_accuracy <- read.csv.result(cv_file)
+  mcfsResult$permutations <- read.csv.result(permutations_file)
+  mcfsResult$jrip <- read.jrip(jrip_file)
+  mcfsResult$predictionStats <- read.csv.result(predictionStats_file)
+  if(!is.null(params)){
+    mcfsResult$params <- params
+  }
+  required.names <- c("RI","distances","cutoff")
+  if(all(required.names %in% names(mcfsResult))){
+    class(mcfsResult) <- "mcfs"
+  }else{
+    missing <- paste0(required.names[!required.names %in% names(mcfsResult)], collapse = ', ')
+    warning(paste0("Result does not contain all needed data.frames: [",missing,"] are missing."))
+  }
+  
   return(mcfsResult)
 }
 
@@ -764,17 +796,24 @@ export.result <- function(mcfs_result, path, label = "rmcfs", save.rds = FALSE){
     permutations_file <- file.path(path, paste0(label, "_permutations.csv"))    
     topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
     jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
+    predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
     params_file <- file.path(path, paste0(label, ".run"))
     
     write.csv(mcfs_result$RI, file=ri_file, row.names = F)
     write.csv(mcfs_result$ID, file=id_file, row.names = F)
     write.csv(mcfs_result$distances, file=distances_file, row.names = F)
-    
-    cmatrix <- as.data.frame(mcfs_result$cmatrix)
-    cmatrix <- cbind(rownames(cmatrix),cmatrix)
-    colnames(cmatrix)[1] <- mcfs_result$target
-    write.csv(cmatrix, file=matrix_file, row.names = F)
-    
+    #save cmatrix
+    if(any(names(mcfs_result)=="cmatrix")){
+      cmatrix <- as.data.frame(mcfs_result$cmatrix)
+      cmatrix <- cbind(rownames(cmatrix),cmatrix)
+      colnames(cmatrix)[1] <- mcfs_result$target
+      write.csv(cmatrix, file=matrix_file, row.names = F)
+    }
+    #save cmatrix
+    if(any(names(mcfs_result)=="predictionStats")){
+      write.csv(mcfs_result$predictionStats, file=predictionStats_file, row.names = F)
+    }
+    #save cutoff
     write.csv(mcfs_result$cutoff, file=cutoff_file, row.names = F)
     #save cv_accuracy
     if(any(names(mcfs_result)=="cv_accuracy")){
@@ -840,12 +879,15 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE,
     stop("Input object is not 'mcfs' class.")
   
   if(all(names(mcfs_result)!="ID")){
-    stop("ID-Graph edges are not collected. Object 'mcfs_result$ID' does not exist.")
+    warning("ID-Graph edges are not collected. Object 'mcfs_result$ID' does not exist.")
+    return (NULL)
   }
   
-  size <- get.size.param(size, mcfs_result$cutoff_value)
-  if(is.null(size))
-    return(NULL)
+  if(is.na(size))
+    size <- mcfs_result$cutoff_value
+  if(is.null(size) | is.na(size) | size <= 0){
+    warning(paste0("Parameter 'size' is NULL, NA or <= 0."))
+  }
   
   min_ID <- get.min.ID(mcfs_result, size, size_ID, size_ID_mult, size_ID_max)
 
@@ -861,7 +903,9 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE,
   ranking$color <- abs(ranking$color-1)
   
   #add weightNorm and color columns to interdeps
-  interdeps <- mcfs_result$ID
+  #interdeps <- mcfs_result$ID
+  interdeps <- mcfs_result$ID[!is.na(mcfs_result$ID$weight),]
+
   if(is.null(interdeps)){
     warning("ID-Graph is empty. Change input parameters and try to build it again.")
     return (NULL)
@@ -926,10 +970,13 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE,
 ###############################
 get.min.ID <- function(mcfs_result, size = NA, size_ID = NA, size_ID_mult = 3, size_ID_max = 100){
 
-  size <- get.size.param(size, mcfs_result$cutoff_value)
-  if(is.null(size))
-    return(NULL)
-  
+  if(is.na(size))
+    size <- mcfs_result$cutoff_value
+  if(is.null(size) | is.na(size) | size <= 0){
+    warning(paste0("Parameter 'size' is NULL, NA or <= 0."))
+    return(0)
+  }
+
   top_attributes <- head(mcfs_result$RI,size)$attribute
   mask_attributes <- mcfs_result$ID$edge_a %in% top_attributes & mcfs_result$ID$edge_b %in% top_attributes
   
@@ -938,8 +985,12 @@ get.min.ID <- function(mcfs_result, size = NA, size_ID = NA, size_ID_mult = 3, s
   }else{
     top_ID <- head(mcfs_result$ID[mask_attributes,], size_ID)
   }
-  min_ID <- min(top_ID$weight)
   
+  if(nrow(top_ID) == 0){
+    min_ID <- 0
+  }else{
+    min_ID <- min(top_ID$weight)
+  }
   return(min_ID)
 }
 
@@ -961,15 +1012,24 @@ print.mcfs <- function(x, ...){
   writeLines("Cutoff values:")
   print(mcfs_result$cutoff, row.names = F)
   writeLines("")
-  writeLines("#################################")
-  writeLines("Confusion matrix obtained on randomly selected (st) datasets:")
-  print.cmatrix(mcfs_result$cmatrix)
-  writeLines("")
+  if(any(names(mcfs_result) %in% c("cmatrix"))){
+    writeLines("#################################")
+    writeLines("Confusion matrix obtained on randomly selected (st) datasets:")
+    print.cmatrix(mcfs_result$cmatrix)
+    writeLines("")
+  }
+  if(any(names(mcfs_result) %in% c("predictionStats"))){
+    writeLines("#################################")
+    writeLines("Basic prediction statistics obtained on randomly selected (st) datasets:")
+    print(summary(mcfs_result$predictionStats))
+    writeLines("")
+  }
   if(any(names(mcfs_result) %in% c("jrip"))){
     writeLines("#################################")
     writeLines(paste0("JRIP classification rules created on top ", mcfs_result$cutoff_value," features:"))
     writeLines(mcfs_result$jrip)
-  }  
+    writeLines("")
+  }
   writeLines("#################################")
   writeLines(paste0("MCFS-ID execution time: ", format(mcfs_result$exec_time, digits=1),""))
 }

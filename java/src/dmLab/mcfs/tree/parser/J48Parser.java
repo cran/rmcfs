@@ -23,58 +23,19 @@
  *******************************************************************************/
 package dmLab.mcfs.tree.parser;
 
-import dmLab.mcfs.tree.TreeNode;
-
 public class J48Parser extends TreeParser
-{   
-    private boolean readingNodes;
-    private J48NodeParser j48NodeParser;
-
+{
     //****************************************    
     public J48Parser(String j48String)
     {
         super(j48String);
-        
-        readingNodes=false;
-        j48NodeParser=new J48NodeParser();                
+        beginLine = "-------";
+        endLine = "Number of Leaves";
     }
     //****************************************
-    @Override
-    public TreeNode getNextNode()
-    {       
-        //flush method have not been used 
-        //return previously read node
-        if(node!=null)
-            return node;
-
-        while(tokenizer.hasMoreTokens())
-        {
-            String line=tokenizer.nextToken().trim();                                 
-
-            //ends the parsing process
-            if(line.startsWith("Number of Leaves"))
-            {
-                readingNodes=false;
-                node=null;
-                return node;
-            }
-
-            if(readingNodes && !line.equalsIgnoreCase(""))
-            {
-                node=new TreeNode(null,-1);
-                j48NodeParser.parse(node,line);
-                
-                //if parsed line did not contain the real node return null value
-                if(node.condition.attributeName==null)
-                    node=null;
-                
-                return node;
-            }
-            //starts the parsing process            
-            if(line.charAt(0)=='-')
-                readingNodes=true;
-        }   
-        return node;
-    }
+	@Override
+	public String lineModifier(String line) {
+		return line;
+	}
     //****************************************
 }

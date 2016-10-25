@@ -46,6 +46,11 @@ public class DataFrame implements Cloneable
 		init(rows,cols);
 	}
 	//******************************
+	public DataFrame(int rows, String[] colNames){
+		init(rows, colNames.length);
+		setColNames(colNames);
+	}
+	//******************************
 	public DataFrame(int rows, DataFrame df){
 		init(rows,df.cols());
 		setColumns(df.getColumns());

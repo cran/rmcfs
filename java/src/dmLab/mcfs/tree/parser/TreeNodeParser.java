@@ -25,12 +25,13 @@ package dmLab.mcfs.tree.parser;
 
 import dmLab.classifier.attributeIndicators.J48NodeIndicators;
 import dmLab.mcfs.tree.TreeNode;
+import dmLab.utils.StringUtils;
 import dmLab.utils.condition.Condition;
 
-public class J48NodeParser
+public class TreeNodeParser
 {   
     //****************************************
-    public J48NodeParser()
+    public TreeNodeParser()
     {
     }
     //****************************************
@@ -56,7 +57,7 @@ public class J48NodeParser
         else
             startIndex++;
 
-        stopIndex=line.indexOf("(");
+        stopIndex = Math.min(line.indexOf("("),line.indexOf("#"));
         if(stopIndex==-1)
             return null;
         
@@ -110,21 +111,22 @@ public class J48NodeParser
             return null;
     }        
     //****************************************
-    public J48NodeIndicators parseNodeIndicators(TreeNode node,String line)
+    public J48NodeIndicators parseNodeIndicators(TreeNode node, String line)
     {
-        int startIndex,stopIndex;
-        
-        startIndex=line.indexOf("#");
+        int startIndex, stopIndex;
+        String tmpLine = line; 
+        startIndex = tmpLine.indexOf("#");
+        stopIndex  = tmpLine.lastIndexOf("#");
         if(startIndex==-1)
-            return null;      
+            return null;
         
-        for(int i=0;i<node.nodeIndicators.size;i++)
-        {   
-            stopIndex=line.indexOf("#",startIndex+1);
-            float tmpDbl=Float.parseFloat(line.substring(startIndex+1,stopIndex));
-            if(i==0)
-            {
-                node.nodeIndicators.nodeIndex=(int)tmpDbl;
+        tmpLine = line.substring(startIndex,stopIndex);        
+        String[] indicators = StringUtils.tokenizeString(tmpLine, new char[]{'#'}, true);
+        
+        for(int i=0;i<node.nodeIndicators.size;i++){   
+            float tmpDbl = Float.parseFloat(indicators[i]);
+            if(i==0){
+                node.nodeIndicators.nodeIndex = (int)tmpDbl;
                 node.setNodeID(node.nodeIndicators.nodeIndex);
             }
             if(i==1)
@@ -133,7 +135,6 @@ public class J48NodeParser
                 node.nodeIndicators.attrGainRatio=tmpDbl;
             else if (i==3)
                 node.nodeIndicators.attrEventsNumber=tmpDbl;
-            startIndex=stopIndex;
         }
         return node.nodeIndicators;
     }

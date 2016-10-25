@@ -45,7 +45,7 @@ public class HyperPipesClassifier extends WekaClassifier {
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[HP];
-        type=HP;
+        model=HP;
         params=new HyperPipesParams();
         cfg=(HyperPipesParams)params;
     }
@@ -68,7 +68,7 @@ public class HyperPipesClassifier extends WekaClassifier {
     }    
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) {
+    public boolean add_RI(AttributesRI[] importances) {
         return false;
     }
 //  ****************************************************

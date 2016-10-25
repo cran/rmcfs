@@ -33,8 +33,8 @@ import dmLab.classifier.attributeIndicators.J48NodeIndicators;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.ExperimentIndicators;
 import dmLab.utils.GeneralUtils;
+import dmLab.utils.cmatrix.QualityMeasure;
 import dmLab.utils.cmatrix.ConfusionMatrix;
-import dmLab.utils.cmatrix.AccuracyMeasure;
 
 public class RNDClassifier extends Classifier
 {
@@ -46,7 +46,7 @@ public class RNDClassifier extends Classifier
 	{
 		super();
 		label=labels[RND];
-		type=RND;
+		model=RND;
         params=new RNDParams();
         cfg=(RNDParams)params;
 	}
@@ -74,14 +74,14 @@ public class RNDClassifier extends Classifier
 		start=System.currentTimeMillis();
 //		results need to be inserted into specified class
 //		ConfusionMatrix it is unified class to store results
-		confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
+		predResult.confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
 				testArray.getDecValues(),testArray.getDecValuesStr());
 		float predictedDecision;
 		float realDecision;
 		final int testEventsNumber=testArray.rowsNumber();
 		final int interval=(int)Math.ceil(0.1*testEventsNumber);
 		int threshold=interval;
-        predictions=new Prediction[testEventsNumber];
+		predResult.predictions=new Prediction[testEventsNumber];
         
 		final int decAttrIndex=testArray.getDecAttrIdx();
 		
@@ -89,10 +89,11 @@ public class RNDClassifier extends Classifier
 		{
 			predictedDecision=classifyEvent(testArray,i);
 			realDecision=testArray.readValue(decAttrIndex,i);
-			confusionMatrix.add(realDecision,predictedDecision);
+			predResult.confusionMatrix.add(realDecision,predictedDecision);
             
-            String predictedClassName=testArray.dictionary.toString(predictedDecision);
-            predictions[i]=new Prediction(predictedClassName,null);
+            String realClassName = testArray.dictionary.toString(realDecision);
+			String predictedClassName=testArray.dictionary.toString(predictedDecision);
+			predResult.predictions[i]=new Prediction(realClassName, predictedClassName,null);
             
 			if(i>threshold && threshold!=0)
 			{
@@ -139,7 +140,7 @@ public class RNDClassifier extends Classifier
 	}
 	//*******************************************************	  
     @Override
-    public boolean addImportances(AttributesRI importances[])
+    public boolean add_RI(AttributesRI importances[])
 	{	
         int idx=-1;
         int decisionAttrIndex=trainArray.getDecAttrIdx();
@@ -149,7 +150,7 @@ public class RNDClassifier extends Classifier
 
         ExperimentIndicators experimentIndicators=new ExperimentIndicators();
         experimentIndicators.eventsNumber=trainSetSize;
-        experimentIndicators.predictionQuality=AccuracyMeasure.calcWAcc(confusionMatrix.getMatrix());
+        experimentIndicators.predictionQuality=QualityMeasure.calcWAcc(predResult.confusionMatrix.getMatrix());
             
         importances[0].addImportances(name,experimentIndicators,new J48NodeIndicators(1));
         return true;

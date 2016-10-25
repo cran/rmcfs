@@ -38,6 +38,8 @@ The number of top features included and the number of ID-Graph edges can be cust
   result <- mcfs(class~., adata, projections = 300, projectionSize = 4, 
                  cutoffPermutations = 0, finalCV = FALSE, finalRuleset = FALSE, 
                  threadsNumber = 2)
+  print(result)
+  names(result)
 
   # build interdependencies graph (all default parameters).
   gid <- build.idgraph(result)

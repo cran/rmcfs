@@ -278,15 +278,18 @@ public class FileLoaderADX extends FileLoader
 					myArray.attributes[attrPointer].type = Attribute.convert(label);
 			}else if(i==2){
 				//attribute role
-				if( label.equalsIgnoreCase("ignore")==false && label.toLowerCase().startsWith("decision")==false){
+				if(label.equalsIgnoreCase("ignore")==false && label.toLowerCase().startsWith("decision")==false){
 					System.err.println("Incorrect role of attribute: "+list[0]+" role: "+label);
 					return false;
-				}else{
+				}else{					
 					if(label.toLowerCase().startsWith("decision")==true){
-						if((decisionValues=decodeDecValues(label))!=null){
+						if(label.toLowerCase().equalsIgnoreCase("decision")){
+							myArray.setDecAttrIdx(attrPointer);
+							allDecision = true;
+						}else if((decisionValues = decodeDecValues(label))!=null){
 							myArray.setDecAttrIdx(attrPointer);
 							if(decisionValues.length==1 && decisionValues[0].equalsIgnoreCase("all"))
-								allDecision=true;
+								allDecision = true;
 							else
 								myArray.setDecValues(decisionValues);
 						}else{
@@ -308,6 +311,10 @@ public class FileLoaderADX extends FileLoader
 	private String[] decodeDecValues(String inputString)
 	{
 		String valuesChain;
+
+		//numeric target
+		if(inputString.trim().equalsIgnoreCase("decision"))
+			return null;
 
 		if(inputString.indexOf("(")==-1 || inputString.indexOf(")")==-1){
 			System.err.println("Missing bracket!");

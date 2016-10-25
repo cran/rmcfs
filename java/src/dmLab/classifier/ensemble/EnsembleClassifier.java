@@ -52,7 +52,7 @@ public class EnsembleClassifier extends Classifier {
     {
         super();
         label=labels[ENSEMBLE];
-        type=ENSEMBLE;        
+        model=ENSEMBLE;        
         en=new ObjectList();
         weights=new FloatList();
         params=new EnsembleParams();
@@ -177,14 +177,14 @@ public class EnsembleClassifier extends Classifier {
         long start,stop;
         if(params.verbose) System.out.println("Testing...");                
         start=System.currentTimeMillis();        
-        confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
+        predResult.confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
         		testArray.getDecValues(),testArray.getDecValuesStr());
         float predictedDecision=-1f;
         float realDecision;
         final int testEventsNumber=testArray.rowsNumber();
         final int interval=(int)Math.ceil(0.1*testEventsNumber);
         int threshold=interval;
-        predictions=new Prediction[testEventsNumber];        
+        predResult.predictions=new Prediction[testEventsNumber];        
         EnsembleDecisionWeights ensembleDecisions=new EnsembleDecisionWeights(testArray.getDecValues());  
         
         final int classifiersNum=en.size();
@@ -208,7 +208,7 @@ public class EnsembleClassifier extends Classifier {
             {
                 if(weights.get(j)!=0)
                 {
-                    String currlabel = ((Classifier)en.get(j)).getPredictions()[i].getLabel();
+                    String currlabel = ((Classifier)en.get(j)).getPredResult().getPredictions()[i].getPredicted();
                     currDecision = testArray.dictionary.toFloat(currlabel);
                     float currWeight=weights.get(j);
                     ensembleDecisions.add(currDecision, currWeight);
@@ -221,11 +221,11 @@ public class EnsembleClassifier extends Classifier {
             //System.out.println(ensembleDecisions.toString());
                 
             realDecision=testArray.readValue(decAttrIndex,i);
-            confusionMatrix.add(realDecision,predictedDecision);
-
-            String predictedClassName=testArray.dictionary.toString(predictedDecision);
+            predResult.confusionMatrix.add(realDecision,predictedDecision);
             
-            predictions[i]=new Prediction(predictedClassName,null);
+            String realClassName = testArray.dictionary.toString(realDecision);
+            String predictedClassName=testArray.dictionary.toString(predictedDecision);            
+            predResult.predictions[i]=new Prediction(realClassName,predictedClassName,null);
             
             if(i>threshold && threshold!=0)
             {
@@ -247,7 +247,7 @@ public class EnsembleClassifier extends Classifier {
     }
 //  ****************************************************    
     @Override
-    public boolean addImportances(AttributesRI[] importances) {
+    public boolean add_RI(AttributesRI[] importances) {
         return false;
     }
 //  ****************************************************

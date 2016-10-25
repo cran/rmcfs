@@ -25,6 +25,8 @@ package dmLab.mcfs.tree;
 
 import java.util.HashMap;
 
+import dmLab.mcfs.tree.parser.TreeParser;
+
 public class Tree 
 {
     protected TreeNode rootNode;
@@ -36,17 +38,32 @@ public class Tree
     //****************************************
     public Tree()
     {
-        rootNode=null;
-        nodes=new HashMap<Integer,TreeNode>();
-        nodesArray=null;
+        rootNode = null;
+        nodes = new HashMap<Integer,TreeNode>();
+        nodesArray = null;
+    }
+    //****************************************
+    public Tree(TreeParser treeParser)
+    {    	
+    	parseTree(treeParser);
+    }
+    //****************************************
+    public TreeNode parseTree(TreeParser treeParser)
+    {
+	    init();
+	    rootNode.parseTree(treeParser);
+	    fillNodes();
+        return rootNode;
     }
     //****************************************
     public void init()
     {
-        final Integer rootInt=new Integer(-1);
-        rootNode=new TreeNode(null,rootInt);
-        rootNode.level=-1;
+        nodesArray = null;        
+    	final Integer rootInt = new Integer(-1);
+        rootNode = new TreeNode(null,rootInt);
+        rootNode.level = -1;
         rootNode.nodeIndicators.nodeIndex=-1;
+        nodes = new HashMap<Integer,TreeNode>();
         nodes.put(rootInt,rootNode);  
     }  
     //****************************************
@@ -61,14 +78,11 @@ public class Tree
         return rootNode;
     }
     //****************************************
-    @Override
     public String toString()
     {       
-        if(rootNode!=null)
-        {
+        if(rootNode!=null){
             return rootNode.toString();
-        }
-        else{
+        }else{
             StringBuffer tmp=new StringBuffer();
             final Object[] values=nodes.values().toArray();
             for(int i=0;i<values.length;i++)
@@ -87,10 +101,9 @@ public class Tree
      to fill it there is need to add method finalize
      that fills nodes by recursion (node by node) 
     */   
-    @Override
-    public void finalize()
+    private void fillNodes()
     {
-        nodeIterator=-1;
+        nodeIterator = -1;
         rootNode.finalize(this);
     }
     //****************************************
@@ -109,22 +122,17 @@ public class Tree
                     " "+((TreeNode)nodesArray[i]).condition.toString());
         //*/
     }
-    //****************************************  
-    public boolean hasNextNode()
-    {
-        if(nodesArray==null)
-            initNodesIterating();
-        if(nodeIterator<nodesArray.length)
-            return true;
-        else
-            return false;
-    }
     //****************************************
     public TreeNode getNextNode()
     {
-        if(nodesArray==null)
-            initNodesIterating();       
-        return (TreeNode)nodesArray[nodeIterator++];
+		if(nodesArray == null)
+			initNodesIterating();
+		while(nodeIterator<nodesArray.length){
+			TreeNode nodeTmp = (TreeNode)nodesArray[nodeIterator++];
+			if(!nodeTmp.isRoot())
+				return nodeTmp;			
+		}
+		return null;
     }
     //****************************************
     public int size()

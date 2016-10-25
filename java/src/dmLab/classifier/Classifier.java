@@ -30,62 +30,124 @@ import java.io.IOException;
 import java.util.HashSet;
 
 import dmLab.array.FArray;
+import dmLab.array.meta.Attribute;
+import dmLab.classifier.adx.ADXClassifier;
+import dmLab.classifier.bayesNet.BayesNetClassifier;
+import dmLab.classifier.ensemble.EnsembleClassifier;
+import dmLab.classifier.hyperPipes.HyperPipesClassifier;
+import dmLab.classifier.j48.J48Classifier;
+import dmLab.classifier.knn.KNNClassifier;
+import dmLab.classifier.logistic.LogisticClassifier;
+import dmLab.classifier.m5.M5Classifier;
+import dmLab.classifier.nb.NBClassifier;
+import dmLab.classifier.randomForest.RandomForestClassifier;
+import dmLab.classifier.ripper.RipperClassifier;
+import dmLab.classifier.rnd.RNDClassifier;
+import dmLab.classifier.sliq.SliqClassifier;
+import dmLab.classifier.svm.SVMClassifier;
 import dmLab.mcfs.MCFSParams;
 import dmLab.mcfs.attributesID.AttributesID;
 import dmLab.mcfs.attributesRI.AttributesRI;
-import dmLab.utils.cmatrix.ConfusionMatrix;
 
-/**
- * @author mdramins
- *
- */
+
 public abstract class Classifier
 {
 	public Params params;     
 	public String label;
-	protected int classifierID;
+	protected int id;
 	
-	protected ConfusionMatrix confusionMatrix;
+	public static int MODEL_CLASSIFIER = 0; 
+	public static int MODEL_PREDICTOR = 1;
+	public int modelType = MODEL_CLASSIFIER;
+	
+	protected PredictionResult predResult;	
+
 	protected String tmpPath;	
 	protected float learningTime;
 	protected float testingTime;
     protected int trainSetSize;
-    
-	protected Prediction predictions[];
-    
+        
     protected HashSet<String> attrSet;
-    
-    public static int ENSEMBLE=0;
-    public static int RND=1;
-	public static int J48=2;
-	public static int ADX=3;
-	public static int SLIQ=4;
-	public static int RF=5;	
-	public static int NB=6;
-	public static int SVM=7;
-	public static int KNN=8;
-	public static int RIPPER=9;
-	public static int BNET=10;
-	public static int HP=11;
-	public static int LOGISTIC=12;
-		
-	public static String labels[]={"ensemble","rnd","j48","adx","sliq","rf","nb",
-	    "svm","knn","ripper","bayesNet","hyperPipes","logistic"};
+
+	protected int model;
+    public static int AUTO=0;
+    public static int ENSEMBLE=1;
+    public static int RND=2;
+	public static int J48=3;
+	public static int ADX=4;
+	public static int SLIQ=5;
+	public static int RF=6;	
+	public static int NB=7;
+	public static int SVM=8;
+	public static int KNN=9;
+	public static int RIPPER=10;
+	public static int BNET=11;
+	public static int HP=12;
+	public static int LOGISTIC=13;
+	public static int M5=14;
+				
+	public static String labels[]={"auto","ensemble","rnd","j48","adx","sliq","rf","nb",
+	    "svm","knn","ripper","bayesNet","hyperPipes","logistic","m5"};
 	
-	protected int type;	
 	//*****************************************
 	public Classifier()
 	{
+		modelType = MODEL_CLASSIFIER;
+		predResult = new PredictionResult(modelType);
 		learningTime=0;
 		testingTime=0;
 		tmpPath="";
 		label="classifier";
-		classifierID=0;
+		id=0;
+	}	
+	//*****************************************
+	public static Classifier getClassifier(int model){
+		Classifier classifier = null;
+		if(model==Classifier.ENSEMBLE){
+			classifier=new EnsembleClassifier();
+		}else if(model==Classifier.RND){
+			classifier=new RNDClassifier();
+		}else if(model==Classifier.J48){
+			classifier=new J48Classifier();
+		}else if(model==Classifier.ADX){
+			classifier=new ADXClassifier();
+		}else if(model==Classifier.SLIQ){
+			classifier=new SliqClassifier();
+		}else if(model==Classifier.RF){
+			classifier=new RandomForestClassifier();
+		}else if(model==Classifier.NB){
+			classifier=new NBClassifier();
+		}else if(model==Classifier.KNN){
+			classifier=new KNNClassifier();
+		}else if(model==Classifier.RIPPER){
+			classifier=new RipperClassifier();
+		}else if(model==Classifier.SVM){
+			classifier=new SVMClassifier();
+		}else if(model==Classifier.BNET){
+			classifier=new BayesNetClassifier();
+		}else if(model==Classifier.HP){
+			classifier=new HyperPipesClassifier();
+		}else if(model==Classifier.LOGISTIC){
+			classifier=new LogisticClassifier();
+		}else if(model==Classifier.M5){
+			classifier=new M5Classifier();
+		}else{
+			System.err.println("Error creating the classifier. Incorrect model value.");
+			return null;
+		}
+		return classifier;
 	}
 	//*****************************************
-	public int type()
+	public boolean isClassifier(){
+		if(modelType == MODEL_CLASSIFIER)
+			return true;
+		else
+			return false;
+	}
+	//*****************************************
+	public int model()
 	{
-		return type;
+		return model;
 	}
 	//*****************************************
 	public String label()
@@ -98,14 +160,14 @@ public abstract class Classifier
 		this.label = label;
 	}
 //  *************************************
-	public void setClassifierId(int id)
+	public void setId(int id)
 	{
-		classifierID=id;
+		this.id=id;
 	}
 	//*****************************************
 	public String getMyName()
 	{
-		return label+"_C"+classifierID;
+		return label+"_C"+id;
 	}
 	//*****************************************
 	public void setTempPath(String tempPath)
@@ -128,6 +190,19 @@ public abstract class Classifier
 		return testingTime;
 	}
 	//*****************************************
+	public boolean checkTargetAttr(FArray array){
+		int DecAttrType = array.attributes[array.getDecAttrIdx()].type;
+		if(DecAttrType == Attribute.NOMINAL && modelType == MODEL_PREDICTOR){
+			System.err.println("Model" + getMyName()  + " cannot handle nominal target attribute!");
+			return false;
+		}
+		else if(DecAttrType == Attribute.NUMERIC && modelType == MODEL_CLASSIFIER){
+			System.err.println("Model" + getMyName()  + " cannot handle numeric target attribute!");
+			return false;			
+		}else
+			return true;		
+	}
+	//*****************************************	
 	public abstract boolean train(FArray trainArray);
 	//*****************************************
 	public abstract boolean test(FArray testArray);	
@@ -151,9 +226,9 @@ public abstract class Classifier
 	//*****************************************
 	public abstract float classifyEvent(FArray array,int eventIndex);
     //*****************************************
-    public abstract boolean addImportances(AttributesRI importances[]);
+    public abstract boolean add_RI(AttributesRI importances[]);
     //*****************************************
-    public boolean addIDependencies(AttributesID attrIDependencies, MCFSParams params)
+    public boolean add_ID(AttributesID attrIDependencies, MCFSParams params)
     {
         if(attrSet==null || attrSet.size()==0)
             return false;
@@ -172,25 +247,6 @@ public abstract class Classifier
     {
         return attrSet;
     }
-	//*****************************************
-    public ConfusionMatrix getConfusionMatrix()
-    {
-        return confusionMatrix;
-    }
-    //*****************************************
-    public Prediction[] getPredictions()
-    {
-        return predictions;  
-    }
-//  *****************************************
-    public String predictionsToString()
-    {
-        StringBuffer tmp=new StringBuffer();
-        for(int i=0;i<predictions.length;i++)            
-            tmp.append(predictions[i].toString());
-        
-        return tmp.toString(); 
-    }
 //  *****************************************
 	public static String int2label(int id)
 	{
@@ -207,6 +263,15 @@ public abstract class Classifier
 		        return i;
 		
 		return -1;
+	}
+//  *************************************
+	public Params getParams()
+	{
+		return params;
+	}
+//  *************************************
+	public PredictionResult getPredResult(){
+		return predResult;
 	}
 //  *************************************
 }

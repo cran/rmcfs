@@ -169,7 +169,13 @@ public class MCFSExperiment implements Runnable
         	int topRankingSize = (int)mcfs.globalStats.getCutoff().getCutoffValue(mcfs.mcfsParams.cutoffMethod);
         	if(topRankingSize == 0)
         		topRankingSize = 8;
-        	MCFSFinalCV simpleCV = new MCFSFinalCV(new int[]{Classifier.J48,Classifier.NB,Classifier.SVM,Classifier.KNN,Classifier.LOGISTIC,Classifier.RIPPER},random);
+        	
+        	MCFSFinalCV simpleCV;
+        	if(mcfs.mcfsArrays.sourceArray.isTargetNominal())
+        		simpleCV = new MCFSFinalCV(new int[]{Classifier.J48,Classifier.NB,Classifier.SVM,Classifier.KNN,Classifier.LOGISTIC,Classifier.RIPPER},random);
+        	else
+        		simpleCV = new MCFSFinalCV(new int[]{Classifier.M5},random);
+        		
         	//int[] cutoffValues = getCutoffValues(ArrayUtils.double2int(mcfs.globalStats.getCutoff().getCutoffValues()));
         	int[] cutoffValues = getCutoffValues(new int[]{topRankingSize});
             System.out.println("");
@@ -181,7 +187,7 @@ public class MCFSExperiment implements Runnable
         }
         
         //RUN Final Rules
-        if(mcfsParams.finalRuleset){
+        if(mcfsParams.finalRuleset && mcfs.mcfsArrays.sourceArray.isTargetNominal()){
         	int topRankingSize = (int)mcfs.globalStats.getCutoff().getCutoffValue(mcfs.mcfsParams.cutoffMethod);
         	if(topRankingSize == 0)
         		topRankingSize = 2;
@@ -196,26 +202,26 @@ public class MCFSExperiment implements Runnable
 			classification.classParams.verbose = false;
 			classification.classParams.saveClassifier = false;
 			classification.classParams.savePredictionResult = false;
+			classification.classParams.repetitions = 1;
 			classification.classParams.classifierCfgPATH = "";
-			classification.classParams.classifier = Classifier.RIPPER;
-
-			classification.createClassifier();
-			classification.singleTrainTest(topRankingArray,topRankingArray);			
+			classification.classParams.model = Classifier.RIPPER;
+			
+			classification.initClassifier();
+			classification.runTrainTest(topRankingArray,topRankingArray);			
 			String ripperResult = classification.classifier.toString(false) +"\n\n";
 			
-			classification.createClassifier();
-			classification.cleanStats();
-
+			classification.initClassifier();
 			classification.classParams.folds = 	mcfsParams.foldsCV;
 			classification.classParams.repetitions = mcfsParams.finalCVRepetitions;
-			classification.multipleCV(topRankingArray);
-			ripperResult += "##### Cross Validation Result (10 folds repeated "+ mcfsParams.finalCVRepetitions +" times) #####" + "\n" + classification.toStringCMatrix();			
+			classification.runCV(topRankingArray);
+			ripperResult += "##### Cross Validation Result (10 folds repeated "+ mcfsParams.finalCVRepetitions +" times) #####" + "\n" + classification.predResult.toString();			
 			System.out.println(ripperResult);
 			
             if(mcfs.saveResutFiles)
             	FileUtils.saveString(mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_RULESET, ripperResult);			
         }
         
+        System.out.println("\n*** MCFS-ID Experiment is Finished ***\n");
         return;
     }
     //*********************************
@@ -319,7 +325,7 @@ public class MCFSExperiment implements Runnable
     				permRI[currPermIdx++]=(Float)row[j];
     			}
     		}
-    		mean[i] = (float)MathUtils.avg(permRI);
+    		mean[i] = (float)MathUtils.mean(permRI);
     		normality_p[i] = (float)StatFunctions.andersonDarlingNormTest(permRI);
     		ttest_p[i] = (float)StatFunctions.tTestOneSample(permRI, (double)valuesRI[i]);
     	}

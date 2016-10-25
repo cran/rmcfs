@@ -35,7 +35,7 @@ import dmLab.classifier.sliq.Tree.treePruning.mdlTreePruning.MdlTreePruning;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.ExperimentIndicators;
 import dmLab.utils.cmatrix.ConfusionMatrix;
-import dmLab.utils.cmatrix.AccuracyMeasure;
+import dmLab.utils.cmatrix.QualityMeasure;
 
 
 
@@ -55,7 +55,7 @@ public class SliqClassifier extends Classifier
 	{
 		super();
 		label="sliq";
-		type=SLIQ;
+		model=SLIQ;
 		params=new SliqParams();
 		cfg=(SliqParams)params;
 	}
@@ -83,13 +83,13 @@ public class SliqClassifier extends Classifier
 	}
     //****************************************************
     @Override
-    public boolean addImportances(AttributesRI importances[])
+    public boolean add_RI(AttributesRI importances[])
     {        
         attrSet=new HashSet<String>();
         
         ExperimentIndicators experimentIndicators=new ExperimentIndicators();
         experimentIndicators.eventsNumber=trainSetSize;
-        experimentIndicators.predictionQuality=AccuracyMeasure.calcWAcc(confusionMatrix.getMatrix());
+        experimentIndicators.predictionQuality=QualityMeasure.calcWAcc(predResult.confusionMatrix.getMatrix());
 
         sliqTree.addInfo(trainArray,sliqTree.root,experimentIndicators,importances[0],attrSet);
         
@@ -166,13 +166,13 @@ public class SliqClassifier extends Classifier
 		long start,stop;
 		if(params.verbose) System.out.print("Testing...");
 		start=System.currentTimeMillis();
-		confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
+		predResult.confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
 				testArray.getDecValues(),testArray.getDecValuesStr());
 		float predictedDecision;
 		float realDecision;
 		final int testEventsNumber=testArray.rowsNumber();
 		//final int interval=(int)Math.ceil(0.1*testEventsNumber);
-        predictions=new Prediction[testEventsNumber];
+		predResult.predictions=new Prediction[testEventsNumber];
         
 		final int decAttrIndex=testArray.getDecAttrIdx();
 
@@ -180,10 +180,11 @@ public class SliqClassifier extends Classifier
 		{
 			predictedDecision=classifyEvent(testArray,i);
 			realDecision=testArray.readValue(decAttrIndex,i);
-			confusionMatrix.add(realDecision,predictedDecision);
+			predResult.confusionMatrix.add(realDecision,predictedDecision);
             
-            String predictedClassName=testArray.dictionary.toString(predictedDecision);
-            predictions[i]=new Prediction(predictedClassName,null);
+            String realClassName = testArray.dictionary.toString(realDecision);
+            String predictedClassName=testArray.dictionary.toString(predictedDecision);            
+            predResult.predictions[i]=new Prediction(realClassName, predictedClassName,null);
 		}
 		stop=System.currentTimeMillis();
 		testingTime=(stop-start)/1000.0f;

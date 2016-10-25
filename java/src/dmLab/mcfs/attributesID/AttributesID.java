@@ -186,12 +186,12 @@ public class AttributesID
         		for(int j=0;j<vals.length;j++){
         			DependencyIdx connId = new DependencyIdx(attrId,vals[j]);
         			DependencyFactors connFactors = connections.get(connId);
-        			connArray[j]= new Dependency(connId,connFactors);
+        			connArray[j] = new Dependency(connId, connFactors);
         		}    			
         		Arrays.sort(connArray);
         		for(int j=0;j<connArray.length;j++){
     				tmp.append(',').append(myDict.get(connArray[j].connId.childId)).append("("+connArray[j].connFactors.toString()+")");
-        		}    			        		
+        		}
         		tmp.append('\n');
         	}        	
         }

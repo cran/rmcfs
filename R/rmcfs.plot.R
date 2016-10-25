@@ -4,7 +4,7 @@
 plot.mcfs <- function(x, type=c("ri", "id", "distances", "features", "cv", "cmatrix"),
                       size=NA,
                       plot_permutations = F, 
-                      measure = c("acc", "wacc"),
+                      measure = c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"),
                       l_margin = 10, 
                       cex = 1, ...){
   mcfs_result <- x
@@ -68,7 +68,7 @@ mcfs.plot.importances <- function(x, permutations, cutoff_value=NA, size=NA, cex
     importance <- x$weight
     mainlabel <- "Interdependence weight"
     shortlabel <- "ID_value"    
-    maxw <- max(x$weight)
+    maxw <- max(x$weight, na.rm = TRUE)
     b <- c(1,5,10,50,100)
     step <- max(tail(b[maxw/b>5],1),1,na.rm=T)
     abln <- seq(0,maxw,step)
@@ -257,6 +257,11 @@ mcfs.plot.features <- function(mcfs_result, size=NA, cex=0.8, l_margin=10)
 ###############################
 mcfs.plot.cmatrix <- function(mcfs_result){
   
+  if(all(names(mcfs_result)!="cmatrix")){
+    warning("Confusion Matrix is not calculated. Object 'mcfs_result$cmatrix' does not exist.")
+    return(NULL)
+  }
+  
   cmatrix <- mcfs_result$cmatrix
   #corrplot(cmatrix/sum(cmatrix), is.corr = FALSE, method = "square",cl.lim = c(0, 1))  
   
@@ -301,20 +306,39 @@ mcfs.plot.cmatrix <- function(mcfs_result){
 ###############################
 #mcfs.plot.cv
 ###############################
-mcfs.plot.cv <- function(mcfs_result, measure=c("wacc", "acc"), cex=1){
+mcfs.plot.cv <- function(mcfs_result, measure=c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"), cex=1){
   
   if(all(names(mcfs_result)!="cv_accuracy")){
     warning("Final CV have not been performed. Object 'mcfs_result$cv_accuracy' does not exist.")  
   }else{
     measure <- measure[1]
-    ylim <- c(0,1)
-    if(!measure %in% c("acc","wacc"))
-      measure <- "acc"
+    if(mcfs_result$params$mcfs.model %in% c("j48")){
+      ylim <- c(0,100)
+      measure_sufix <- " [%]"
+      measure_mult <- 100
+      if(!tolower(measure) %in% c("acc","wacc"))
+        measure <- "wacc"
+    }
     
-    cv_accuracy_TMP <- mcfs_result$cv_accuracy
-    cv_accuracy_TMP[,measure] <- 100 * cv_accuracy_TMP[,measure]
+    if(mcfs_result$params$mcfs.model %in% c("m5")){
+      measure_sufix <- ""
+      measure_mult <- 1
+      if(!tolower(measure) %in% tolower(c("pearson", "MAE", "RMSE", "SMAPE")))
+        measure <- "pearson"
+      if(tolower(measure) == tolower("pearson")){
+        ylim <- c(-1,1)
+      }else if(tolower(measure) == tolower("SMAPE")){
+        ylim <- c(0,1)
+      }else{
+        ylim <- NULL
+      }
+    }
     
-    pivot <- reshape2::acast(cv_accuracy_TMP, algorithm ~ label, value.var=measure)
+    cv_quality_TMP <- mcfs_result$cv_accuracy
+    measure_mask <- tolower(names(cv_quality_TMP)) %in% tolower(measure)
+    cv_quality_TMP[,measure_mask] <- measure_mult * cv_quality_TMP[,measure_mask]
+    measure <- names(cv_quality_TMP)[measure_mask]
+    pivot <- reshape2::acast(cv_quality_TMP, algorithm ~ label, value.var=measure)
     
     #library(RColorBrewer)
     #darkcols <- brewer.pal(8, "Dark2")
@@ -326,8 +350,8 @@ mcfs.plot.cv <- function(mcfs_result, measure=c("wacc", "acc"), cex=1){
     }else{
       xaxt<-'s'
     }
-    barplot(pivot, main=paste0("Cross Validation Results (",measure,")"), xlab= "top n attributes", ylab=paste0(measure," [%]"), beside=T, col=plot.colors, 
-            cex.axis = cex, cex.names = cex, cex.lab = cex, ylim=c(0,100), xaxt=xaxt)
+    barplot(pivot, main=paste0("Cross Validation Results (",measure,")"), xlab= "top n attributes", ylab=paste0(measure,measure_sufix), beside=T, col=plot.colors, 
+            cex.axis = cex, cex.names = cex, cex.lab = cex, ylim=ylim, xaxt=xaxt)
     
     #colorize value at mcfs_result$cutoff_value  
     if("cutoff_value" %in% names(mcfs_result)){

@@ -42,6 +42,7 @@ import dmLab.mcfs.attributesRI.measuresRI.ProjectionMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.RINormMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.SliqRIMeasure;
 import dmLab.mcfs.cutoffMethods.Cutoff;
+import dmLab.utils.ArrayUtils;
 import dmLab.utils.GeneralUtils;
 import dmLab.utils.MathUtils;
 import dmLab.utils.cmatrix.ConfusionMatrix;
@@ -54,7 +55,7 @@ import dmLab.utils.statList.StatsList;
 public class GlobalStats {
     
     private ConfusionMatrix confusionMatrix;
-    private ChartFrame distanceChart=null;
+    private ChartFrame distanceChart = null;
     private LinearRegression myLinearRegression;
     private AttributesRI attrRI[];
     private AttributesID attrID;
@@ -99,9 +100,11 @@ public class GlobalStats {
         if(mcfsParams.buildID){        	
         	attrID = new AttributesID(attrNames, true, false);
         }
-        
-        confusionMatrix = new ConfusionMatrix(inputArray.getColNames(true)[inputArray.getDecAttrIdx()],
-        		inputArray.getDecValuesStr());
+        if(inputArray.isTargetNominal())
+        	confusionMatrix = new ConfusionMatrix(inputArray.getColNames(true)[inputArray.getDecAttrIdx()],inputArray.getDecValuesStr());
+		else
+			confusionMatrix = null;
+
         initChartFrame(mcfsParams);        
         initLinearRegression();
         splitsStats = new StatsList();
@@ -137,7 +140,7 @@ public class GlobalStats {
         //If a classifier calculates attributesImportance separately for each class - change this
         //only ADX can calculate attributesImportance separately for each class
         //attributesImportance[0] contains general ranking
-        if(mcfsParams.classifier == Classifier.ADX)
+        if(mcfsParams.model == Classifier.ADX)
         	importances = new AttributesRI[1 + decValues.length];
 
         for(int i=0;i<importances.length;i++){            
@@ -145,11 +148,11 @@ public class GlobalStats {
             importances[i].addMeasure(new ProjectionMeasure(null));            
             importances[i].addMeasure(new ClassifiersMeasure(null));
             importances[i].addMeasure(new NodesMeasure(null));            
-            if(mcfsParams.classifier==Classifier.J48)
+            if(mcfsParams.model==Classifier.J48 || mcfsParams.model==Classifier.M5)
                 importances[i].addMeasure(new J48RIMeasure(mcfsParams));
-            else if(mcfsParams.classifier==Classifier.SLIQ)
+            else if(mcfsParams.model==Classifier.SLIQ)
                 importances[i].addMeasure(new SliqRIMeasure(mcfsParams));
-            else if(mcfsParams.classifier==Classifier.ADX)
+            else if(mcfsParams.model==Classifier.ADX)
                 importances[i].addMeasure(new ADXRIMeasure(mcfsParams));            
             importances[i].addMeasure(new RINormMeasure(mcfsParams));
             
@@ -171,16 +174,17 @@ public class GlobalStats {
     	return splitsStats.add(localSplitsStats);
     }
 //  *************************************
-    public synchronized boolean update(int jobId, ConfusionMatrix localMatrix, 
-            AttributesRI localImportances[], AttributesID localAttrID)
+    public synchronized boolean update(int jobId, ConfusionMatrix localMatrix, AttributesRI localImportances[], AttributesID localAttrID)
     {
         if(projectionsCounter >= myMCFSParams.projections){
-            System.out.println("Projections: "+projectionsCounter+" (stop criterion has been met)");
+            System.out.println("[thread: "+jobId+"] Stop Criterion: projections = "+projectionsCounter);
             return false;
         }
         projectionsCounter = (calculatedDistances +1) * myMCFSParams.progressInterval;
+
         //update confusionMatrix
-        confusionMatrix.add(localMatrix);
+        if(confusionMatrix != null)
+        	confusionMatrix.add(localMatrix);
         
         if(attrID != null)
         	attrID.addDependencies(localAttrID);
@@ -188,14 +192,14 @@ public class GlobalStats {
         //update and save importances for all classes in [0] and each separated class if initiated
         for(int j=0; j<attrRI.length; j++){
             if(attrRI[j]!=null){
-                attrRI[j].combineImportances(localImportances[j]);                
+                attrRI[j].sumImportances(localImportances[j]);                
                 //calc normalized RI before saving
                 attrRI[j].calcNormMeasure(myMCFSParams.splits);
                 attrRI[j].save(prefix+"_"+attrRI[j].label+"_"+MCFSParams.FILESUFIX_IMPORTANCES);                
             }          
         }
-        newRank = attrRI[0].getTopRankingSize(attrRI[0].mainMeasureIdx,myMCFSParams.projectionSizeAttr);
-                        
+        
+        newRank = attrRI[0].getTopRankingSize(attrRI[0].mainMeasureIdx, myMCFSParams.progressTopMinSize);                        
         if(oldRank!=null){
             float distance = newRank.compare(oldRank);                    
             float commonPart = newRank.commonPart(oldRank);
@@ -204,7 +208,7 @@ public class GlobalStats {
 
             if(distanceList.size()>=WINDOW_SIZE){
             	float[] yArray =  distanceList.toArray(distanceList.size()-WINDOW_SIZE,distanceList.size());            	
-            	mAvg = MathUtils.avg(yArray);
+            	mAvg = (float)MathUtils.mean(ArrayUtils.float2double(yArray));
             	myLinearRegression.calc(xArray, yArray);
             	beta1 = (float) myLinearRegression.getBeta1();
             }
@@ -278,5 +282,4 @@ public class GlobalStats {
     	this.cutoff = cutoff;
     }
 //  *************************************
-
 }

@@ -143,7 +143,7 @@ public class FileLoaderArff extends FileLoader
 		myArray.attributes[attrPointer].name=attributeName;//attribute name                
 		if(attributeType.equalsIgnoreCase("real") || attributeType.equalsIgnoreCase("numeric"))        
 			myArray.attributes[attrPointer].type = Attribute.NUMERIC;               
-		else if(attributeType.equalsIgnoreCase("nominal"))
+		else if(attributeType.equalsIgnoreCase("nominal") || attributeType.equalsIgnoreCase("string"))
 			myArray.attributes[attrPointer].type = Attribute.NOMINAL;
 		else
 			System.err.println("Incorrect type of attribute. Line: "+inputLine);

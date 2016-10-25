@@ -44,7 +44,7 @@ public class SVMClassifier extends WekaClassifier
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[SVM];
-        type=SVM;
+        model=SVM;
         params=new SVMParams();
         cfg=(SVMParams)params;
     }
@@ -67,7 +67,7 @@ public class SVMClassifier extends WekaClassifier
     }
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) 
+    public boolean add_RI(AttributesRI[] importances) 
     {
         return false;
     }

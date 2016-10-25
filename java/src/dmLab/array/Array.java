@@ -65,8 +65,10 @@ public abstract class Array implements Cloneable
 	{
 		if (col < 0 || col >= colsNumber())
 			return false;
-		else
+		else{
 			decAttrIdx = col;
+			setAllDecValues();
+		}
 		return true;
 	}
 	//  ********************************************
@@ -139,4 +141,13 @@ public abstract class Array implements Cloneable
 	//********************************
 	public abstract void swapColumns(int source, int destination);
 	//********************************
+	public boolean isTargetNominal(){
+		if(attributes[decAttrIdx].type == Attribute.NOMINAL)
+			return true;
+		else
+			return false;
+	}
+	//********************************
+	
+
 }

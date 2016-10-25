@@ -26,8 +26,8 @@ package dmLab;
 
 public class DMLabInfo
 {
-	public static String VERSION = "2.1.1";
-	public static String DATE = "2016.03.29";
+	public static String VERSION = "2.1.2";
+	public static String DATE = "2016.10.23";
 
 	public DMLabInfo()
 	{

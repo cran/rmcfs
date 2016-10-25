@@ -33,7 +33,7 @@ import dmLab.experiment.ExperimentParams;
 
 public class ClassificationParams extends ExperimentParams
 {   
-    public int classifier;
+    public int model;
     public int repetitions;
     public double splitRatio;
     public int splitType;
@@ -71,7 +71,7 @@ public class ClassificationParams extends ExperimentParams
         outputFileName="";
         
         savePredictionResult=false;
-        classifier=Classifier.label2int("j48");
+        model = Classifier.label2int("j48");
         saveClassifier=true;
         validationType=VALIDATION_CV;
         folds=3;
@@ -96,7 +96,7 @@ public class ClassificationParams extends ExperimentParams
         outputFileName = p.outputFileName;
         
         savePredictionResult = p.savePredictionResult;
-        classifier = p.classifier;
+        model = p.model;
         saveClassifier = p.saveClassifier;
         validationType = p.validationType;
         folds = p.folds;
@@ -112,7 +112,7 @@ public class ClassificationParams extends ExperimentParams
         tmp.append(super.toString()).append('\n');
         
         tmp.append("### Classification Parameters ### ").append('\n');                 
-        tmp.append("classifier="+ Classifier.int2label(classifier)).append('\n');
+        tmp.append("model="+ Classifier.int2label(model)).append('\n');
         tmp.append("saveClassifier="+ saveClassifier).append('\n');
         tmp.append("savePredictionResult="+ savePredictionResult).append('\n');
         
@@ -139,7 +139,7 @@ public class ClassificationParams extends ExperimentParams
         if(!super.update(properties))
         	return false; 
         	
-        classifier=Classifier.label2int(properties.getProperty("classifier", "j48"));
+        model=Classifier.label2int(properties.getProperty("model", "j48"));
         repetitions=Integer.valueOf(properties.getProperty("repetitions", "1")).intValue();
         splitRatio=Double.valueOf(properties.getProperty("splitRatio", "0.66")).doubleValue();
         
@@ -180,7 +180,7 @@ public class ClassificationParams extends ExperimentParams
             System.err.println("Incorrect 'folds' parameter");
             return false;
         }
-        if(classifier==-1){
+        if(model<0){
             System.err.println("Incorrect 'classifier' parameter.");
             return false;
         }
@@ -188,6 +188,17 @@ public class ClassificationParams extends ExperimentParams
             System.err.println("Parameter 'testFileName' is not defined.");
             return false;            
         }
+        Classifier c = Classifier.getClassifier(model);
+        if(array != null){
+	        if(!array.isTargetNominal() && c.isClassifier()){
+	            System.err.println("Target in 'NUMERIC' and model is 'Classifier'.");
+	            return false;            
+	        }
+	        if(array.isTargetNominal() && !c.isClassifier()){
+	            System.err.println("Target in 'NOMINAL' and model is 'Predictor'.");
+	            return false;            
+	        }
+        }	
         return true;
     }
 //  *****************************************

@@ -44,7 +44,7 @@ public class KNNClassifier extends WekaClassifier {
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[KNN];
-        type=KNN;
+        model=KNN;
         params=new KNNParams();
         cfg=(KNNParams)params;
     }
@@ -67,7 +67,7 @@ public class KNNClassifier extends WekaClassifier {
     }    
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) 
+    public boolean add_RI(AttributesRI[] importances) 
     {
         return false;
     }

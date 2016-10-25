@@ -29,26 +29,24 @@ import dmLab.array.Array;
 import dmLab.array.FArray;
 import dmLab.array.functions.SelectFunctions;
 import dmLab.classifier.Classifier;
+import dmLab.classifier.PredictionResult;
 import dmLab.mcfs.MCFSParams;
 import dmLab.mcfs.attributesID.AttributesID;
 import dmLab.mcfs.attributesRI.AttributesRI;
-import dmLab.utils.cmatrix.ConfusionMatrix;
 
 public class Split
 {
-    private MCFSParams mcfsParams;
-    
-    private ConfusionMatrix matrix;
+    private MCFSParams mcfsParams;    
     private SelectFunctions selectFunctions;
     
     //*************************************    
     public Split(MCFSParams mcfsParams, Random random)
     {
-        this.mcfsParams=mcfsParams;
+        this.mcfsParams = mcfsParams;
         selectFunctions = new SelectFunctions(random);
     }
     //*************************************    
-    public ConfusionMatrix splitLoop(Classifier classifier, FArray inputArray,
+    public PredictionResult splitLoop(Classifier classifier, FArray inputArray,
             AttributesRI attrRI[], AttributesID attrIDependencies)
     {
         //shuffle input columns since WEKA always select first attribute if two are identical 
@@ -70,23 +68,25 @@ public class Split
         if (mcfsParams.verbose) 
         	System.out.println("Training phase...");
         classifier.train(trainArray);
-        //System.out.println("### DEBUG ### \n"+classifier.toString());
+        
+        //if (mcfsParams.debug) 
+        //	System.out.println("### DEBUG ### \n"+classifier.toString()+"\n");
  
         if (mcfsParams.verbose) 
         	System.out.println("Testing phase...");
         classifier.test(testArray);
         
-        matrix=classifier.getConfusionMatrix();        
+        PredictionResult predResult = classifier.getPredResult();
         
         //add Importances
-        classifier.addImportances(attrRI);
+        classifier.add_RI(attrRI);
         
         //add ID edges 
         if(attrIDependencies!=null)
-            classifier.addIDependencies(attrIDependencies, mcfsParams);               
+            classifier.add_ID(attrIDependencies, mcfsParams);               
         //System.out.println("### DEBUG ### \n"+attrRI[0].toString());
             
-        return matrix;
+        return predResult;
     }
     //*************************************************
 }

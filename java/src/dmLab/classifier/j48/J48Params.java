@@ -31,21 +31,21 @@ import dmLab.classifier.Params;
 public class J48Params extends Params {
 
 	//J48 Parameters
-    boolean binarySplits;
-    int minNumObj;
-    boolean saveInstanceData;
+	public boolean binarySplits;
+	public int minNumObj;
+	public boolean saveInstanceData;
     //The confidence factor used for pruning (smaller values incur more pruning
-    float confidenceFactor;
+	public float confidenceFactor;
     //Whether reduced-error pruning is used instead of C.4.5 pruning
-    boolean reducedErrorPruning;
+	public boolean reducedErrorPruning;
     //Whether to consider the subtree raising operation when pruning
-    boolean subtreeRaising;
+	public boolean subtreeRaising;
     /* Determines the amount of data used for reduced-error pruning
       One fold is used for pruning, the rest for growing the tree */
-    int numFolds;
-    boolean unpruned;
+	public int numFolds;
+	public boolean unpruned;
     //Whether counts at leaves are smoothed based on Laplace
-    boolean useLaplace;
+	public boolean useLaplace;
     //*************************************
 	public J48Params()
 	{

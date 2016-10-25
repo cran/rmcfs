@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import dmLab.utils.ArrayUtils;
 import dmLab.utils.FileUtils;
+import dmLab.utils.MathUtils;
 import dmLab.utils.StringUtils;
 
 public class StatsList {
@@ -63,6 +65,20 @@ public class StatsList {
 		}
 		return tmp.toString();
 	}
+	//********************************
+	public String toStringSummary(String colName){
+		if(getColIndex(colName)==null)
+			return null;
+		
+		double[] col = ArrayUtils.float2double(getCol(colName));		
+		StringBuffer tmp=new StringBuffer();
+		tmp.append(colName).append(": ");
+		tmp.append("mean = ").append(MathUtils.mean(col)).append(" ");
+		tmp.append("median = ").append(MathUtils.median(col)).append(" ");
+		tmp.append("stdev = ").append(MathUtils.stdev(col)).append(" ");
+		
+		return tmp.toString();		
+	}	
 	//********************************
 	public int size(){
 		return list.size();
@@ -163,25 +179,4 @@ public class StatsList {
 		return column;
 	}
 	//********************************
-	/*
-	public static void main(String[] args)
-	{ 
-		StatsList s = new StatsList();
-		s.addHeader("a,b,c,d",',');
-    	s.add(new StatsObject("0,1,2,3"));
-    	s.add(new StatsObject("1,1,2,3"));
-    	s.add(new StatsObject("2,1,2,3"));
-    	s.add(new StatsObject("3,1,2,3"));
-    	s.add(new StatsObject("4,1,2,3"));
-    	System.out.println(s.toString());		
-    	System.out.println("############");
-    	s.save("/Users/mdraminski/tmp.csv");
-		s = new StatsList();
-    	s.load("/Users/mdraminski/tmp.csv");
-    	System.out.println(s.toString());
-    	
-    	System.out.println(Arrays.toString(s.getCol("b")));
-    	System.out.println(Arrays.toString(s.getCol("f")));    	
-	}
-	*/
 }

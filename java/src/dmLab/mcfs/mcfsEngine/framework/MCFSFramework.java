@@ -101,7 +101,7 @@ public abstract class MCFSFramework implements Runnable
 //  *************************************
     public boolean run(MCFSParams mcfsParams)
     {
-    	this.mcfsParams=mcfsParams.clone(); 	
+    	this.mcfsParams = mcfsParams.clone(); 	
         if(!loadArrays())
         	return false;
         
@@ -121,22 +121,28 @@ public abstract class MCFSFramework implements Runnable
         
         if(!mcfsParams.check(inputArray))
             return null;       
-
+        
+        //for numeric target turn off balancing and final ruleset
+        if(!inputArray.isTargetNominal()){
+        	mcfsParams.balanceRatio = 0;
+        	mcfsParams.finalRuleset = false;
+        }
+        
         System.out.println("MCFS-ID: "+Params.booleanParamToString(mcfsParams.buildID==true, "ID-Graph"));
         System.out.println("MCFS-ID: "+Params.booleanParamToString(mcfsParams.finalCV==true, "finalCV"));
         System.out.println("MCFS-ID: "+Params.booleanParamToString(mcfsParams.finalRuleset==true, "finalRuleset"));
         System.out.println("MCFS-ID: "+Params.booleanParamToString(mcfsParams.splitSetSize>0, "Input data size limitation"));        
         System.out.println("MCFS-ID: "+Params.booleanParamToString(mcfsParams.balanceRatio>0, "Classes balancing"));        
         
-        if(mcfsParams.balanceRatio>0)
-        	SelectFunctions.getBalancedClassSizes(mcfsArrays.sourceArray,mcfsParams.balanceRatio,true);
+       	if(mcfsParams.balanceRatio>0)
+        		SelectFunctions.getBalancedClassSizes(mcfsArrays.sourceArray,mcfsParams.balanceRatio,true);
         
 		globalStats = new GlobalStats();
 		globalStats.init(inputArray, mcfsParams, experimentName);
 
         Cutoff cutoff = new Cutoff(mcfsParams);
         globalStats.setCutoff(cutoff);
-        if(mcfsParams.contrastAttr){ 
+        if(mcfsParams.contrastAttr){
     		System.out.println("Adding Contrast Attributes...");
     		ExtFunctions.addContrastAttributes(inputArray);		
     		System.out.println("New input array size: attributes: "+inputArray.colsNumber()+ " events: "+inputArray.rowsNumber());	
@@ -178,9 +184,18 @@ public abstract class MCFSFramework implements Runnable
         
         float experimentTime=(stop-start)/1000.0f;
         System.out.println("stop: " +(new Date(stop)).toString());
-        System.out.println(confusionMatrix.toString());
-        System.out.println(confusionMatrix.statsToString(4));
-
+        if(confusionMatrix != null){
+	        System.out.println(confusionMatrix.toString());
+	        System.out.println(confusionMatrix.statsToString(4));
+        }else{
+	        System.out.println("*** Prediction Summary on Random Subsample (st) ***");
+	        System.out.println(globalStats.getSplitsStats().toStringSummary("pearson"));
+	        System.out.println(globalStats.getSplitsStats().toStringSummary("MAE"));
+	        System.out.println(globalStats.getSplitsStats().toStringSummary("RMSE"));
+	        System.out.println(globalStats.getSplitsStats().toStringSummary("SMAPE"));
+	        System.out.println();
+        }
+        
         //save ID
         if(globalStats.getAttrConnections()!=null){
         	globalStats.getAttrConnections().findMinMaxID();        
@@ -188,16 +203,21 @@ public abstract class MCFSFramework implements Runnable
 	        	globalStats.getAttrConnections().save(mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_CONNECTIONS);
         }
         
-        //save distances
-        DataFrame distances = globalStats.getDistances();
-        if(saveResutFiles)
+        if(saveResutFiles){
+            //save distances
+            DataFrame distances = globalStats.getDistances();
         	FileUtils.saveString(mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DISTANCE, distances.toString());
         
-        //save confusion matrix
-        String matrix = confusionMatrix.toString(false, true, false, ",");
-        if(saveResutFiles)
-        	FileUtils.saveString(mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_MATRIX, matrix);        
-                
+        	if(confusionMatrix != null){	        		
+	            //save confusion matrix
+	            String matrix = confusionMatrix.toString(false, true, false, ",");
+	        	FileUtils.saveString(mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_MATRIX, matrix);
+        	}else{
+        		//save pearson, MAE, RMSE, SMAPE        		
+	        	FileUtils.saveString(mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_PREDICTION_STATS, globalStats.getSplitsStats().toString());
+        	}        	
+        }
+        
         //save cutoff table
         double minRI = cutoff.calcCutoff(globalStats.getAttrImportances()[0]);
         System.out.println("Minimal important (based on all cutoff methods) RI = " + GeneralUtils.format(minRI,7));

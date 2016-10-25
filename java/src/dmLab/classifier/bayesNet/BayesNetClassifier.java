@@ -45,7 +45,7 @@ public class BayesNetClassifier extends WekaClassifier {
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[BNET];
-        type=BNET;
+        model=BNET;
         params=new BayesNetParams();
         cfg=(BayesNetParams)params;
     }
@@ -68,7 +68,7 @@ public class BayesNetClassifier extends WekaClassifier {
     }    
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) {
+    public boolean add_RI(AttributesRI[] importances) {
         return false;
     }
 //  ****************************************************

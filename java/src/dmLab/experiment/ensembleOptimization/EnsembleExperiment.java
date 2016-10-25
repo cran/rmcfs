@@ -29,7 +29,7 @@ import dmLab.classifier.Classifier;
 import dmLab.classifier.ensemble.EnsembleClassifier;
 import dmLab.experiment.classification.ClassificationBody;
 import dmLab.experiment.classification.ClassificationParams;
-import dmLab.utils.cmatrix.AccuracyMeasure;
+import dmLab.utils.cmatrix.QualityMeasure;
 
 public class EnsembleExperiment
 {
@@ -55,13 +55,13 @@ public class EnsembleExperiment
         classification.classParams.validationType=ClassificationParams.VALIDATION_CV;               
         //classification.classParams.folds=3;
         //classification.classParams.repetitions=5;
-        classification.classParams.classifier=Classifier.ENSEMBLE;
+        classification.classParams.model=Classifier.ENSEMBLE;
     }
     //***************************************
     public float run(String inputFileName,float[] _weights)
     {
         classification.classParams.inputFileName=inputFileName;
-        classification.createClassifier();
+        classification.initClassifier();
         if(!((EnsembleClassifier)classification.classifier).setWeights(_weights))
         {
             System.err.println("Error in weights setting!");
@@ -69,11 +69,10 @@ public class EnsembleExperiment
         }
         classification.classifier.params.debug=false;
         classification.classifier.params.verbose=false;
-        classification.loadArrays();
-        classification.classifier.params.check(classification.inArray);
-
-        wAcc = classification.run();
-        Acc = classification.resultConfMatrix.calcMeasure(AccuracyMeasure.ACC);
+        classification.run();
+        
+        Acc = classification.predResult.getPredQuality(QualityMeasure.ACC);
+        wAcc = classification.predResult.getPredQuality(QualityMeasure.WACC);
         
         if(classification.classParams.verbose)
         	System.out.println(classification.toStringResults());                 

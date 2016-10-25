@@ -33,7 +33,7 @@ public class StatFunctions {
     {
         int size=x.length;
         double stdev=MathUtils.stdev(x);
-        double avg=MathUtils.avg(x);
+        double avg=MathUtils.mean(x);
         //System.out.println("size: "+size+" avg: "+avg+" stdev: "+stdev);
         double t=0;
         try{
@@ -55,7 +55,7 @@ public class StatFunctions {
     //***************************************************
     public static double tTestOneSample(double x[], double mu){
     	
-    	double t = (MathUtils.avg(x) - mu)/(MathUtils.stdev(x)/(Math.sqrt(x.length)));
+    	double t = (MathUtils.mean(x) - mu)/(MathUtils.stdev(x)/(Math.sqrt(x.length)));
     	double p = 2 * Probability.studentT(x.length-1, -Math.abs(t));
     	return p;
     }
@@ -81,8 +81,8 @@ public class StatFunctions {
         if(x.length!=y.length)
             return Float.NaN;
         double pearson=0;
-        double avg_x=MathUtils.avg(x);
-        double avg_y=MathUtils.avg(y);
+        double avg_x=MathUtils.mean(x);
+        double avg_y=MathUtils.mean(y);
         double numerator=0;//licznik
         double denominator_x=0;//mianownik
         double denominator_y=0;//mianownik
@@ -92,9 +92,45 @@ public class StatFunctions {
             denominator_x+=Math.pow((x[i]-avg_x), 2);
             denominator_y+=Math.pow((y[i]-avg_y), 2);
         }
-        pearson=numerator/( Math.sqrt(denominator_x) * Math.sqrt(denominator_y) );
+        pearson = numerator/( Math.sqrt(denominator_x) * Math.sqrt(denominator_y) );
+        if(Double.isNaN(pearson))
+        	pearson = 0f;
         return (float)pearson;
     }
 //  *********************************************
-
+    public static float mae(double x[], double y[]){
+        if(x.length!=y.length)
+            return Float.NaN;
+        double mae=0;
+        for(int i=0;i<x.length;i++){
+        	mae += Math.abs(x[i]-y[i]);
+        }
+        mae=mae/( x.length );
+        return (float)mae;    	
+    }
+//  *********************************************
+    public static float rmse(double x[], double y[]){
+        if(x.length!=y.length)
+            return Float.NaN;
+        double rmse=0;
+        for(int i=0;i<x.length;i++){
+        	rmse += Math.pow(x[i]-y[i],2);
+        }
+        rmse = Math.sqrt(rmse/( x.length ));
+        return (float)rmse;    	
+    }
+//  *********************************************
+    //see:
+    //https://en.wikipedia.org/wiki/Symmetric_mean_absolute_percentage_error
+    public static float smape(double x[], double y[]){
+        if(x.length!=y.length)
+            return Float.NaN;
+        double smape=0;
+        for(int i=0;i<x.length;i++){
+        	smape += Math.abs(x[i]-y[i])/(Math.abs(x[i])+Math.abs(y[i]));
+        }
+        smape = smape/x.length;
+        return (float)smape;    	
+    }
+//  *********************************************
 }

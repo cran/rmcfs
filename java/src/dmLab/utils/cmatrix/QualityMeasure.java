@@ -24,10 +24,15 @@
 package dmLab.utils.cmatrix;
 
 
-public class AccuracyMeasure
+public class QualityMeasure
 {
-	public static int ACC=1;
-	public static int WACC=2;
+	public static int ACC = 1;
+	public static int WACC = 2;
+	public static int PEARSON = 3;
+	public static int MAE = 4;
+	public static int RMSE = 5;
+	public static int SMAPE = 6;	
+	
 	/*
 //*** calculates true based accuracy
   public double calcTrueAcc()

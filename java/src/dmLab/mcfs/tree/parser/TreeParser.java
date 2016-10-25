@@ -29,25 +29,65 @@ import dmLab.mcfs.tree.TreeNode;
 
 public abstract class TreeParser
 {
-    protected StringTokenizer tokenizer;        
+    protected StringTokenizer tokenizer;
+    protected TreeNodeParser j48NodeParser;
     protected TreeNode node;
-    
+    protected boolean readingNodes;
+
+    protected String beginLine;
+    protected String endLine;    
+        
     //****************************************    
-    public TreeParser(String j48String)
+    public TreeParser(String treeString)
     {
-        node=null;        
-        tokenizer=new StringTokenizer(j48String,"\n");                
+        readingNodes=false;
+        j48NodeParser=new TreeNodeParser();
+
+    	node = null;        
+        tokenizer = new StringTokenizer(treeString,"\n");                
     }
+    //****************************************
+    public abstract String lineModifier(String line);
     //****************************************    
-    /*
-     * method clears node that was read previously
-     */
+    //method clears node that was read previously
     public void flush()
     {
         node=null;  
     }
     //****************************************
-    public abstract TreeNode getNextNode();
+    public TreeNode getNextNode()
+    {       
+        //flush method have not been used 
+        //return previously read node
+        if(node!=null)
+            return node;
+
+        while(tokenizer.hasMoreTokens()){
+            String line=tokenizer.nextToken().trim();                                 
+            line = lineModifier(line);
+            
+            //ends the parsing process
+            if(line.startsWith(endLine)){
+                readingNodes=false;
+                node=null;
+                return node;
+            }
+
+            if(readingNodes && !line.equalsIgnoreCase("")){
+                node=new TreeNode(null,-1);
+                j48NodeParser.parse(node,line);
+                
+                //if parsed line did not contain the real node return null value
+                if(node.condition.attributeName==null)
+                    node=null;
+                
+                return node;
+            }
+            //starts the parsing process            
+            if(line.startsWith(beginLine))
+                readingNodes=true;
+        }   
+        return node;
+    }
     //****************************************
-    
 }

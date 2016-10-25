@@ -28,10 +28,11 @@ import java.util.Random;
 import dmLab.array.FArray;
 import dmLab.array.functions.SelectFunctions;
 import dmLab.classifier.Classifier;
+import dmLab.classifier.PredictionResult;
 import dmLab.experiment.classification.ClassificationBody;
 import dmLab.experiment.classification.ClassificationParams;
 import dmLab.mcfs.attributesRI.AttributesRI;
-import dmLab.utils.cmatrix.AccuracyMeasure;
+import dmLab.utils.cmatrix.QualityMeasure;
 import dmLab.utils.cmatrix.ConfusionMatrix;
 import dmLab.utils.dataframe.Column;
 import dmLab.utils.dataframe.DataFrame;
@@ -56,7 +57,7 @@ public class MCFSFinalCV {
 		DataFrame result_df=null;		
 		for(int i=0;i<size.length;i++){
 			int currSize = size[i];
-			if(currSize>0 && currSize<array.colsNumber()-1){				
+			if(currSize>0 && currSize<array.colsNumber()-1){
 				FArray topRankingArray = (FArray)SelectFunctions.selectColumns(array, importances, currSize);
 		    	//System.out.println("***topRankingArray***\n"+topRankingArray.toString());		
 
@@ -88,10 +89,16 @@ public class MCFSFinalCV {
 	//************************************
 	private DataFrame singleCV(FArray array, String label, int cvFolds)
 	{
-		DataFrame df = new DataFrame(algorithms.length, 4);
-		df.setColNames(new String[]{"label","algorithm","acc","wacc"});
-		df.setColTypes(new short[]{Column.TYPE_NOMINAL,Column.TYPE_NOMINAL,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC});
-
+		DataFrame df;
+		if(array.isTargetNominal()){
+			df = new DataFrame(algorithms.length, new String[]{"label","algorithm","acc","wacc"});
+			df.setColTypes(new short[]{Column.TYPE_NOMINAL,Column.TYPE_NOMINAL,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC});
+		}else{
+			df = new DataFrame(algorithms.length, new String[]{"label","algorithm","pearson","MAE","RMSE","SMAPE"});
+			df.setColTypes(new short[]{Column.TYPE_NOMINAL,Column.TYPE_NOMINAL,
+					Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC});			
+		}
+		
 		ClassificationBody classification = new ClassificationBody(random);
 		classification.setParameters(new ClassificationParams());
 		classification.classParams.debug = false;
@@ -100,16 +107,26 @@ public class MCFSFinalCV {
 		classification.classParams.savePredictionResult = false;
 		classification.classParams.classifierCfgPATH = "";
 		classification.classParams.folds = cvFolds;
-
+		classification.classParams.repetitions = 1;
+		
 		for(int i=0;i<algorithms.length;i++){
-			classification.classParams.classifier=algorithms[i];
-			classification.createClassifier();
+			classification.classParams.model=algorithms[i];
+			classification.initClassifier();
 			System.out.println("Running CV "+cvFolds+" fold. Algorithm: "+Classifier.int2label(algorithms[i]));
-			ConfusionMatrix matrix = classification.singleCV(array,"");	        
+			
+			PredictionResult predResult = classification.runCV(array);
 			df.set(i, 0, label);
 			df.set(i, 1, Classifier.int2label(algorithms[i]));
-			df.set(i, 2, matrix.calcMeasure(AccuracyMeasure.ACC));
-			df.set(i, 3, matrix.calcMeasure(AccuracyMeasure.WACC));
+			if(array.isTargetNominal()){	
+				ConfusionMatrix matrix = predResult.getConfusionMatrix();	        
+				df.set(i, 2, (float)matrix.calcMeasure(QualityMeasure.ACC));
+				df.set(i, 3, (float)matrix.calcMeasure(QualityMeasure.WACC));
+			}else{
+				df.set(i, 2, (float)predResult.getPredQuality(QualityMeasure.PEARSON));
+				df.set(i, 3, (float)predResult.getPredQuality(QualityMeasure.MAE));
+				df.set(i, 4, (float)predResult.getPredQuality(QualityMeasure.RMSE));
+				df.set(i, 5, (float)predResult.getPredQuality(QualityMeasure.SMAPE));
+			}
 		}
 		return df;
 	}

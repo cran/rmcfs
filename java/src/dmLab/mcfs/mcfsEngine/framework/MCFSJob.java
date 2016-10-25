@@ -28,13 +28,12 @@ import java.util.Random;
 
 import dmLab.array.FArray;
 import dmLab.classifier.Classifier;
-import dmLab.classifier.adx.ADXClassifier;
 import dmLab.classifier.j48.J48Classifier;
-import dmLab.classifier.sliq.SliqClassifier;
 import dmLab.mcfs.MCFSParams;
 import dmLab.mcfs.attributesID.AttributesID;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.mcfsEngine.modules.Projection;
+import dmLab.utils.ArrayUtils;
 import dmLab.utils.cmatrix.ConfusionMatrix;
 import dmLab.utils.statList.StatsList;
 
@@ -57,7 +56,7 @@ public class MCFSJob implements Runnable
 	//************************************    
 	public MCFSJob(int id, MCFSParams mcfsParams, FArray inputArray, GlobalStats globalStats)
 	{
-		jobId=id;
+		jobId = id;
 		this.globalStats = globalStats;
 		this.mcfsParams = mcfsParams;
 		this.inputArray = inputArray;
@@ -71,9 +70,11 @@ public class MCFSJob implements Runnable
 	{ 
 		createClassifier();
 		projection = new Projection(mcfsParams, random);
-
-		localMatrix = new ConfusionMatrix(inputArray.getColNames(true)[inputArray.getDecAttrIdx()],
-				inputArray.getDecValuesStr());
+		if(inputArray.isTargetNominal())
+			localMatrix = new ConfusionMatrix(inputArray.getColNames(true)[inputArray.getDecAttrIdx()],inputArray.getDecValuesStr());
+		else
+			localMatrix = null;
+		
 		return true;
 	}
 	//************************************
@@ -90,17 +91,13 @@ public class MCFSJob implements Runnable
 	//************************************
 	private boolean createClassifier()
 	{
-		if(mcfsParams.classifier==Classifier.J48)
-			classifier = new J48Classifier();
-		else if(mcfsParams.classifier==Classifier.ADX)
-			classifier = new ADXClassifier();
-		else if(mcfsParams.classifier==Classifier.SLIQ)
-			classifier = new SliqClassifier();
-		else{
+		if(!ArrayUtils.valueIn(mcfsParams.model, new int[]{Classifier.AUTO, Classifier.J48,Classifier.M5,Classifier.ADX,Classifier.SLIQ})){							
 			System.err.println("@@@ Thread: "+jobId+" Error. Unknown defined classifier.");
 			return false;
 		}
-
+			
+		classifier = Classifier.getClassifier(mcfsParams.model);
+	
 		if(!classifier.params.load(mcfsParams.classifierCfgPATH,classifier.label))
 			return false;
 
@@ -108,7 +105,7 @@ public class MCFSJob implements Runnable
 		//classifier.params.verbose=mcfsParams.verbose;
 		//classifier.params.debug=mcfsParams.debug;                
 		classifier.setTempPath(mcfsParams.resFilesPATH);
-		classifier.setClassifierId(jobId);
+		classifier.setId(jobId);
 
 		if(classifier instanceof J48Classifier)
 			((J48Classifier)classifier).mode = mcfsParams.wekaClassifierMode;
@@ -125,8 +122,10 @@ public class MCFSJob implements Runnable
 		boolean keepLoop=true;
 		int loopIndex=0;
 		while(keepLoop){
-			ConfusionMatrix matrix = projection.projectionLoop(classifier, inputArray, localImportance, localAttrID);            
-			localMatrix.add(matrix);
+			ConfusionMatrix matrix = projection.projectionLoop(classifier, inputArray, localImportance, localAttrID);
+			if(localMatrix != null){
+				localMatrix.add(matrix);
+			}
 			localSplitsStats.add(projection.getSplitsStats());
 			//every saveResultInterval update global stats
 			if(loopIndex%mcfsParams.progressInterval==0 && loopIndex!=0){
@@ -137,8 +136,11 @@ public class MCFSJob implements Runnable
 				for(int i=0;i<localImportance.length;i++)
 					if(localImportance[i]!=null)
 						localImportance[i].initImportances();
-				localMatrix.cleanMatrix();
 
+				if(localMatrix != null){
+					localMatrix.cleanMatrix();
+				}
+				
 				if(localAttrID!=null)
 					localAttrID.init();
 			}

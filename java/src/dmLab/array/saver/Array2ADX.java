@@ -59,26 +59,31 @@ public class Array2ADX extends Array2String
 		StringBuffer buffer=new StringBuffer();
 		final int attributesNumber=array.colsNumber();
 		final int decisionIndex=array.getDecAttrIdx();
-		for(int i=0;i<attributesNumber;i++)
-		{
+		for(int i=0;i<attributesNumber;i++){
 			buffer.append(' ').append(getCleanAttrName(array.attributes[i].name));
 			buffer.append('\t').append(type2String(array.attributes[i].type));
-			if(i==decisionIndex)
-			{
-				String decValues[]=array.getDecValuesStr();
-                buffer.append('\t').append("decision(");
-				for(int j=0;j<decValues.length;j++)
-				{
-					buffer.append(decValues[j]);
-					if(j!=decValues.length-1)
-						buffer.append(',');
-				}
-				buffer.append(')');
+			if(i==decisionIndex){
+                buffer.append('\t').append("decision");                
+                buffer.append(decValues2String(array.getDecValuesStr()));
 			}
 			buffer.append('\n');
 		}		
 		return buffer.toString();
 		
+	}
+	//************************************
+	private String decValues2String(String decValues[]){
+		StringBuffer buffer=new StringBuffer();
+		if(decValues!=null){
+			buffer.append('(');
+			for(int j=0;j<decValues.length;j++){
+				buffer.append(decValues[j]);
+				if(j!=decValues.length-1)
+					buffer.append(',');
+			}
+			buffer.append(')');
+		}
+		return buffer.toString();
 	}
 	//************************************
     private String type2String(short attributeType)

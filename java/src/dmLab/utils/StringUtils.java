@@ -83,6 +83,7 @@ public class StringUtils {
 		
 		StringReader reader = new StringReader(s);
 		StreamTokenizer st = new StreamTokenizer(reader);
+		st.resetSyntax();
 		st.wordChars(32, 254);
 		
 		for(int i=0;i<separators.length;i++){
@@ -111,7 +112,7 @@ public class StringUtils {
 				tokens.add(st.sval.trim());
 				break;
 			case StreamTokenizer.TT_NUMBER:
-				tokens.add(st.sval.trim());
+				tokens.add(Double.toString(st.nval).trim());
 				break;
 			default:
 				tokens.add(st.sval);			

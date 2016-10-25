@@ -44,7 +44,7 @@ public class NBClassifier extends WekaClassifier
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[NB];
-        type=NB;
+        model=NB;
         params=new NBParams();
         cfg=(NBParams)params;
     }
@@ -67,7 +67,7 @@ public class NBClassifier extends WekaClassifier
     }
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) {
+    public boolean add_RI(AttributesRI[] importances) {
         return false;
     }
 //  ****************************************************

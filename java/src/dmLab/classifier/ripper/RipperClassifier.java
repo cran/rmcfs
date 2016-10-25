@@ -44,7 +44,7 @@ public class RipperClassifier extends WekaClassifier {
         array2File = new Array2File();
         array2File.setFormat(FileType.ARFF);
         label=labels[RIPPER];
-        type=RIPPER;
+        model=RIPPER;
         params=new RipperParams();
         cfg=(RipperParams)params;
     }
@@ -67,7 +67,7 @@ public class RipperClassifier extends WekaClassifier {
     }
 //  ****************************************************
     @Override
-    public boolean addImportances(AttributesRI[] importances) {
+    public boolean add_RI(AttributesRI[] importances) {
         return false;
     }
 //  ****************************************************

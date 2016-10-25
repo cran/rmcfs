@@ -32,8 +32,8 @@ mcfs(formula, data,
     threadsNumber = 2)
 }
 \arguments{
-  \item{formula}{specifies decision attribute and relation between class and other attributes (e.g. \code{class~.}).}
-  \item{data}{defines input \emph{data.frame} containing all features with decision attribute included. This data.frame must contain proper types of columns. Columns \code{character}, \code{factor}, \code{Date}, \code{POSIXct}, \code{POSIXt} are treated as nominal/categorical and remaining columns as numerical/continuous. Decision attribute defined by \code{formula} must be nominal.}
+  \item{formula}{specifies decision attribute and relation between class and other attributes (e.g. \code{class~.}). The target attribute can be nominal (then MCFS-ID uses decision tree) or numerical (then MCFS-ID uses regression tree).}
+  \item{data}{defines input \emph{data.frame} containing all features with decision attribute included. This data.frame must contain proper types of columns. Columns \code{character}, \code{factor}, \code{Date}, \code{POSIXct}, \code{POSIXt} are treated as nominal/categorical and remaining columns as numerical/continuous. Decision attribute defined by \code{formula} can be nominal or numerical.}
   \item{projections}{defines the number of subsets (projections) with randomly selected features. This parameter is usually set to a few thousands and is denoted in the paper as \emph{s}.}
   \item{projectionSize}{defines the number of features in one subset. It can be defined by an absolute value (e.g. 100 denotes 100 randomly selected features) or by a fraction of input attributes (e.g. 0.05 denotes 5\% of input features). This parameter is denoted in the paper as \emph{m} and by default is set to 5\%. Minimum number of features in one subset is 2.}
   \item{splits}{defines the number of splits of each subset. This parameter is denoted in the paper as \emph{t}.}
@@ -97,7 +97,8 @@ mcfs(formula, data,
 
   # Print basic information about mcfs result.
   print(result)
-  
+  names(result)
+
   # Review cutoff values for all methods
   print(result$cutoff)
   

@@ -21,49 +21,33 @@
  * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
-/*
- * Created on 2004-11-07
- *
- * Window - Preferences - Java - Code Style - Code Templates
- */
-package dmLab.classifier.attributeIndicators;
+package dmLab.mcfs.tree.parser;
 
-
-public class SliqNodeIndicators extends AttributeIndicators
-{
-	public float diversityMeasure;
-	public float goodnessOfSplit;
-	public float attrEventsNumber;
-	//*********************************************
-    public SliqNodeIndicators()
+public class M5Parser extends TreeParser
+{   
+    //****************************************    
+    public M5Parser(String m5String)
     {
-        //number of indicators
-        size=3;
-        
-        diversityMeasure=0;
-        goodnessOfSplit=0;
-        attrEventsNumber=0;
+        super(m5String);                
+        beginLine = "-------";
+        endLine = "LM num:";
     }
-    //*********************************************
-    public SliqNodeIndicators(int eventsNumber)
-	{
-        //number of indicators
-        size=3;
-        
-        diversityMeasure=0;
-		goodnessOfSplit=0;
-		attrEventsNumber=0;
-	}
-	//*********************************************
+    //****************************************
 	@Override
-    public String toString()
-	{
-		StringBuffer tmp=new StringBuffer(); 
-		tmp.append("### sliq NodeIndicators ###").append('\n');
-		tmp.append(" diversityMeasure: "+diversityMeasure);
-		tmp.append(" goodnessOfSplit: "+goodnessOfSplit);
-		tmp.append(" attrEventsNumber: "+attrEventsNumber);
-		return tmp.toString();
+	public String lineModifier(String line) {
+		int eqIdx = line.indexOf("=");
+		int loIdx = line.indexOf("<= 0.5 :");
+		int hiIdx = line.indexOf(">  0.5 :");
+		int lhIdx = Math.max(loIdx,hiIdx);
+		if(eqIdx >-1 && lhIdx >-1){
+			if(eqIdx < lhIdx){
+				line = line.replaceAll("<= 0.5 :", "");
+				line = line.replaceAll(">  0.5 :", "");
+			}
+			if(hiIdx>-1)
+				line = line.replaceAll("=", "!=");			
+		}
+		return line;
 	}
-	//*********************************************
+    //****************************************
 }

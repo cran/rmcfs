@@ -129,7 +129,7 @@ public class AttributesRI
         }        
     }
 //**********************************************
-    public boolean combineImportances(AttributesRI ri)
+    public boolean sumImportances(AttributesRI ri)
     {
         final int size_attr = attrMap.size();
         if(size_attr!=ri.attrMap.size()){
@@ -154,7 +154,7 @@ public class AttributesRI
     {
     	Integer measureIndex = this.measureName.get(measureName);
     	if(measureIndex==null){
-    		System.err.print("Measure "+measureName+" does not exist");
+    		System.err.println("Measure "+measureName+" does not exist");
     		return -1;
     	}
         return measureIndex;  
@@ -169,7 +169,7 @@ public class AttributesRI
         final int size=getAttributesNumber();
         for (int i=0;i<size;i++){                                    
             if(importances[i][measureProjectionsIdx]!=0)                    
-                importances[i][measureRINormIdx]=importances[i][measureRIIdx]/(importances[i][measureProjectionsIdx] * (float)splits);            
+                importances[i][measureRINormIdx]=importances[i][measureRIIdx]/(importances[i][measureProjectionsIdx] * (float)splits);
         }        
     }
 //**********************************************    

@@ -116,7 +116,8 @@ public class FArray extends Array
 					dstArray.attributes[currentColumn] = attributes[i].clone();					
 					if(i == decAttrIdx){
 						dstArray.decAttrIdx=currentColumn;
-						dstArray.decisionValues = decisionValues.clone();
+						if(decisionValues!=null)
+							dstArray.decisionValues = decisionValues.clone();
 					}
 					if(discRanges!=null && discRanges[i]!=null)
 						dstArray.discRanges[currentColumn] = discRanges[i].clone();
@@ -223,7 +224,7 @@ public class FArray extends Array
 	public int rowsNumber()
 	{
 		return valuesArray[0].length;
-	}
+	}		
 	//  ********************************************
 	public boolean isDiscretized()
 	{
@@ -272,7 +273,8 @@ public class FArray extends Array
 	//	********************************************
 	public void setDecValues(float[] decValues)
 	{
-		decisionValues = decValues.clone();
+		if(decValues != null)
+			decisionValues = decValues.clone();
 	}	
 	//	********************************************
 	@Override
@@ -281,8 +283,10 @@ public class FArray extends Array
 		String decValuesStr[] = null;		
 		if (attributes[decAttrIdx].type == Attribute.NOMINAL)
 			decValuesStr = dictionary.toString(decisionValues);
-		else if (attributes[decAttrIdx].type == Attribute.NUMERIC)
-			decValuesStr = ArrayUtils.float2String(decisionValues);
+		else if (attributes[decAttrIdx].type == Attribute.NUMERIC &&
+				decisionValues != null){
+			decValuesStr = ArrayUtils.float2String(decisionValues);				
+		}
 
 		return decValuesStr;
 	}	
@@ -290,15 +294,13 @@ public class FArray extends Array
 	@Override
 	public boolean setDecValues(String[] decValues)
 	{
-		decisionValues = new float[decValues.length];
-		if (attributes[decAttrIdx].type == Attribute.NOMINAL)
-			decisionValues = dictionary.toFloat(decValues);
-		else if (attributes[decAttrIdx].type == Attribute.NUMERIC)
-			decisionValues = ArrayUtils.string2float(decValues);
-
-		if(decisionValues==null)
-			return false;
-
+		if(decValues != null){		
+			decisionValues = new float[decValues.length];
+			if (attributes[decAttrIdx].type == Attribute.NOMINAL)
+				decisionValues = dictionary.toFloat(decValues);
+			else if (attributes[decAttrIdx].type == Attribute.NUMERIC)
+				decisionValues = ArrayUtils.string2float(decValues);
+		}
 		return true;
 	}
 	//********************************************
@@ -316,7 +318,10 @@ public class FArray extends Array
 	@Override
 	public boolean setAllDecValues()
 	{
-		decisionValues = getUniqueValues(decAttrIdx);
+		if(attributes[decAttrIdx].type == Attribute.NOMINAL)
+			decisionValues = getUniqueValues(decAttrIdx);
+		else
+			decisionValues = null;
 		return true;	
 	}
 	//	********************************************
@@ -373,6 +378,11 @@ public class FArray extends Array
 		if (decAttrIdx == -1){
 			System.err.println("Decision Attribute is not Defined!");
 			return false;
+		}
+		
+		if(attributes[decAttrIdx].type != Attribute.NOMINAL){
+			decisionValues = null;
+			return true;
 		}
 		
 		Float[] uniqueValues = ArrayUtils.float2Float(getUniqueValues(decAttrIdx));

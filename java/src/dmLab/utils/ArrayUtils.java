@@ -395,7 +395,16 @@ public class ArrayUtils
 			}
 		}
 		return minMax;
-	}    
+	}
+	//***************************************************
+	public static boolean valueIn(int x, int[] array)
+	{
+		for(int i=0;i<array.length;i++){
+			if(x == array[i])
+				return true;
+		}
+		return false;
+	}
 	//***************************************************
 	public static int[] distribution(float array[], float values[])
 	{
