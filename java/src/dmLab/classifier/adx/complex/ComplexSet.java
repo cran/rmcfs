@@ -43,11 +43,8 @@ public class ComplexSet
 	public static final int REMOVE_NO=0;  
     public static final int REMOVE_IF_WORSE_THAN_SELECTORS_Q=1;
     public static final int REMOVE_IF_WORSE_THAN_PARENTS_Q=2;
-    
-	
-	public boolean verbose=true;	
-	public boolean debug=false; 
-
+    	
+	public boolean verbose = false;
 //	**********************************************************
 	public ComplexSet(int sizeOfComplex,ADXParams adxParams)
 	{
@@ -279,7 +276,8 @@ public class ComplexSet
 				threshold+=interval;
 			}
 		}
-		if(verbose) System.out.println("100% ");
+		if(verbose)
+			System.out.println("100% ");
 		return true;
 	}
 //	**********************************************************

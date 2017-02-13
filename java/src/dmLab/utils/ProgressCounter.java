@@ -21,55 +21,39 @@
  * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
-package dmLab.mcfs.cutoffMethods;
+package dmLab.utils;
 
-import java.util.Arrays;
-
-import dmLab.mcfs.MCFSParams;
-import dmLab.mcfs.attributesRI.measuresRI.Importance;
-import dmLab.utils.GeneralUtils;
-
-public class ContrastAttributesCutoff extends CutoffMethod {
+public class ProgressCounter {
 	
-	//*********************************
-	public ContrastAttributesCutoff(MCFSParams mcfsParams) {
-		super(mcfsParams);
-		name = "contrastAttributes";
+	private float min;
+	private float max;
+	private int prevId;
+	private float[] progressArray;
+	
+	public ProgressCounter(float min, float max, float[] progressArray){
+		this.min = min;
+		this.max = max;
+		this.progressArray = progressArray;		
+		prevId = -1;
 	}
-	//*********************************
-	public double getCutoff(Importance[] importance)
-	{
-		int size=0;
-		for(int i=0;i<importance.length;i++){
-			if(importance[i].name.startsWith(MCFSParams.CONTRAST_ATTR_NAME))
-				size++;			
+	//*************************************************
+	public String getPercentValue(float x){
+		if(x >= max)
+			return Integer.toString((int)progressArray[progressArray.length-1]);
+		
+		float currPercent = (100 * (x-min)/(max-min));
+		int currentId = 0;
+						
+		while(currentId < progressArray.length && currPercent >= progressArray[currentId]){
+			currentId++;
 		}
-		if(size==0){
-			return Double.NaN;
-		}else{
-			double[] values = new double[size];
-			for(int i=0,j=0;i<importance.length;i++){
-				if(importance[i].name.startsWith(MCFSParams.CONTRAST_ATTR_NAME))
-					values[j++]=importance[i].importance;
-			}		
-			return getCutoffMinRI(values);
-		}
+		currentId--;
+		String retVal = null;
+		if(currentId > prevId){
+			retVal = Integer.toString((int)progressArray[currentId]); 
+			prevId = currentId;
+		}						
+		return retVal;
 	}
-	//*********************************	
-	public double getCutoffMinRI(double[] values) 
-	{		
-		double minRI = Double.NaN;		
-    	Arrays.sort(values);
-    	
-    	int cf = mcfsParams.contrastAttrThreshold;
-    	if(cf <= 0 || cf > values.length) {
-    		System.out.println("Invalid mcfsParams.contrastAttrThreshold value, ignoring cutoff.");
-    	} else {
-    		minRI = values[values.length-cf];
-    	   	System.out.println("Minimal (based on top "+ cf +" high estimated contrast attributes) RI = " + GeneralUtils.format(minRI,7));
-    	}
-    	   	
-		return minRI;
-	}
-	//*********************************
+	//*************************************************
 }

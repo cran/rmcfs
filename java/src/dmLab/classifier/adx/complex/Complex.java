@@ -145,26 +145,26 @@ public class Complex implements Cloneable
 	public String toStringCov()
 	{    
 		StringBuffer tmp=new StringBuffer();
-		tmp.append("p: "+ GeneralUtils.format(posCoverage,3));
-		tmp.append(" n: "+ GeneralUtils.format(negCoverage,3));
-		tmp.append(" c: "+ GeneralUtils.format(coverage,3));
-		tmp.append(" ps: "+ GeneralUtils.format(posSupport,3));
-		tmp.append(" ns: "+ GeneralUtils.format(negSupport,3));
+		tmp.append("p: "+ GeneralUtils.formatFloat(posCoverage,3));
+		tmp.append(" n: "+ GeneralUtils.formatFloat(negCoverage,3));
+		tmp.append(" c: "+ GeneralUtils.formatFloat(coverage,3));
+		tmp.append(" ps: "+ GeneralUtils.formatFloat(posSupport,3));
+		tmp.append(" ns: "+ GeneralUtils.formatFloat(negSupport,3));
 		return tmp.toString();
 	}
 	//  *******************************************************
 	public String toStringQ(ADXParams cfg)
 	{    
 		StringBuffer tmp=new StringBuffer();
-		tmp.append("q: "  + GeneralUtils.format(calcQuality(cfg.qMethod),4));
-		tmp.append(" qf: "  + GeneralUtils.format(calcQuality(cfg.qMethodFinal),4));
+		tmp.append("q: "  + GeneralUtils.formatFloat(calcQuality(cfg.qMethod),4));
+		tmp.append(" qf: "  + GeneralUtils.formatFloat(calcQuality(cfg.qMethodFinal),4));
 		return tmp.toString();
 	}
 	//  *******************************************************
 	public String toStringPosProbability()
 	{
 		StringBuffer tmp=new StringBuffer();        
-		tmp.append("pr: "+ GeneralUtils.format(calcPosProbability(),4));
+		tmp.append("pr: "+ GeneralUtils.formatFloat(calcPosProbability(),4));
 		return tmp.toString();        
 	}
 	//	*******************************************************

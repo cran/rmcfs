@@ -35,37 +35,49 @@ import dmLab.utils.ArrayUtils;
 
 public class Cutoff {
 	
-	protected CutoffMethod[] cutoff;
+	protected CutoffMethod[] cutoffMethod;
 	protected DataFrame cutoffTable;
 
 	protected MCFSParams mcfsParams;
 	//****************************************
 	public Cutoff(MCFSParams mcfsParams){
 		
-    	cutoffTable = new DataFrame(3,4);
+		int methodsNum = initCutoffMethods(mcfsParams);
+		cutoffTable = new DataFrame(methodsNum, 4);
     	cutoffTable.setColNames(new String[]{"method", "minRI", "size", "minID"});
     	cutoffTable.setColTypes(new short[]{Column.TYPE_NOMINAL,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC});
 		
-		this.mcfsParams=mcfsParams;		
+		this.mcfsParams = mcfsParams;		
+	}
+	//****************************************
+	protected int initCutoffMethods(MCFSParams mcfsParams){
+		if(mcfsParams.cutoffMethod.equalsIgnoreCase("contrast")){
+			cutoffMethod = new CutoffMethod[3];		
+			cutoffMethod[0] = new CriticalAngleCutoff(mcfsParams);
+			cutoffMethod[1] = new KMeansCutoff(mcfsParams);
+			cutoffMethod[2] = new ContrastCutoff(mcfsParams);			
+		}else{
+			cutoffMethod = new CutoffMethod[2];		
+			cutoffMethod[0] = new CriticalAngleCutoff(mcfsParams);
+			cutoffMethod[1] = new KMeansCutoff(mcfsParams);
+		}
+		return cutoffMethod.length;
 	}
 	//****************************************
 	public double calcCutoff(AttributesRI attrRI){
 				
-		cutoff = new CutoffMethod[3];		
-		cutoff[0] = new CriticalAngleCutoff(mcfsParams);
-		cutoff[1] = new KMeansCutoff(mcfsParams);
-		cutoff[2] = new ContrastAttributesCutoff(mcfsParams);
-		
+		int methodsNum = initCutoffMethods(mcfsParams);
+
 		Importance[] importance = attrRI.getImportances(attrRI.mainMeasureIdx);
 		Arrays.sort(importance);
 
-		double[] minRI = new double[3];
-		double[] attrNumber = new double[3];
-		for(int i=0;i<cutoff.length;i++){
-			minRI[i] = cutoff[i].getCutoff(importance);
+		double[] minRI = new double[methodsNum];
+		double[] attrNumber = new double[methodsNum];
+		for(int i=0;i<cutoffMethod.length;i++){
+			minRI[i] = cutoffMethod[i].getCutoff(importance);
 			attrNumber[i] = getImportantAttrNumber(importance,minRI[i]);
 
-			cutoffTable.set(i, cutoffTable.getColIdx("method"), cutoff[i].name);						
+			cutoffTable.set(i, cutoffTable.getColIdx("method"), cutoffMethod[i].name);						
 			cutoffTable.set(i, cutoffTable.getColIdx("minRI"), minRI[i]);
 			cutoffTable.set(i, cutoffTable.getColIdx("size"), attrNumber[i]);			
 		}

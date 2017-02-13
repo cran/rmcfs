@@ -43,13 +43,10 @@ public class RuleSet
     protected int decValIndex;
     protected ADXParams adxParams;
 
-    public boolean verbose;
-    public boolean debug=false;    
+    public boolean verbose = false;
 //  *****************************************
     public RuleSet(int maxComplexLength,ADXParams adxParams)
     {
-        verbose=true;
-       
         complexLinks=null;
         complexSetArray=new ComplexSet[maxComplexLength];
         this.adxParams=adxParams;
@@ -92,7 +89,7 @@ public class RuleSet
         }		
         complexSetArray[0]=new ComplexSet(selectorList,adxParams,array.colsNumber());		
         // START DEBUG INFO
-        if(adxParams.debug) System.out.println("### DEBUG INFO\n"+complexSetArray[0].toString(selectorList,array));
+        //System.out.println("### DEBUG INFO\n"+complexSetArray[0].toString(selectorList,array));
         // END DEBUG INFO
         
         for(int currentComplexLength=1;currentComplexLength<complexSetArray.length;currentComplexLength++)
@@ -110,8 +107,7 @@ public class RuleSet
             
             complexSetArray[currentComplexLength]=new ComplexSet(selectorList,
                     complexSetArray[currentComplexLength-1],adxParams,array.colsNumber());
-            complexSetArray[currentComplexLength].debug=debug;
-            complexSetArray[currentComplexLength].verbose=verbose;
+            complexSetArray[currentComplexLength].verbose = verbose;
             
             if(verbose) System.out.println(""+complexSetArray[currentComplexLength].size()+" Complexes generated.");
             
@@ -122,18 +118,14 @@ public class RuleSet
             complexSetArray[currentComplexLength].evaluate(selectorList,array,decisionValIndex);
             if(verbose) System.out.println(""+complexSetArray[currentComplexLength].size()+" Complexes evaluated.");
             
-            // START DEBUG INFO
-            if(adxParams.debug) System.out.println("### DEBUG INFO - candidates\n"+complexSetArray[currentComplexLength].toString(selectorList,array));
-            // END DEBUG INFO
+            //System.out.println("### DEBUG INFO - candidates\n"+complexSetArray[currentComplexLength].toString(selectorList,array));
             
             if(verbose) System.out.print("Clenaning candidates...");
             //if there are special criteria about complexes
             complexSetArray[currentComplexLength].cleanCandidatesSet(selectorList,adxParams);			
             if(verbose) System.out.println(" Done. Current complexes (size="+currentComplexLength+") number is "+complexSetArray[currentComplexLength].size());
             
-            // START DEBUG INFO
-            if(adxParams.debug) System.out.println("### DEBUG INFO - after cleaning\n"+complexSetArray[currentComplexLength].toString(selectorList,array));			
-            // END DEBUG INFO
+            //System.out.println("### DEBUG INFO - after cleaning\n"+complexSetArray[currentComplexLength].toString(selectorList,array));			
             
             if(testStopCriteria(currentComplexLength))
                 break;
@@ -163,15 +155,11 @@ public class RuleSet
 //  *****************************************
     public void mergeRules(SelectorList selectorList,FArray array)
     {		
-        for(int i=0;i<complexSetArray.length;i++)
-        {						
-            if(complexSetArray[i]!=null)
-            {
-                //DEBUG INFO
-                if(debug) System.out.println("### DEBUG INFO - before merging\n"+complexSetArray[i].toString(selectorList,array));                
+        for(int i=0;i<complexSetArray.length;i++){						
+            if(complexSetArray[i]!=null){
+                //System.out.println("### DEBUG INFO - before merging\n"+complexSetArray[i].toString(selectorList,array));                
                 complexSetArray[i].mergeComplexes(selectorList,array);
-                //DEBUG INFO
-                if(debug) System.out.println("### DEBUG INFO - after merging\n"+complexSetArray[i].toString(selectorList,array));                
+                //System.out.println("### DEBUG INFO - after merging\n"+complexSetArray[i].toString(selectorList,array));                
             }
             else
                 continue;

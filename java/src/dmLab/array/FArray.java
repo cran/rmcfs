@@ -33,7 +33,9 @@ import dmLab.array.domain.FDomain;
 import dmLab.array.meta.Attribute;
 import dmLab.array.meta.Dictionary;
 import dmLab.array.meta.DiscRanges;
+import dmLab.array.saver.Array2ADH;
 import dmLab.array.saver.Array2ADX;
+import dmLab.array.saver.Array2CSV;
 import dmLab.utils.ArrayUtils;
 
 
@@ -167,7 +169,7 @@ public class FArray extends Array
 			System.err.println("Function cbind cannot be used. Arrays have different numbers of rows.");
 			return;
 		}
-			
+		
 		//add new columns to attributes
 		bindAttributes(array.attributes);
 
@@ -504,12 +506,26 @@ public class FArray extends Array
 	//  ********************************************
 	public String toString()
 	{
+		return toADX();
+	}
+	//  ********************************************
+	public String toADX(){
 		Array2ADX container2ADX = new Array2ADX();
 		return container2ADX.toString(this);
+	}	
+	//  ********************************************
+	public String toADH(){
+		Array2ADH container2ADH = new Array2ADH();
+		return container2ADH.toString(this);
+	}	
+	//  ********************************************
+	public String toCSV(){
+		Array2CSV container2CSV = new Array2CSV();
+		return container2CSV.toString(this);
 	}
 	//  ********************************************
 	public String info(){
-		return "attr: "+colsNumber()+" events: "+rowsNumber();
+		return "attributes: "+colsNumber()+" events: "+rowsNumber();
 	}
 	//  ********************************************
 }

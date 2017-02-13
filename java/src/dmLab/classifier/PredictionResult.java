@@ -106,8 +106,8 @@ public class PredictionResult{
 			return tmp.toString();
 		}else if(type == Classifier.MODEL_CLASSIFIER && confusionMatrix != null){
 			StringBuffer tmp = new StringBuffer();
-			tmp.append(confusionMatrix.toString(true, true, false, "\t")).append("\n");
-			tmp.append(confusionMatrix.statsToString(4)).append("\n");
+			tmp.append(confusionMatrix.toString(true, true, false, "\t"));
+			tmp.append(confusionMatrix.statsToString(4));
 			return tmp.toString();
 		}else {
 			return "";

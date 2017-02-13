@@ -4,12 +4,12 @@
 \description{
   Saves csv files with result obtained by the MCFS-ID.
 }
-\usage{export.result(mcfs_result, path, label = "rmcfs", save.rds = FALSE)}
+\usage{export.result(mcfs_result, path, label = "rmcfs", zip = TRUE)}
 \arguments{  
   \item{mcfs_result}{result of the MCFS-ID experiment returned by \code{\link{mcfs}} function.}
   \item{path}{path to the MCFS-ID result *.csv files.}
     \item{label}{label of the experiment and common name for output files.}
-  \item{save.rds}{if \code{= TRUE}, saves all results data as additional *.rds file.}
+  \item{zip}{if \code{= TRUE}, saves all results data as one zip file.}
 }
 
 \examples{
@@ -18,18 +18,15 @@
   library(rmcfs)
   
   # create input data
-  adata <- artificial.data(rnd.features = 10)
+  adata <- artificial.data(rnd_features = 10)
   showme(adata)
   
   # Parametrize and run MCFS-ID procedure
-  result <- mcfs(class~., adata, projections = 100, projectionSize = 4, 
-                 cutoffPermutations = 3, finalCV = FALSE, finalRuleset = FALSE, 
-                 threadsNumber = 2)
+  result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 10,
+                  finalCV = FALSE, finalRuleset = FALSE, threadsNumber = 2)
 
   # Export and import R result to/from files
   path <- tempdir()
-  export.result(result, path = path, label = "artificial", save.rds = FALSE)
+  export.result(result, path = path, label = "artificial")
   result <- import.result(path = path, label = "artificial")
 }
-
-

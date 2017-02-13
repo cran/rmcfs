@@ -279,7 +279,7 @@ public class EditorBody extends javax.swing.JFrame implements ActionListener
     {
         if(containerOperations.loadFromDB(dbConnectionWindow.dbConnectionPanel.getResultSet()))
         {
-            System.out.println("Query is loaded.");
+            System.out.println("Query loaded.");
             containerOperations.findDomains();                
             updateGUI();
             dbConnectionWindow.setVisible(false);
@@ -303,9 +303,8 @@ public class EditorBody extends javax.swing.JFrame implements ActionListener
             containerOperations.setTrimCommentsCSV(optionsPanel.getTrimCommentsCSV());
             containerOperations.setConsequentSeparatorsTreatAsOneCSV(optionsPanel.getConsequentSeparatorsTreatAsOne());
             
-            if(containerOperations.loadFromFile(file.getAbsolutePath()))
-            {
-                System.out.println("File is loaded.");
+            if(containerOperations.loadFromFile(file.getAbsolutePath())){
+                System.out.println("File loaded.");
                 this.setTitle(EditorBody.GUITitle+" - "+containerOperations.getFileName());
                 containerOperations.findDomains();                
                 updateGUI();
@@ -436,7 +435,7 @@ public class EditorBody extends javax.swing.JFrame implements ActionListener
     	for(int i=0;i<attributesNumber;i++)
     	{
     		container.attributes[i].name=attr[0][i];
-    		container.attributes[i].type=Attribute.convert(attr[1][i]);
+    		container.attributes[i].type=Attribute.type2Int(attr[1][i]);
     	}
     	//setting mapping
     	HashMap<String,Integer> map=new HashMap<String,Integer>();

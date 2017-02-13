@@ -34,10 +34,10 @@ import dmLab.mcfs.attributesID.AttributesID;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.Ranking;
 import dmLab.mcfs.attributesRI.measuresRI.ADXRIMeasure;
-import dmLab.mcfs.attributesRI.measuresRI.NodesMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.ClassifiersMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.ImportanceMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.J48RIMeasure;
+import dmLab.mcfs.attributesRI.measuresRI.NodesMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.ProjectionMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.RINormMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.SliqRIMeasure;
@@ -45,6 +45,7 @@ import dmLab.mcfs.cutoffMethods.Cutoff;
 import dmLab.utils.ArrayUtils;
 import dmLab.utils.GeneralUtils;
 import dmLab.utils.MathUtils;
+import dmLab.utils.ProgressCounter;
 import dmLab.utils.cmatrix.ConfusionMatrix;
 import dmLab.utils.dataframe.Column;
 import dmLab.utils.dataframe.DataFrame;
@@ -79,6 +80,8 @@ public class GlobalStats {
 
     private String prefix;
     
+    private ProgressCounter pc;
+    
     public String[] attrNames;    
     public static int WINDOW_SIZE=20;
     
@@ -87,7 +90,7 @@ public class GlobalStats {
     {        
     }
 //  *************************************
-    public boolean init(FArray inputArray, MCFSParams mcfsParams, String experimentName)
+    public boolean init(FArray inputArray, MCFSParams mcfsParams, String experimentName, String chartTitle)
     {
         myMCFSParams = mcfsParams;
         prefix = mcfsParams.resFilesPATH + experimentName;
@@ -105,22 +108,36 @@ public class GlobalStats {
 		else
 			confusionMatrix = null;
 
-        initChartFrame(mcfsParams);        
+        initChartFrame(mcfsParams, chartTitle);        
         initLinearRegression();
         splitsStats = new StatsList();
         
+        pc = new ProgressCounter(0, mcfsParams.projectionsValue, new float[]{0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100});        
+        
         return true;
     }
-//************************************
-    private boolean initChartFrame(MCFSParams mcfsParams)
+    //************************************
+    private boolean initChartFrame(MCFSParams mcfsParams, String chartTitle)
     {
         if(mcfsParams.progressShow){
-        	if(distanceChart!=null){
+        	if(distanceChart != null){
                 distanceChart.dispose();
-                distanceChart=null;
+                distanceChart = null;
             }
-            distanceChart=new ChartFrame("dmLab","MCFS Calculation Progress");           
+        	try{
+        		distanceChart = new ChartFrame("dmLab", chartTitle);
+        	}catch(java.awt.HeadlessException e){
+    			System.err.println("Warning! Progress chart frame cannot be displayed.");
+        	}
         }        
+        return true;
+    }
+    //************************************
+    public boolean closeChartFrame(){
+        if(distanceChart!=null){
+        	distanceChart.setVisible(false);
+        	distanceChart.dispose(); 
+        }
         return true;
     }
 //************************************    
@@ -176,8 +193,9 @@ public class GlobalStats {
 //  *************************************
     public synchronized boolean update(int jobId, ConfusionMatrix localMatrix, AttributesRI localImportances[], AttributesID localAttrID)
     {
-        if(projectionsCounter >= myMCFSParams.projections){
-            System.out.println("[thread: "+jobId+"] Stop Criterion: projections = "+projectionsCounter);
+        if(projectionsCounter >= myMCFSParams.projectionsValue){
+        	if(myMCFSParams.verbose)
+        		System.out.println("[thread: "+jobId+"] Stop Criterion: projections = "+projectionsCounter);
             return false;
         }
         projectionsCounter = (calculatedDistances +1) * myMCFSParams.progressInterval;
@@ -195,7 +213,8 @@ public class GlobalStats {
                 attrRI[j].sumImportances(localImportances[j]);                
                 //calc normalized RI before saving
                 attrRI[j].calcNormMeasure(myMCFSParams.splits);
-                attrRI[j].save(prefix+"_"+attrRI[j].label+"_"+MCFSParams.FILESUFIX_IMPORTANCES);                
+                if(myMCFSParams.saveResutFiles)
+                	attrRI[j].save(prefix+"_"+attrRI[j].label+"_"+MCFSParams.FILESUFIX_RI);
             }          
         }
         
@@ -229,12 +248,21 @@ public class GlobalStats {
                 }
             }
             
-            System.out.println("*** PROJECTION: " + projectionsCounter
+            if(myMCFSParams.verbose){
+            	System.out.println("*** PROJECTION: " + projectionsCounter
             					+ " [thread: " + jobId+"]"
-            					+ " *** -> distance: " + GeneralUtils.format(distance, 4) 
-            					+ " commonPart: " + GeneralUtils.format(commonPart,4)
-            					+" mAvg: " + GeneralUtils.format(mAvg,4)
-            					+" beta1: " + GeneralUtils.format(beta1,4));
+            					+ " *** -> distance: " + GeneralUtils.formatFloat(distance, 4) 
+            					+ " commonPart: " + GeneralUtils.formatFloat(commonPart,4)
+            					+" mAvg: " + GeneralUtils.formatFloat(mAvg,4)
+            					+" beta1: " + GeneralUtils.formatFloat(beta1,4));
+            }else{
+            	String p = pc.getPercentValue(projectionsCounter);
+            	if(p != null){
+            		System.out.print(p+"% ");
+            		if(p.equalsIgnoreCase("100"))
+            			System.out.print("\n");
+            	}
+            }
         }
                         
         oldRank=newRank;

@@ -36,8 +36,6 @@ import dmLab.array.meta.Attribute;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.Ranking;
 import dmLab.utils.ArrayUtils;
-import dmLab.utils.GeneralUtils;
-import dmLab.utils.MathUtils;
 import dmLab.utils.condition.Condition;
 import dmLab.utils.list.IntegerList;
 
@@ -50,14 +48,16 @@ public class SelectFunctions
 		arrayUtils = new ArrayUtils(random);
 	}
 	//*************************************
-	public FArray balanceClasses(FArray srcArray, float balanceRatio)
+	public FArray balanceClasses(FArray srcArray, int[] balancedSizes)
 	{
 		int decIndex = srcArray.getDecAttrIdx();
-		float[] decColumn=srcArray.getColumn(decIndex);
+		float[] decColumn = srcArray.getColumn(decIndex);
 		float[] decValues = srcArray.getDecValues();
 
-		int balancedSizes[] = getBalancedClassSizes(srcArray, balanceRatio, false);
-
+		if(srcArray.getDecValues().length != balancedSizes.length){
+			System.err.println("Error. balancedSizes.lenght does not equal to srcArray.getDecValues().length.");
+		}
+		
 		int[] splitMask = new int[srcArray.rowsNumber()];
 		for(int i=0; i<decValues.length; i++){
 			splitMask = selectRowsBalanced(decColumn, decValues[i], balancedSizes[i], splitMask);
@@ -69,38 +69,6 @@ public class SelectFunctions
 		FArray dstArray = srcArray.clone(colMask, ArrayUtils.int2boolean(splitMask, 1));
 
 		return dstArray;
-	}
-	//*************************************
-	public static int[] getBalancedClassSizes(FArray srcArray, float balanceRatio, boolean verbose)
-	{		
-		int decIndex = srcArray.getDecAttrIdx();
-		int[] classSizes = ArrayUtils.distribution(srcArray.getColumn(decIndex), srcArray.getDecValues());
-
-		float minSize = MathUtils.minValue(ArrayUtils.int2float(classSizes));
-		float maxSize = MathUtils.maxValue(ArrayUtils.int2float(classSizes));
-
-		if(verbose){
-			System.out.println("Classes: " + Arrays.toString(srcArray.dictionary.toString(srcArray.getDecValues())));
-			System.out.println("Class Sizes: " + Arrays.toString(classSizes));
-			float classSizeRatio = minSize/maxSize;
-			if(classSizeRatio < 0.05)
-				System.out.println("Classes are highly unbalanced (ratio="+GeneralUtils.format(classSizeRatio, 5)
-						+"). It is recomended to set mcfs.balanceRatio=2 or higher.");
-		}
-
-		double b = (double)minSize / Math.pow((double)minSize, 1.0/balanceRatio);
-
-		int balancedClassSizes[] = classSizes.clone();
-		for(int i=0;i<balancedClassSizes.length;i++){
-			int newSize = (int)Math.ceil(b * Math.pow((double)balancedClassSizes[i], 1.0/balanceRatio));
-			if(balancedClassSizes[i] > newSize)
-				balancedClassSizes[i] = newSize;
-		}
-		if(verbose){
-			System.out.println("Balanced sizes: "+Arrays.toString(balancedClassSizes));
-		}
-
-		return balancedClassSizes;
 	}
 	//	********************************************
 	//randomly selects n="selectionSize" rows from column[] where column[i]==value 
@@ -354,7 +322,7 @@ public class SelectFunctions
 	}
 	//********************************************
 	public static Array selectColumns(Array srcArray, AttributesRI importances, int dstColumns)
-	{
+	{		
 		if(dstColumns>=srcArray.colsNumber())
 			return srcArray;
 

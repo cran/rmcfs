@@ -172,7 +172,7 @@ public class GraphVisualization
         int cellIndex=nodesNumber;
         for(int i=0;i<edgesNumber;i++)
         {                                                
-            DefaultEdge edge = new DefaultEdge(GeneralUtils.format(edges[i].weight,edgeWeightFormat));            
+            DefaultEdge edge = new DefaultEdge(GeneralUtils.formatFloat(edges[i].weight,edgeWeightFormat));            
             edge.setSource(cells[edges[i].nodeIndex1].getChildAt(0));
             edge.setTarget(cells[edges[i].nodeIndex2].getChildAt(0));
 

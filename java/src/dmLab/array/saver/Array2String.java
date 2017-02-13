@@ -89,7 +89,7 @@ public abstract class Array2String
     {
         String name=attributeName;
         for(int j=0;j<forbiddenChars.length;j++)
-            name=StringUtils.replaceAll(name, forbiddenChars[j], Array.SPACEVALUE);
+            name=StringUtils.replaceAll(name, forbiddenChars[j], Array.SPACE_CHAR);
         return name;
     }
     //************************************

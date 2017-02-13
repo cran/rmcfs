@@ -45,7 +45,7 @@ public class KMeansCutoff extends CutoffMethod {
 		
 		minRI = kmeans(values);
 		
-		System.out.println("Minimal (based on k-means clustering) RI = " + GeneralUtils.format(minRI,7));
+		System.out.println("Minimal (based on k-means clustering) RI = " + GeneralUtils.formatFloat(minRI,7));
 		
 		return minRI;
 	}

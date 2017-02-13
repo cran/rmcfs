@@ -31,27 +31,21 @@ The number of top features included and the number of ID-Graph edges can be cust
   library(rmcfs)
   
   # create input data
-  adata <- artificial.data(rnd.features = 10)
+  adata <- artificial.data(rnd_features = 10)
   showme(adata)
   
   # Parametrize and run MCFS-ID procedure
-  result <- mcfs(class~., adata, projections = 300, projectionSize = 4, 
-                 cutoffPermutations = 0, finalCV = FALSE, finalRuleset = FALSE, 
-                 threadsNumber = 2)
-  print(result)
-  names(result)
+  result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 50,
+                  buildID = TRUE, finalCV = FALSE, finalRuleset = FALSE,
+                  threadsNumber = 2)
 
-  # build interdependencies graph (all default parameters).
-  gid <- build.idgraph(result)
-  plot(gid)
-  
   # build interdependencies graph for top 6 features 
   # and top 12 interdependencies and plot all nodes
   gid <- build.idgraph(result, size = 6, size_ID = 12, plot_all_nodes = TRUE)
-  plot(gid, label.dist = 1)
+  plot(gid, label_dist = 1)
 
   # Export graph to graphML (XML structure)
   path <- tempdir()
   igraph::write.graph(gid, file = paste0(path, "/artificial.graphml"), 
-              format = "graphml", prefixAttr = FALSE)
+            format = "graphml", prefixAttr = FALSE)
 }

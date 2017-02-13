@@ -35,7 +35,8 @@ public class ExperimentParams extends Params implements Cloneable
 {	
 	public static String DEFAULT_RES_PATH = ".//results//";
 	public static String DEFAULT_DATA_PATH = ".//data//";
-
+	public static String DEFAULT_CFG_PATH = ".//cfg//";
+	
 	public String label;
 	public String inputFilesPATH;
 	public String resFilesPATH;
@@ -51,25 +52,24 @@ public class ExperimentParams extends Params implements Cloneable
 	//  **** sets all default values
 	public ExperimentParams()
 	{
-		super();
-		fileType="run";
+		super();		
 		setDefault();
 	}
 	//  *****************************************
 	@Override
 	public boolean setDefault()
 	{
-		verbose=true;
-		debug=false;
+		verbose = false;		
+		fileType = "run";
+		label = "experiment";        
+		
+		inputFilesPATH = DEFAULT_DATA_PATH;
+		resFilesPATH = DEFAULT_RES_PATH;
+		classifierCfgPATH = DEFAULT_CFG_PATH;
 
-		label="experiment";        
-		inputFilesPATH = ExperimentParams.DEFAULT_DATA_PATH;
-		resFilesPATH = ExperimentParams.DEFAULT_RES_PATH;
-		classifierCfgPATH=".//cfg//";
-
-		inputFileName="";
-		testFileName="";
-		outputFileName="";
+		inputFileName = "";
+		testFileName = "";
+		outputFileName = "";
 
 		return true;
 	}
@@ -116,13 +116,12 @@ public class ExperimentParams extends Params implements Cloneable
 	@Override
 	protected boolean update(Properties properties)
 	{
-		verbose=Boolean.valueOf(properties.getProperty("verbose", "true")).booleanValue();
-		debug=Boolean.valueOf(properties.getProperty("debug", "false")).booleanValue();
+		verbose = Boolean.valueOf(properties.getProperty("verbose", "false")).booleanValue();
 
 		label=properties.getProperty("label", "experiment");
 		inputFilesPATH=properties.getProperty("inputFilesPATH", ExperimentParams.DEFAULT_DATA_PATH);
 		resFilesPATH=properties.getProperty("resFilesPATH", ExperimentParams.DEFAULT_RES_PATH);
-		classifierCfgPATH=properties.getProperty("classifierCfgPATH", ".//cfg//");        
+		classifierCfgPATH=properties.getProperty("classifierCfgPATH", ExperimentParams.DEFAULT_CFG_PATH);        
 		inputFileName=properties.getProperty("inputFileName", "inputFile.adx");        
 		inputFiles = StringUtils.tokenizeArray(inputFileName);        
 		if(inputFiles == null){

@@ -23,8 +23,10 @@
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
 import java.io.BufferedReader;
+import java.io.File;
 
 import dmLab.array.meta.Attribute;
+import dmLab.utils.FileUtils;
 import dmLab.utils.StringUtils;
 
 
@@ -32,29 +34,36 @@ import dmLab.utils.StringUtils;
 public class FileLoaderArff extends FileLoader 
 {
 	//	************************************************
-	//	*** class loads adx file into array class
+	//	*** load arff file into array class
 	//	************************************************
 	@Override
-	protected boolean privateInitializator()
+	protected boolean myInit()
 	{
 		separator=',';
 		nullLabels.clear();
 		nullLabels.add("?");
 		commentChar="%";
+		fileType = FileType.ARFF;
 		return true;
 	}
 	//	************************************************
 	//	*** method parses file and finds attribute and event numbers
 	@Override
-	protected boolean parseInputFile(BufferedReader inputFile)
+	protected boolean parseInputFile(File inputFile)
 	{
 		int lineCount=0;
 		String line="";
 		boolean dataBlock=false;
 
+		BufferedReader fileReader;
+		if((fileReader = FileUtils.openFile(inputFile)) == null){
+			FileUtils.closeFile(fileReader);
+			return false;
+		}
+
 		do{
 			try{
-				line=inputFile.readLine();
+				line = fileReader.readLine();
 				lineCount++;
 			}catch (Exception e) {
 				System.out.println("Error reading input file. Line: "+lineCount);
@@ -72,14 +81,16 @@ public class FileLoaderArff extends FileLoader
 					eventsNumber++;
 			}
 		}while(line!=null); //end while
-
-		System.out.println("Simple parsing has been done.");            
+		
+		if(!FileUtils.closeFile(fileReader))
+			return false;
+		
 		return true;
 	}
 	//	************************************************
 	//*** method reads attributes and events into memory
 	@Override
-	protected boolean readInputFile(BufferedReader inputFile)
+	protected boolean readInputFile(File inputFile)
 	{
 		int attrPointer=0;
 		int eventPointer=0;
@@ -89,9 +100,15 @@ public class FileLoaderArff extends FileLoader
 		//char eventSeparators[]=new char[]{separator};
 		boolean dataBlock=false;
 
+		BufferedReader fileReader;
+		if((fileReader = FileUtils.openFile(inputFile)) == null){
+			FileUtils.closeFile(fileReader);
+			return false;
+		}
+		
 		do{
 			try{
-				line=inputFile.readLine();
+				line = fileReader.readLine();
 				lineCount++;
 			}
 			catch (Exception e) {
@@ -118,8 +135,10 @@ public class FileLoaderArff extends FileLoader
 				}
 			}
 		}while(line!=null); //end while
-
-		System.out.println("Reading file has been done.");        
+		
+		if(!FileUtils.closeFile(fileReader))
+			return false;
+		
 		return true;   
 	}
 	//	************************************************
@@ -151,5 +170,15 @@ public class FileLoaderArff extends FileLoader
 		return true;
 	}
 	//  ************************************************
+	@Override
+	protected boolean readHeaderFile(File inputFile) {
+		return true;
+	}
+	//	************************************************
+	@Override
+	protected File getDataFile(File inputFile) {
+		return inputFile;
+	}
+	//	************************************************
 }
 

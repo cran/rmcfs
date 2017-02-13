@@ -57,7 +57,7 @@ public class J48Classifier extends WekaTree
 	@Override
 	public boolean saveDefinition(String path,String name) throws IOException
 	{
-		if(params.verbose) System.out.print("Saving classifier definition...");
+		//System.out.print("Saving classifier definition...");
 		params.save(path,name);
 		//this method saves only visualization of the decision tree
 		//there is no method to load such visualization from the file
@@ -65,21 +65,19 @@ public class J48Classifier extends WekaTree
 		writer = new FileWriter(path+"//"+name+".tree");
 		writer.write(toString());
 		writer.close();
-		if(params.verbose) System.out.println(" Done!");
 		return true;
 	}
 	//  *****************************************
 	@Override
 	public boolean loadDefinition(String path,String name)
 	{
-		if(params.verbose) System.out.print("Loading classifier definition...");
+		//System.out.print("Loading classifier definition...");
 		//load classifier parameters
 		params.load(path,name);
 		//load classifier definition e.g. rules, tree structure etc.
 		//this classifier has not such sophisticated definition
 		System.out.println("Loading of definition is not implemented!");
 		//j48Tree.load(path+"//"+label);      
-		if(params.verbose) System.out.println("Done!");
 		return true;
 	}
 	//************************************** 

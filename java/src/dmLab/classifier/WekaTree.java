@@ -48,7 +48,6 @@ public abstract class WekaTree extends WekaClassifier
 	//  ****************************************
 	public abstract Tree parseWekaTree(String treeString);	
 	//  ****************************************
-	@Override
 	public boolean add_RI(AttributesRI importances[])
 	{                
 		attrSet = new HashSet<String>();
@@ -64,6 +63,9 @@ public abstract class WekaTree extends WekaClassifier
 		ExperimentIndicators experimentIndicators = new ExperimentIndicators();
 		experimentIndicators.eventsNumber = trainSetSize;
 		experimentIndicators.predictionQuality = Math.abs(predResult.getPredQuality());
+		
+        //System.err.println("##########   TREE ####### ");
+        //System.err.println(tree.toString());
 
 		while((node=tree.getNextNode())!=null){
 			/*
@@ -78,7 +80,7 @@ public abstract class WekaTree extends WekaClassifier
 				/*
                 // *************** DEBUG ********************
                 System.err.println("##########   TREE ####### ");
-                System.err.println(j48String);
+                System.err.println(wekaClassifier.toString());
                 System.err.println("##########   TREE NODE ####### ");
                 System.err.println(node.toString());
                 System.err.println(node.condition.attributeName);

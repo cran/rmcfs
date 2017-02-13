@@ -192,7 +192,7 @@ public class StringUtils {
 		return destination;
 	}
 	//********************************
-	public static char[] toCharArray(String s,int size)
+	public static char[] toCharArray(String s, int size)
 	{
 		char[] charArray =new char[size];
 		Arrays.fill(charArray,' ');
@@ -203,7 +203,7 @@ public class StringUtils {
 		return charArray;
 	}
 	//********************************
-	public static boolean stringsEquals(String string1,String string2)
+	public static boolean equalsTo(String string1, String string2)
 	{
 		if(string1.length()!=string2.length())
 			return false;
@@ -217,12 +217,10 @@ public class StringUtils {
 		return true;
 	}
 	//*******************************
-	public static boolean stringsEquals(String inputString, String[] items)
+	public static boolean equalsToAny(String inputString, String[] items)
 	{
-	    for(int i=0; i < items.length; i++)
-	    {
-	        if(inputString.equalsIgnoreCase(items[i]))
-	        {
+	    for(int i=0; i < items.length; i++){
+	        if(inputString.equalsIgnoreCase(items[i])){
 	            return true;
 	        }
 	    }

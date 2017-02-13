@@ -1,7 +1,8 @@
 ###############################
 #showme
 ###############################
-showme <- function(x, size=10, show=c("tiles","head","tail","none")){
+showme <- function(x, size = 10, show = c("tiles", "head", "tail", "none")){
+  size <- min(c(size, nrow(x), ncol(x)))
   show <- show[1]
   if(show == "tiles"){
     print(x[1:size,1:size])
@@ -17,18 +18,6 @@ showme <- function(x, size=10, show=c("tiles","head","tail","none")){
     stop(paste0("Parameter 'show' is incorrect: ", show))
   
   cat(paste0("class: '", class(x), "' size: ", nrow(x)," x ", ncol(x)))
-}
-
-###############################
-#get.size.param
-###############################
-get.size.param <- function(size, default_value){
-  if(is.na(size))
-    size <- default_value
-  if(is.na(size) | size <= 0){
-    stop(paste0("'size' is NA or <= 0"))
-  }
-  return(size)
 }
 
 ###############################
@@ -53,21 +42,21 @@ my.seq <- function(from, to, by, add.last.to = F){
 #  data(alizadeh)
 #  d <- alizadeh
 #  print(paste0("class: ", class(d), " size: ", nrow(d)," x ", ncol(d)))
-#  d.matrix <- df.to.matrix(x=d, chunk.size=1000, verbose = T)
-#  d.matrix <- df.to.matrix(x=d, chunk.size=0, verbose = T)
+#  d.matrix <- df.to.matrix(x=d, chunk_size=1000, verbose = T)
+#  d.matrix <- df.to.matrix(x=d, chunk_size=0, verbose = T)
 #  print(paste0("class: ", class(d), " size: ", nrow(d)," x ", ncol(d)))
 #  d.matrix[1:10,1:10]
 #  d.matrix[1:10,(ncol(d.matrix)-10):ncol(d.matrix)]
 
-df.to.matrix <- function(x, chunk.size=50000, verbose = F)
+df.to.matrix <- function(x, chunk_size=50000, verbose = F)
 {
   cols.x <- ncol(x)
   rows.x <- nrow(x)
   
-  if(chunk.size<=1){
+  if(chunk_size<=1){
     x.matrix <- as.matrix(x)
   }else{
-    m.steps <- my.seq(chunk.size, cols.x, chunk.size, T)
+    m.steps <- my.seq(chunk_size, cols.x, chunk_size, T)
     begin <- 1
     chunk <- 1
     x.matrix.list <- list()
@@ -107,7 +96,7 @@ string.trim <- function(str) gsub("^\\s+|\\s+$", "", str)
 ###############################
 #string.starts.with
 ###############################
-string.starts.with <- function(str, pattern, trim=FALSE, ignore.case=FALSE){
+string.starts.with <- function(str, pattern, trim = FALSE, ignore.case = FALSE){
   pattern <- c(pattern)
   str <- c(str)
   if(trim)
@@ -120,7 +109,14 @@ string.starts.with <- function(str, pattern, trim=FALSE, ignore.case=FALSE){
   for(i in 1:length(pattern)){
     ret <- ret | substring(str, 1, nchar(pattern[i])) == pattern[i]
   }
-  return(ret)    
+  return(ret)
+}
+
+###############################
+#string.combine
+###############################
+string.combine <- function(..., prefix = "", sep = "") {
+  paste0(prefix, levels(interaction(..., sep = sep)))
 }
 
 ###############################
@@ -184,15 +180,27 @@ File.exists <- function(x) {
 }
 
 ###############################
-#File.ext
+#file.extension
 ###############################
 # path <- "//Users\\mdr.am.ins.ki\\Dropbox/DOCUM.ENTS//Money//ghfdjkhkj.hkfjdhk.EXD"
 # file.extension(path)
+# drop.file.extension(path)
+#library(tools)
+#file_ext(path)
+#basename(path)
 file.extension <- function(x){
   file <- tail(unlist(strsplit(x, '[/\\]')),1)
   file <- tail(unlist(strsplit(file, '[.]')),1)
   file_ext <- tolower(file)
   return (file_ext)
+}
+
+###############################
+#drop.file.extension
+###############################
+drop.file.extension <- function(x){
+  file <- sub(paste0('\\.', file.extension(x)), '', x)
+  return(file)
 }
 
 ###############################
@@ -215,13 +223,30 @@ open.plot.file <- function(filename, width, height, res = 72){
 }
 
 ###############################
+#delete.files
+###############################
+delete.files <- function(files){
+  if(length(files)>0){
+  for(i in 1:length(files)){
+    if(File.exists(files[i])){
+      #cat(paste0("remove ", files[i]))
+      file.remove(files[i])
+    }
+  }
+}
+}
+
+###############################
 #build.cmatrix
 ###############################
 #x1 <- round(runif(100, 0.0, 3.0))
 #x2 <- round(runif(100, 0.0, 3.0))
 #build.cmatrix(x1,x2)
-build.cmatrix <- function(real, predicted){
-  cmatrix <- table(as.character(real), as.character(predicted))
+build.cmatrix <- function(real, predicted, levels = NULL){
+  if(is.null(levels)){
+    levels <- as.character(unique(c(real,predicted)))
+  }
+  cmatrix <- table(factor(real,levels), factor(predicted,levels))
   cmatrix <- as.data.frame.matrix(cmatrix)
   cmatrix <- as.matrix(cmatrix)
   colnMat <-  colnames(cmatrix)
@@ -284,4 +309,16 @@ calc.wacc <- function(cmatrix){
   TPR <- dg / rowSums(cmatrix)
   wacc <- mean(TPR)
   return(wacc)
+}
+
+###############################
+#get.projectionSize
+###############################
+get.projectionSize <- function(data_size, projectionSize = NA){
+  if(tolower(trimws(projectionSize)) == 'auto' || is.na(projectionSize)){
+    projection_size <- max(floor(1.05*(data_size^0.6)), 1)
+  }else{
+    projection_size <- projectionSize
+  }
+  return(projection_size)
 }

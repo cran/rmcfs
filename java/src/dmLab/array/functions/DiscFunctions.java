@@ -62,8 +62,7 @@ public class DiscFunctions
 				array.discRanges[i] = new DiscRanges(); 
 				if(array.discRanges[i].find(values, decision, discParams)){
 					if(discParams.verbose)
-						System.out.println("Attribute Discretized: "+array.attributes[i].name +
-								" ranges: "+ Arrays.toString(array.discRanges[i].getRanges()));
+						System.out.println("Attribute Discretized: "+array.attributes[i].name + " ranges: "+ Arrays.toString(array.discRanges[i].getRanges()));
 				}				
 			}			
 		}

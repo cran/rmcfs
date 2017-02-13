@@ -53,8 +53,8 @@ public class ExtFunctions {
 		Random rand = new Random();
 
 		for(int i=0; i<columns; i++){
-			array.attributes[i].type = Attribute.NUMERIC;
-			array.attributes[i].name = colNamePrefix+i;
+			srcArray.attributes[i].type = Attribute.NUMERIC;
+			srcArray.attributes[i].name = colNamePrefix+i;
 			for(int j=0; j<rows; j++){
 				if(valuesNumber==0)
 					srcArray.writeValue(i, j, rand.nextFloat());
@@ -63,7 +63,7 @@ public class ExtFunctions {
 			}
 		}
 		array.cbind(srcArray);
-	}	
+	}
 	//  ***********************************
 	public static void addContrastAttributes(FArray array)
 	{		
@@ -101,7 +101,7 @@ public class ExtFunctions {
     {
         if(array!=null){
             int i=1;
-            String name="";
+            String name = "";
             while(true){
                 name = "attr_" + Integer.toString(i);
                 if(array.getColIndex(name) == -1)

@@ -215,7 +215,7 @@ public class TreeNode
             TreeNode kid=kids.get(i);
             String connectionLabel=startNode.nodeIndicators.nodeIndex+"_"+kid.nodeIndicators.nodeIndex;  
             
-            if(!addedConnections.contains(connectionLabel) && !StringUtils.stringsEquals(startNode.condition.attributeName,kid.condition.attributeName))
+            if(!addedConnections.contains(connectionLabel) && !StringUtils.equalsTo(startNode.condition.attributeName,kid.condition.attributeName))
             {
                 connections.addDependency(startNode.condition.attributeName, kid.condition.attributeName,1.0f/currentLevel);                                
                 addedConnections.add(connectionLabel);

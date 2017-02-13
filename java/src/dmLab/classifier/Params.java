@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import dmLab.array.FArray;
+import dmLab.mcfs.mcfsEngine.MCFSAutoParams;
 import dmLab.utils.FileUtils;
 
 public abstract class Params
@@ -38,13 +39,11 @@ public abstract class Params
 	protected String fileType;
 	
 	public boolean verbose;
-	public boolean debug;
 	//*****************************************
 	public Params()
 	{
-		fileType="cfg";
-		verbose=false;
-		debug=false;
+		fileType = "cfg";
+		verbose = false;
 		setDefault();
 	}
 	//*****************************************
@@ -58,7 +57,6 @@ public abstract class Params
 		//properties = new Properties();
 		fileType = p.fileType;
 		verbose = p.verbose;
-		debug = p.debug;		
 	}
 	//*************************************
 	public boolean load(String path, String inputFileName)
@@ -80,26 +78,21 @@ public abstract class Params
 		else
 			filePath=myPath+inputFileName+"."+fileType;		
 		
-		try
-		{
+		try{
 			FileInputStream cfgFile = new FileInputStream(filePath);
 			properties.load(cfgFile);
 			cfgFile.close();
 		}
-		catch (FileNotFoundException e)
-		{
-			if(verbose)
-				System.out.println("Config file: '"+filePath+"' not found. Default params will be used.");
+		catch (FileNotFoundException e){
+			System.out.println("Config file: '"+filePath+"' not found. Default params will be used.");
 			return setDefault();
 		}
-		catch (IOException e)
-		{
+		catch (IOException e){
 			System.err.println("Error: Loading config file. File" + filePath);
 			e.printStackTrace();
 			return false;
 		}
 		verbose = Boolean.valueOf(properties.getProperty("verbose", "false")).booleanValue();
-		debug = Boolean.valueOf(properties.getProperty("debug", "false")).booleanValue();
 		return update(properties);
 	}
 //	*****************************************
@@ -133,18 +126,21 @@ public abstract class Params
 	{
 		StringBuffer tmp=new StringBuffer();
 		tmp.append("verbose="+ verbose).append('\n');
-		tmp.append("debug="+ debug).append('\n');
 		return tmp.toString(); 
 	}
 	//*****************************************
-	public static String booleanParamToString(boolean paramValue, String paramName) 
+	public static String intParamToString(int paramValue, String paramName) 
 	{   
 		StringBuffer tmp=new StringBuffer();
-		if(paramValue){
+		if(paramValue >= 1){
 			tmp.append(paramName).append(" is ON");
-    	}else{
+    	}else if(paramValue == 0){
     		tmp.append(paramName).append(" is OFF");
-    	} 
+    	}else if(paramValue == MCFSAutoParams.AUTO){
+    		tmp.append(paramName).append(" is AUTO");
+    	}else{
+    		tmp.append(paramName).append(" is Unknown");
+    	}
 		return tmp.toString();
 	}
 //	*****************************************

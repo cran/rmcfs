@@ -23,9 +23,12 @@
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
 import java.io.BufferedReader;
+import java.io.File;
 
 import dmLab.array.Array;
 import dmLab.array.meta.Attribute;
+import dmLab.array.meta.AttributeDef;
+import dmLab.utils.FileUtils;
 import dmLab.utils.StringUtils;
 
 
@@ -33,18 +36,21 @@ import dmLab.utils.StringUtils;
 public class FileLoaderCSV extends FileLoader 
 {
 	public boolean firstLineContainsAttributes;
-	public String defaultAttributeName;
-
 	public boolean consequentSeparatorsTreatAsOne; 
+	public String defaultAttributeName;
+	
+	protected AttributeDef[] attrDefArray;
+	private boolean allDecision = false;
+
 	//	************************************************
-	//	*** class loads adx file into array class
+	//	*** load csv file into array class
 	public FileLoaderCSV()
 	{
 		super();
 	}
 	//	************************************************
 	@Override
-	protected boolean privateInitializator()
+	protected boolean myInit()
 	{
 		separator=',';
 		nullLabels.clear();
@@ -53,28 +59,35 @@ public class FileLoaderCSV extends FileLoader
 		nullLabels.add("NaN");
 		nullLabels.add("NA");
 		nullLabels.add("Null");        
-		firstLineContainsAttributes=true;
-		defaultAttributeName="attr";
-		trimComments=false;
-		consequentSeparatorsTreatAsOne=false;
+		firstLineContainsAttributes = true;
+		defaultAttributeName = "attr";
+		trimComments = false;
+		consequentSeparatorsTreatAsOne = false;
+		fileType = FileType.CSV;
 		return true;
 	}
 	//	************************************************
 	//	*** method parses file and finds attribute and event numbers
 	@Override
-	protected boolean parseInputFile(BufferedReader inputFile)
+	protected boolean parseInputFile(File inputFile)
 	{
-		int lineCount=0;
+		int lineCount = 0;
 		String line="";
-		char separators[]=new char[]{separator};
+		char separators[] = new char[]{separator};
 		boolean firstLine=true;
 
+		BufferedReader fileReader;
+		if((fileReader = FileUtils.openFile(inputFile)) == null){
+			FileUtils.closeFile(fileReader);
+			return false;
+		}
+		
 		do{
 			try{
-				line=inputFile.readLine();
+				line = fileReader.readLine();
 				lineCount++;
 			}catch (Exception e) {
-				System.out.println("Error reading input file. Line: "+lineCount);
+				System.err.println("Error reading input file. Line: "+lineCount);
 				return false;
 			}
 			if(line!=null){ 
@@ -82,42 +95,76 @@ public class FileLoaderCSV extends FileLoader
 				if(line.length()==0) //if line is empty
 					continue;
 				if(firstLine){
-					String[] list=StringUtils.tokenizeString(line,separators,consequentSeparatorsTreatAsOne);
-					attributesNumber=list.length;
-					firstLine=false;    
+					String[] tokens = StringUtils.tokenizeString(line, separators, consequentSeparatorsTreatAsOne);
+					attributesNumber = tokens.length;
+					if(firstLineContainsAttributes){
+						if(!readHeaderLine(tokens))
+							return false;
+					}else{
+						if(!readHeaderLine(null))
+							return false;
+						eventsNumber++;
+					}
+					firstLine = false;
 				}else{
-					String[] list=StringUtils.tokenizeString(line,separators,consequentSeparatorsTreatAsOne);
-					if(attributesNumber<list.length)
-						attributesNumber=list.length;
 					eventsNumber++;
 				}
 			}
 		}while(line!=null); //end while
-		System.out.println("Simple Parsing Done!");
+		
+		if(attrDefArray!=null && attrDefArray.length != attributesNumber){
+			System.err.println("Number of attributes in data ("+attributesNumber+") does not equal to header("+attrDefArray.length+").");
+			return false;			
+		}
+		
+		attributesNumber = attributesNumber - ignoredAttributesNumber;
+		
+		if(!FileUtils.closeFile(fileReader))
+			return false;
 
 		return true;
 	}
 	//	************************************************
 	//*** method reads attributes and events into memory
 	@Override
-	protected boolean readInputFile(BufferedReader inputFile)
+	protected boolean readInputFile(File inputFile)
 	{
 		int lineCount=0;
 		String line="";
-		char separators[]=new char[]{separator};
-		boolean firstLine=true;
+		boolean firstLine = true;
 		int eventIndex=0;
-
-		if(!firstLineContainsAttributes){
-			for(int i=0;i<attributesNumber;i++){
-				myArray.attributes[i].name=defaultAttributeName+i;
-				myArray.attributes[i].type=Attribute.NOMINAL;
-			}   
-		}
-
+		
+		BufferedReader fileReader;
+		if((fileReader = FileUtils.openFile(inputFile)) == null)
+			return false;
+		
+		//load attributes
+		if(attrDefArray!=null){
+			int attrIndex = 0;
+			for(int i=0;i<attrDefArray.length;i++){
+				AttributeDef attr = attrDefArray[i];
+				if(attr.role == AttributeDef.ROLE_IGNORE){
+					ignoredAttributeMask[i] = true;					
+				}else{
+					ignoredAttributeMask[i] = false;
+					myArray.attributes[attrIndex].name = attr.name;
+					myArray.attributes[attrIndex].type = attr.type;			
+					if(attr.role == AttributeDef.ROLE_DECISION){
+						myArray.setDecAttrIdx(attrIndex);
+						if(attr.decValues.length>0){
+							myArray.setDecValues(attr.decValues);
+						}else{
+							allDecision = true;
+						}
+					}
+					attrIndex ++;
+				}
+			}//end for
+		}//end if
+		
 		do{
 			try{
-				line=inputFile.readLine();
+				line = fileReader.readLine();
 				lineCount++;
 			}catch (Exception e) {
 				System.err.println("Error reading input file. Line: "+lineCount);
@@ -129,44 +176,70 @@ public class FileLoaderCSV extends FileLoader
 				if(line.length()==0) //if line is empty
 					continue;
 
-				String[] list=StringUtils.tokenizeString(line,separators,consequentSeparatorsTreatAsOne);
-
 				if(firstLine && firstLineContainsAttributes){
-					for(int i=0;i<attributesNumber;i++){
-						String name;
-						if(i>=list.length){
-							name=defaultAttributeName+i;
-						}else{
-							name=list[i];
-						}
-						if(name.equalsIgnoreCase(""))
-							name=defaultAttributeName+i;
-						myArray.attributes[i].name=name.trim().replaceAll(" ", Array.SPACEVALUE);
-						myArray.attributes[i].type=Attribute.NOMINAL;
-					}
 					firstLine=false;    
 				}else{
-					//loading events
-					final int listSize=list.length;
-					for(int i=0;i<attributesNumber;i++){                    
-						String value;
-						if(i>=listSize){
-							value=defaultNullLabel;
-						}else{	
-							value=list[i];                	
-							if(nullLabels.containsIgnoreCase(value))
-								value=defaultNullLabel;
-						}
-						myArray.writeValueStr(i, eventIndex, value);
+					if(!loadEvent(line, eventIndex)){
+						System.err.println("Error reading event. Line: "+lineCount);
+						return false;
 					}
 					eventIndex++;
 				}   
 			} 
 		}while(line!=null); //end while
 
-		System.out.println("Reading file is done!");        
+		if(allDecision==true){
+			myArray.setAllDecValues();
+		}
+		
+		if(!FileUtils.closeFile(fileReader))
+			return false;
+		
 		return true;   
 	}
 	//	************************************************
+	protected boolean readHeaderLine(String[] tokens) {
+
+		if(attrDefArray == null)
+			attrDefArray = new AttributeDef[attributesNumber];
+		
+		if(tokens == null){
+				for(int i=0;i<attributesNumber;i++){
+					if(attrDefArray[i] == null){
+						attrDefArray[i] = new AttributeDef();
+						attrDefArray[i].name = defaultAttributeName+i;
+						attrDefArray[i].type = Attribute.NOMINAL;
+					}
+				}			
+		}else{
+			for(int i=0; i<tokens.length; i++){
+				String name = tokens[i];
+				if(name.equalsIgnoreCase(""))
+					name = defaultAttributeName+i;
+				if(attrDefArray[i] == null){
+					attrDefArray[i] = new AttributeDef();
+					attrDefArray[i].name = name.trim().replaceAll(" ", Array.SPACE_CHAR);
+					attrDefArray[i].type = Attribute.NOMINAL;
+				}else if(!attrDefArray[i].name.equalsIgnoreCase(name)){
+					System.err.println("Name of attribute in data ("+name+") does not equal to header attribute name ("+attrDefArray[i].name+").");
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+	//	************************************************
+	@Override
+	protected boolean readHeaderFile(File inputFile) {
+		return true;
+	}
+	//	************************************************
+	@Override
+	protected File getDataFile(File inputFile) {
+		return inputFile;
+	}
+	//	************************************************
+
 }
 

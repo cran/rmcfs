@@ -119,7 +119,7 @@ public class AttrFilterPanel extends JPanel implements ActionListener
 
             if(importances.load(file.getAbsolutePath()))
             {
-                System.out.println("Histogram file is loaded.");
+                System.out.println("Histogram file loaded.");
                 filePath.setText(file.getAbsolutePath());
                 ComboBoxModel measureNameModel = new DefaultComboBoxModel(importances.getMeasuresNames() );
                 measureName.setModel(measureNameModel);

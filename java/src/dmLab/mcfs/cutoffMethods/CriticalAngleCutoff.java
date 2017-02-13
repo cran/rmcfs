@@ -69,7 +69,7 @@ public class CriticalAngleCutoff extends CutoffMethod {
 			a0 = a1;
 		}
 				
-		System.out.println("Minimal (based on linear regression angle) RI = " + GeneralUtils.format(minRI,7));
+		System.out.println("Minimal (based on linear regression angle) RI = " + GeneralUtils.formatFloat(minRI,7));
 		
 		return minRI;
 	}

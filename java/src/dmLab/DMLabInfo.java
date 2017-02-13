@@ -26,8 +26,8 @@ package dmLab;
 
 public class DMLabInfo
 {
-	public static String VERSION = "2.1.2";
-	public static String DATE = "2016.10.23";
+	public static String VERSION = "2.2.1";
+	public static String DATE = "2016.10.27";
 
 	public DMLabInfo()
 	{
@@ -39,14 +39,11 @@ public class DMLabInfo
 		StringBuffer tmp=new StringBuffer();
 		tmp.append("*****************************************").append('\n');
 		tmp.append("********          dmLab           *******").append('\n');
-		tmp.append("***            version "+VERSION+"          ***").append('\n');
-		tmp.append("*****           "+DATE+"          *****").append('\n');
-		tmp.append("*****************************************").append('\n');
+		tmp.append("***     ver. "+VERSION+"     "+DATE+"     ***").append('\n');
 		tmp.append("*****************************************").append('\n');
 		tmp.append("Created by Michal Draminski [mdramins@ipipan.waw.pl]").append('\n');
 		tmp.append("http://www.ipipan.eu/staff/m.draminski/").append('\n');
 		tmp.append("Polish Academy of Sciences - Institute of Computer Science").append('\n');
-		tmp.append("Department of Artificial Intelligence").append('\n');
 		tmp.append("**************************************************************************").append('\n');
         tmp.append("'MCFS-ID' and 'ADX' are developed by Michal Draminski").append('\n');
         tmp.append("'rmcfs' developed by Michal Draminski & Julian Zubek").append('\n');
@@ -55,7 +52,6 @@ public class DMLabInfo
         tmp.append("If you want to use dmLab or 'MCFS-ID' in your work, please cite the paper:").append('\n');
         tmp.append("M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski").append('\n');
         tmp.append("'Monte Carlo feature selection for supervised classification', BIOINFORMATICS 24(1): 110-117 (2008)").append('\n');
-		tmp.append("**************************************************************************").append('\n');
 		tmp.append("**************************************************************************").append('\n');
 		return tmp.toString();
 	}

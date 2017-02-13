@@ -268,14 +268,16 @@ public class AttributesRI
     public Ranking getTopRankingSize(int measureIndex, int size)
     {       
         float ranking[][] = new float[importances.length][2];
-   
+        if(size>importances.length)
+        	size = importances.length;
+        
         for(int i=0;i<importances.length;i++){
             ranking[i][0]=i;//attribute index
             ranking[i][1]=importances[i][measureIndex];//value of the measure
         }
-        ArrayUtils.qSort(ranking,1);
+        ArrayUtils.qSort(ranking, 1);
         
-        Ranking rank=new Ranking(size);
+        Ranking rank = new Ranking(size);
         for(int i=importances.length-1,j=0;i>=importances.length-size;i--,j++){
             String attr=attrMap.getItem((int)ranking[i][0]);
             rank.put(attr,ranking[i][1],j);

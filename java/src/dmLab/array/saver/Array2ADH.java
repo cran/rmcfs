@@ -21,46 +21,27 @@
  * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
-package dmLab.mcfs.mcfsEngine.framework;
+package dmLab.array.saver;
 
-import java.util.Random;
+import dmLab.array.Array;
 
-import dmLab.array.FArray;
-import dmLab.utils.ArrayUtils;
-import dmLab.utils.statFunctions.StatFunctions;
-
-
-public class MCFSPermutation extends MCFSFramework implements Runnable 
-{
-	public String permPrefix="_perm";
-
-//	*************************************
-    public MCFSPermutation(Random random) {
-		super(random);
-	}
-//	*************************************
-	@Override
-    public void run()
+public class Array2ADH extends Array2ADX
+{	
+	public Array2ADH()
 	{
-		mcfsParams.buildID = true;
-		mcfsParams.finalCV = false;
-		mcfsParams.finalRuleset = false;
-		mcfsParams.cutoffMethod = "mean";
-		
-		experimentName = permPrefix+mcfsParams.getExperimentName();               
-        FArray permArray = mcfsArrays.sourceArray; 
-        //System.out.println("*** MCFS-ID & Permutation of Decision Attribute ***");
-        System.out.println("Permutation of decision attribute...");
-        float decColumn[] = permArray.getColumn(permArray.getDecAttrIdx());
-        double[] x = ArrayUtils.float2double(decColumn);
-        ArrayUtils arrayUtils = new ArrayUtils(random);
-        arrayUtils.shuffle(decColumn, 3);
-        double[] y = ArrayUtils.float2double(decColumn);
-        System.out.println("Pearson's correlation after permutation: "+ StatFunctions.pearson(x, y));
-        
-        if(runExperiment(permArray) == null)
-            return;
+		super();
 	}
-//	*************************************
-    
+	//************************************
+	@Override
+    public String toString(Array array)
+	{
+		if(isEmpty(array))
+			return null;
+		
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(attributesToString(array));
+		return buffer.toString();
+	}
+	//************************************
 }
+

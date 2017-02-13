@@ -118,23 +118,21 @@ public class ClassificationBody
 	{
 		FArray trainArray = new FArray();
 		FArray testArray = null;
-		if(classParams.verbose) System.out.println("Loading Input Table...");
+		if(classParams.verbose) 
+			System.out.println("Loading input data...");
 		if(!file2Container.load(trainArray,classParams.inputFilesPATH+classParams.inputFileName))
 			return null;
 		if(trainArray.checkDecisionValues()==false)
 			return null;
 
-		if(classParams.debug){
-			System.out.println(" ### DEBUG ### ");
-			System.out.println(trainArray.toString());
-		}
+		//System.out.println(trainArray.toString());
 
 		if(classParams.verbose) 
-			System.out.println("Input table has been loaded.");         
+			System.out.println("Input data loaded.");         
 
 		if(classParams.validationType==ClassificationParams.VALIDATION_TEST_SET){
 			if(classParams.verbose) 
-				System.out.println("Loading Testing Table...");
+				System.out.println("Loading testing data...");
 
 			testArray = new FArray();
 			testArray.dictionary = trainArray.dictionary.clone();
@@ -143,7 +141,7 @@ public class ClassificationBody
 			file2Container.load(testArray,classParams.inputFilesPATH+classParams.testFileName);
 
 			if(classParams.verbose) 
-				System.out.println("Testing table has been loaded.");
+				System.out.println("Testing data loaded.");
 		}
 		
 		FArray[] arrays = new FArray[2];
@@ -164,7 +162,7 @@ public class ClassificationBody
 		if(classParams.load("", paramsFileName) == false){
 			System.err.println("Error loading configuration file. File: " + paramsFileName);
 			return false;
-		}        
+		}
 
 		if(classParams.verbose){
 			System.out.println(classParams.toString());
@@ -178,7 +176,6 @@ public class ClassificationBody
 		if(!classifier.params.load(classParams.classifierCfgPATH, classifier.label))
 			return false;
 		classifier.init();
-
 		classifier.setTempPath(classParams.resFilesPATH);       
 
 		predResult = new PredictionResult(classifier.modelType); 
@@ -191,10 +188,7 @@ public class ClassificationBody
 	}
 	//*************************************************
 	protected Array[] split(FArray array, int[] splitMask)
-	{        
-		if(classParams.verbose) 
-			System.out.println("Splitting Input Table...");
-
+	{
 		if(splitMask==null){
 			if(classParams.splitType==ClassificationParams.SPLIT_RANDOM)
 				splitMask = selectFunctions.getSplitMaskRandom(array, classParams.splitRatio);
@@ -209,7 +203,6 @@ public class ClassificationBody
 		return trainTestArrays;
 	}
 	//**************************************
-	//TO przetestowac
 	protected boolean savePredictionArray(FArray array, String fileName)
 	{
 		FArray predictionArray = array.clone();
@@ -221,10 +214,9 @@ public class ClassificationBody
 
 		//add scores
 		if(saveScores){
-			for(int i=0;i<decValues.length;i++)
-			{
+			for(int i=0;i<decValues.length;i++){
 				String scoreAttrName="score_"+decValues[i];
-				ExtFunctions.addAttribute(predictionArray, scoreAttrName);                
+				ExtFunctions.addAttribute(predictionArray, scoreAttrName);
 				scoreIndex[i]=predictionArray.getColIndex(scoreAttrName);
 				predictionArray.attributes[scoreIndex[i]].type=Attribute.NUMERIC;
 			}
@@ -413,10 +405,7 @@ public class ClassificationBody
 	protected PredictionResult singleTrainTest(FArray trainArray, FArray testArray)
 	{        
 		classifier.train(trainArray);
-		if(classParams.debug){
-			System.out.println("### DEBUG ### ");
-			System.out.println(classifier.toString());        	
-		}        
+		//System.out.println(classifier.toString());        	
 		classifier.test(testArray);
 		PredictionResult myPredResult = classifier.getPredResult();		
 		return myPredResult;
@@ -446,14 +435,14 @@ public class ClassificationBody
 		if(classParams.validationType==ClassificationParams.VALIDATION_CV)
 			folds=classParams.folds;
 
-		tmp.append("Average Repetition time: "+ GeneralUtils.format(experimentTime*folds,2) + " s.").append("\n");            
-		tmp.append("Average Experiment time: "+ GeneralUtils.format(experimentTime,2) + " s.").append("\n");
-		tmp.append("Average Learning time: "+ GeneralUtils.format(learningTime,2) + " s.").append("\n");
-		tmp.append("Average Testing time: "+ GeneralUtils.format(testingTime,2) + " s.").append("\n");
+		tmp.append("Average Repetition time: "+ GeneralUtils.formatFloat(experimentTime*folds,2) + " s.").append("\n");            
+		tmp.append("Average Experiment time: "+ GeneralUtils.formatFloat(experimentTime,2) + " s.").append("\n");
+		tmp.append("Average Learning time: "+ GeneralUtils.formatFloat(learningTime,2) + " s.").append("\n");
+		tmp.append("Average Testing time: "+ GeneralUtils.formatFloat(testingTime,2) + " s.").append("\n");
 
 		if(predQualityVector!=null){
 			tmp.append("\nwPredQuality: "+ Arrays.toString(predQualityVector)).append("\n");
-			tmp.append("\nwPredQuality variance: "+ GeneralUtils.format(MathUtils.variance(predQualityVector),5)).append("\n");
+			tmp.append("\nwPredQuality variance: "+ GeneralUtils.formatFloat(MathUtils.variance(predQualityVector),5)).append("\n");
 		}
 
 		return tmp.toString();

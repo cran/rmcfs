@@ -30,18 +30,21 @@ import dmLab.mcfs.MCFSParams;
 public class MCFSArrays
 {
     public FArray sourceArray;
-    
-//  ************************************    
+  //************************************
     public MCFSArrays()
     {
-        sourceArray=null;
+        sourceArray = null;
+    }    
+//  ************************************
+    public MCFSArrays(FArray array)
+    {
+        sourceArray = array;
     }
 //************************************
     public boolean loadArrays(MCFSParams mcfsParams)
     {
         sourceArray = new FArray();
-        System.out.print("Loading Input Table...");
-        File2Array file2Container=new File2Array();
+        File2Array file2Container = new File2Array();
         
         if (!file2Container.load(sourceArray, mcfsParams.inputFilesPATH + mcfsParams.inputFileName))
             return false;
@@ -49,9 +52,7 @@ public class MCFSArrays
         if (!sourceArray.checkDecisionValues())
             return false;
         
-        if (mcfsParams.debug) 
-            System.out.println("### DEBUG ### InputArray\n" + sourceArray.toString());
-        
+        //System.out.println("### DEBUG ### InputArray\n" + sourceArray.toString());        
         sourceArray.findDomains();
         
         return true;

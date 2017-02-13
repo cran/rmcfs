@@ -152,20 +152,16 @@ public class EnsembleClassifier extends Classifier {
 //  ****************************************************
     @Override
     public boolean train(FArray trainArray) 
-    {
-        if(params.verbose) System.out.println("Training...");
-        
+    {        
         //MDR DEBUG
-        //System.out.println("TRAIN:        \n"+ weightsToString());
-        
+        //System.out.println("TRAIN:\n"+ weightsToString());        
         final int classifiersNum=en.size();
         for(int i=0;i<classifiersNum;i++)
         {
             if(weights.get(i)!=0)
             {
                 ((Classifier)en.get(i)).train(trainArray);
-                if(params.verbose) 
-                    System.out.println("*** Classifier: "+ ((Classifier)en.get(i)).label+" is trained ***");
+                //System.out.println("*** Classifier: "+ ((Classifier)en.get(i)).label+" is trained ***");
             }
         }
         return true;
@@ -175,7 +171,6 @@ public class EnsembleClassifier extends Classifier {
     public boolean test(FArray testArray) 
     {               
         long start,stop;
-        if(params.verbose) System.out.println("Testing...");                
         start=System.currentTimeMillis();        
         predResult.confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
         		testArray.getDecValues(),testArray.getDecValuesStr());
@@ -194,7 +189,7 @@ public class EnsembleClassifier extends Classifier {
             if(weights.get(i)!=0)
             {
                 ((Classifier)en.get(i)).test(testArray);
-                if(params.verbose) System.out.println("*** Classifier: "+ ((Classifier)en.get(i)).label+" is tested ***");
+                //System.out.println("*** Classifier: "+ ((Classifier)en.get(i)).label+" is tested ***");
             }
         }
         
@@ -227,16 +222,12 @@ public class EnsembleClassifier extends Classifier {
             String predictedClassName=testArray.dictionary.toString(predictedDecision);            
             predResult.predictions[i]=new Prediction(realClassName,predictedClassName,null);
             
-            if(i>threshold && threshold!=0)
-            {
-                if(params.verbose) System.out.print(""+ (int)(100.0*i/testEventsNumber) + "% ");
+            if(i>threshold && threshold!=0){
                 threshold+=interval;
             }
         }
-        if(params.verbose) System.out.print("100% ");
         stop=System.currentTimeMillis();
         testingTime=(stop-start)/1000.0f;
-        if(params.verbose) System.out.println(" Done!");
         return true;
 
     }

@@ -7,11 +7,11 @@
 }
 \usage{
   \method{plot}{idgraph}(x, 
-          label.dist = 0.5, 
+          label_dist = 0.5, 
           cex = 1, \dots)}
 \arguments{
   \item{x}{\emph{idgraph/igraph} S3 object representing feature interdependencies. This object is produced by \code{\link{build.idgraph}} function.}
-  \item{label.dist}{space between the node's label and the corresponding node in the plot.}
+  \item{label_dist}{space between the node's label and the corresponding node in the plot.}
   \item{cex}{size of fonts.}
   \item{...}{additional plotting parameters.}
 }
@@ -22,20 +22,15 @@
   library(rmcfs)
   
   # create input data
-  adata <- artificial.data(rnd.features = 10)
+  adata <- artificial.data(rnd_features = 10)
   showme(adata)
   
   # Parametrize and run MCFS-ID procedure
-  result <- mcfs(class~., adata, projections = 300, projectionSize = 4, 
-                 cutoffPermutations = 0, finalCV = FALSE, finalRuleset = FALSE, 
-                 threadsNumber = 2)
+  result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 50,
+                  finalCV = FALSE, finalRuleset = FALSE, threadsNumber = 2)
 
-  # build interdependencies graph (all default parameters).
-  gid <- build.idgraph(result)
-  plot(gid)
-  
   # build interdependencies graph for top 6 features 
   # and top 12 interdependencies and plot all nodes
   gid <- build.idgraph(result, size = 6, size_ID = 12, plot_all_nodes = TRUE)
-  plot(gid, label.dist = 1)
+  plot(gid, label_dist = 1)
 }

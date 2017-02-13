@@ -1,6 +1,6 @@
 MCFS-ID and dmLab java source code is located in java/src/dmLab directory.
 
-Weka12 is slightly modified Weka 3.6.10. All changes are necessary to work with Java implementation of MCFS-ID.
+Weka12 is a slightly modified Weka 3.6.10. All changes are necessary to work with Java implementation of MCFS-ID.
 Weka12 project is publicly available on bitbucket:
 https://bitbucket.org/mdraminski/weka12
 

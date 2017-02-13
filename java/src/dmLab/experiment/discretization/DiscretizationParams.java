@@ -49,8 +49,7 @@ public class DiscretizationParams extends ExperimentParams
     @Override
     public boolean setDefault()
     {
-        verbose=true;
-        debug=false;
+        verbose = false;
 
     	label="experiment";
         inputFilesPATH = ExperimentParams.DEFAULT_DATA_PATH;

@@ -59,7 +59,7 @@ public class ComplexLink implements Comparable<ComplexLink>
         StringBuffer tmp=new StringBuffer();
         tmp.append("setId: "+setIndex);               
         tmp.append(" complexId: "+ complexIndex);
-        tmp.append(" qMeasure: "+GeneralUtils.format(qMeasure,4));
+        tmp.append(" qMeasure: "+GeneralUtils.formatFloat(qMeasure,4));
         return tmp.toString();
     }
 //  ***********************************************

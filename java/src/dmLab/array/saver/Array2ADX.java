@@ -30,8 +30,8 @@ public class Array2ADX extends Array2String
 {	
 	public Array2ADX()
 	{
-		separator=',';
-		nullLabel="?";
+		separator = ',';
+		nullLabel = "?";
 	}
 	//************************************
 	@Override

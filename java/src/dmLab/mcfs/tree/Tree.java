@@ -29,102 +29,102 @@ import dmLab.mcfs.tree.parser.TreeParser;
 
 public class Tree 
 {
-    protected TreeNode rootNode;
-    protected HashMap<Integer,TreeNode> nodes;
+	protected TreeNode rootNode;
+	protected HashMap<Integer,TreeNode> nodes;
 
-    protected Object[] nodesArray;
-    protected int nodeIterator;
+	protected Object[] nodesArray;
+	protected int nodeIterator;
 
-    //****************************************
-    public Tree()
-    {
-        rootNode = null;
-        nodes = new HashMap<Integer,TreeNode>();
-        nodesArray = null;
-    }
-    //****************************************
-    public Tree(TreeParser treeParser)
-    {    	
-    	parseTree(treeParser);
-    }
-    //****************************************
-    public TreeNode parseTree(TreeParser treeParser)
-    {
-	    init();
-	    rootNode.parseTree(treeParser);
-	    fillNodes();
-        return rootNode;
-    }
-    //****************************************
-    public void init()
-    {
-        nodesArray = null;        
-    	final Integer rootInt = new Integer(-1);
-        rootNode = new TreeNode(null,rootInt);
-        rootNode.level = -1;
-        rootNode.nodeIndicators.nodeIndex=-1;
-        nodes = new HashMap<Integer,TreeNode>();
-        nodes.put(rootInt,rootNode);  
-    }  
-    //****************************************
-    public void addNode(TreeNode parent,TreeNode node)
-    {
-        parent.addKid(node);
-        nodes.put(node.getNodeID(),node);
-    }
-    //****************************************  
-    public TreeNode getRootNode()
-    {
-        return rootNode;
-    }
-    //****************************************
-    public String toString()
-    {       
-        if(rootNode!=null){
-            return rootNode.toString();
-        }else{
-            StringBuffer tmp=new StringBuffer();
-            final Object[] values=nodes.values().toArray();
-            for(int i=0;i<values.length;i++)
-                tmp.append( ((TreeNode)values[i]).toString() );
-            return tmp.toString(); 
-        }
-    }
-    //****************************************
-    public TreeNode getNode(int nodeID)
-    {    
-        return nodes.get(new Integer(nodeID));
-    }
-    //****************************************
-    /*
+	//****************************************
+	public Tree()
+	{
+		rootNode = null;
+		nodes = new HashMap<Integer,TreeNode>();
+		nodesArray = null;
+	}
+	//****************************************
+	public Tree(TreeParser treeParser)
+	{    	
+		parseTree(treeParser);
+	}
+	//****************************************
+	public TreeNode parseTree(TreeParser treeParser)
+	{
+		init();
+		rootNode.parseTree(treeParser);
+		fillNodes();
+		return rootNode;
+	}
+	//****************************************
+	public void init()
+	{
+		nodesArray = null;        
+		final Integer rootInt = new Integer(-1);
+		rootNode = new TreeNode(null,rootInt);
+		rootNode.level = -1;
+		rootNode.nodeIndicators.nodeIndex=-1;
+		nodes = new HashMap<Integer,TreeNode>();
+		nodes.put(rootInt,rootNode);  
+	}  
+	//****************************************
+	public void addNode(TreeNode parent,TreeNode node)
+	{
+		parent.addKid(node);
+		nodes.put(node.getNodeID(),node);
+	}
+	//****************************************  
+	public TreeNode getRootNode()
+	{
+		return rootNode;
+	}
+	//****************************************
+	public String toString()
+	{       
+		if(rootNode!=null){
+			return rootNode.toString();
+		}else{
+			StringBuffer tmp = new StringBuffer();
+			final Object[] values = nodes.values().toArray();
+			for(int i=0;i<values.length;i++)
+				tmp.append( ((TreeNode)values[i]).toString() );
+			return tmp.toString(); 
+		}
+	}
+	//****************************************
+	public TreeNode getNode(int nodeID)
+	{    
+		return nodes.get(new Integer(nodeID));
+	}
+	//****************************************
+	/*
      nodes are empty
      to fill it there is need to add method finalize
      that fills nodes by recursion (node by node) 
-    */   
-    private void fillNodes()
-    {
-        nodeIterator = -1;
-        rootNode.finalize(this);
-    }
-    //****************************************
-    public void initNodesIterating()
-    {                
-        nodeIterator=0;              
-        if(nodesArray==null)
-            nodesArray=nodes.values().toArray();
+	 */   
+	private void fillNodes()
+	{
+		nodeIterator = -1;
+		rootNode.finalize(this);
+	}
+	//****************************************
+	public void initNodesIterating()
+	{                
+		nodeIterator = 0;
+		if(nodesArray == null)
+			nodesArray = nodes.values().toArray();
 
-        //DEBUG MDR
-        /*
+		//DEBUG MDR
+		/*
         for(int i=0;i<nodesArray.length;i++)
             System.out.println(" "+((TreeNode)nodesArray[i]).level+
                     " "+((TreeNode)nodesArray[i]).getNodeID()+
                     " "+((TreeNode)nodesArray[i]).nodeIndicators.nodeIndex+
                     " "+((TreeNode)nodesArray[i]).condition.toString());
         //*/
-    }
-    //****************************************
-    public TreeNode getNextNode()
-    {
+	}
+	//****************************************
+	public TreeNode getNextNode()
+	{
 		if(nodesArray == null)
 			initNodesIterating();
 		while(nodeIterator<nodesArray.length){
@@ -133,12 +133,12 @@ public class Tree
 				return nodeTmp;			
 		}
 		return null;
-    }
-    //****************************************
-    public int size()
-    {
-        return nodes.size();
-    }
-    //****************************************
-    
+	}
+	//****************************************
+	public int size()
+	{
+		return nodes.size();
+	}
+	//****************************************
+
 }

@@ -47,8 +47,8 @@ public class Projection
     //*************************************
     public Projection(MCFSParams mcfsParams, Random random)
     {
-        this.mcfsParams=mcfsParams;
-        split=new Split(mcfsParams, random);
+        this.mcfsParams = mcfsParams;
+        split = new Split(mcfsParams, random);
         selectFunctions = new SelectFunctions(random);
     }
     //*************************************
@@ -68,7 +68,7 @@ public class Projection
         }
         
         FArray projectionArray=null;
-        int projectionSize=mcfsParams.projectionSizeAttr;
+        int projectionSize = mcfsParams.projectionSizeValue;
         
         if(projectionSize>=inputArray.colsNumber())
             projectionSize=inputArray.colsNumber()-1;
@@ -80,30 +80,23 @@ public class Projection
         for(int i=0; i<attrRI.length; i++)
         	attrRI[i].addProjections(projectionArray);
 
-        if (mcfsParams.verbose) 
-        	System.out.println("projectionArray# "+projectionArray.info());
-        
+        //System.out.println("*** MDR DEBUG *** projectionArray \n"+projectionArray.info());        
         //SPLIT LOOP
-        for (int j = 0; j < mcfsParams.splits; j++){
-            if (mcfsParams.verbose) 
-            	System.out.println("*** SPLIT: " + j + " *** ");            
-            FArray balancedArray=projectionArray;
-            if(mcfsParams.balanceRatio>0){           
-                if (mcfsParams.verbose)	
-                	System.out.println("Balancing table...");          
-                balancedArray = selectFunctions.balanceClasses(projectionArray, mcfsParams.balanceRatio);
-                if (mcfsParams.verbose) 
-                	System.out.println("balancedArray# "+balancedArray.info());
+        for (int j = 0; j < mcfsParams.splits; j++){            
+        	//System.out.println("*** MDR DEBUG *** SPLIT: " + j + " *** ");            
+            FArray balancedArray = projectionArray;
+            if(mcfsParams.tmpBalancedClassSizes != null){
+                //System.out.println("*** MDR DEBUG *** mcfsParams.tmpBalancedClassSizes# "+Arrays.toString(mcfsParams.tmpBalancedClassSizes));
+            	balancedArray = selectFunctions.balanceClasses(projectionArray, mcfsParams.tmpBalancedClassSizes);
+                //System.out.println("*** MDR DEBUG *** balancedArray# \n"+balancedArray.info());
             }
             
             FArray limitedSizeArray=balancedArray;
             if(mcfsParams.splitSetSize>0){
-                if (mcfsParams.verbose) 
-                	System.out.println("Decreasing number of objects...");
             	limitedSizeArray = (FArray)selectFunctions.selectRowsRandom(balancedArray, (float)mcfsParams.splitSetSize);
-            	if (mcfsParams.verbose) 
-            		System.out.println("limitedSizeArray# "+limitedSizeArray.info());
             }
+        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+limitedSizeArray.info());
+        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+limitedSizeArray.toString());
             
             //single prediction and confusion matrix
             PredictionResult predRes = split.splitLoop(classifier, limitedSizeArray, attrRI, attrIDependencies);

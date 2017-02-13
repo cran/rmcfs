@@ -23,36 +23,42 @@
  *******************************************************************************/
 package dmLab.mcfs;
 
+import java.io.File;
+
 import dmLab.DMLabInfo;
 import dmLab.mcfs.mcfsEngine.MCFSExperiment;
 
 public class MCFS
 {
-//	*************************************
+	//	*************************************
 	public static void main(String[] args)
 	{		
 		DMLabInfo dmLabInfo = new DMLabInfo();      
-        System.out.println(dmLabInfo.toString());
-        
-        String paramsFileName;      
-        if(args.length>=1)
-            paramsFileName=args[0];
-        else
-        {
-            System.err.println("Missing parameters file!");
-            return;
-        }
-        
-        MCFSParams mcfsParams=new MCFSParams();
-        if(mcfsParams.load("",paramsFileName)){
-	        for(int i=0; i<mcfsParams.inputFiles.length; i++){
-	        	mcfsParams.inputFileName = mcfsParams.inputFiles[i];
-	        	System.out.println("Input File: " + mcfsParams.inputFileName);
-		        MCFSExperiment mcfs = new MCFSExperiment(mcfsParams.seed);
-		        mcfs.init(mcfsParams);
-		        mcfs.run();
-	        }
-        }
+		System.out.println(dmLabInfo.toString());
+
+		String paramsFileName;      
+		if(args.length>=1){
+			paramsFileName=args[0];
+		}else{
+			System.err.println("Missing parameters file!");
+			return;
+		}
+
+		MCFSParams mcfsParams = new MCFSParams();
+
+		File tmpDir = new File(MCFSParams.TMP_PATH);
+		if(!tmpDir.exists()) {
+			tmpDir.mkdir();
+		}
+
+		if(mcfsParams.load("", paramsFileName)){
+			for(int i=0; i<mcfsParams.inputFiles.length; i++){
+				mcfsParams.inputFileName = mcfsParams.inputFiles[i];
+				//System.out.println("Input File: " + mcfsParams.inputFileName);
+				MCFSExperiment mcfs = new MCFSExperiment(mcfsParams);
+				mcfs.run();
+			}
+		}
 	}
-//	*************************************
+	//	*************************************
 }

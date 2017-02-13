@@ -31,7 +31,7 @@ public class Array2File
 {
 	public FileType fileType;
 	private Array2String container2String;	
-    public char separatorCSV=',';
+    public char separatorCSV = ',';
     
 //****************************************
 	public Array2File()
@@ -48,12 +48,13 @@ public class Array2File
 	{		        
 		if(fileType.getType()==FileType.ADX)
 			container2String=new Array2ADX();
-		else if(fileType.getType()==FileType.ARFF)			
+		else if(fileType.getType()==FileType.ADH)
+			container2String=new Array2ADH();
+		else if(fileType.getType()==FileType.ARFF)
 			container2String=new Array2Arff();
-		else if(fileType.getType()==FileType.CSV)
-        {
+		else if(fileType.getType()==FileType.CSV){
 			container2String=new Array2CSV();
-            container2String.separator=separatorCSV;
+            container2String.separator = separatorCSV;
         }
         else if(fileType.getType()==FileType.DTA)          
             container2String=new Array2DTA();

@@ -23,8 +23,11 @@
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
 import java.io.BufferedReader;
+import java.io.File;
 
 import dmLab.array.meta.Attribute;
+import dmLab.array.meta.AttributeDef;
+import dmLab.utils.FileUtils;
 import dmLab.utils.MyString;
 import dmLab.utils.StringUtils;
 
@@ -32,12 +35,12 @@ import dmLab.utils.StringUtils;
 
 public class FileLoaderADX extends FileLoader 
 {
-	private boolean allDecision=false;
+	private boolean allDecision = false;
 	//	************************************************
-	//	*** class loads adx file into array class
+	//	*** load adx file into array class
 	//	************************************************	
 	@Override
-	protected boolean privateInitializator()
+	protected boolean myInit()
 	{
 		separator=',';
 		nullLabels.clear();
@@ -47,12 +50,13 @@ public class FileLoaderADX extends FileLoader
 		nullLabels.add("NA");
 		nullLabels.add("Null");
 		commentChar="#";
+		fileType = FileType.ADX;
 		return true;
 	}
 	//	************************************************
 	//	*** method parses file and finds attribute and event numbers
 	@Override
-	protected boolean parseInputFile(BufferedReader inputFile)
+	protected boolean parseInputFile(File inputFile)
 	{
 		boolean attributeSection=false;
 		boolean eventSection=false;
@@ -61,9 +65,15 @@ public class FileLoaderADX extends FileLoader
 		int startLine,stopLine;
 		String line="";
 
+		BufferedReader fileReader;
+		if((fileReader = FileUtils.openFile(inputFile)) == null){
+			FileUtils.closeFile(fileReader);
+			return false;
+		}
+		
 		do{
 			try{
-				line=inputFile.readLine();
+				line = fileReader.readLine();
 				lineCount++;
 			}catch (Exception e) {
 				System.err.println("Error reading input file.");
@@ -151,16 +161,19 @@ public class FileLoaderADX extends FileLoader
 				}//end if(bracketOpen==true)
 			}
 		}while(line!=null); //end while
-		System.out.println("Simple Parsing Done!");
+		
+		if(!FileUtils.closeFile(fileReader))
+			return false;
+		
 		return true;
 	}
 	//	************************************************
 	//*** method reads attributes and events into memory
 	@Override
-	protected boolean readInputFile(BufferedReader inputFile)
+	protected boolean readInputFile(File inputFile)
 	{
-		int attrPointer=0;
-		int eventPointer=0;
+		int attrIndex=0;
+		int eventIndex=0;
 		boolean attributeSection=false;
 		boolean eventSection=false;
 		boolean bracketOpen=false;
@@ -168,9 +181,14 @@ public class FileLoaderADX extends FileLoader
 		int attributeCount=0;
 		int startLine,stopLine;
 		String line="";
+
+		BufferedReader fileReader;
+		if((fileReader = FileUtils.openFile(inputFile)) == null)
+			return false;
+		
 		do{
 			try{
-				line=inputFile.readLine();
+				line = fileReader.readLine();
 				lineCount++;
 			}
 			catch (Exception e) {
@@ -212,12 +230,12 @@ public class FileLoaderADX extends FileLoader
 						if(line.substring(startLine,stopLine).endsWith("ignore")){
 							ignoredAttributeMask[attributeCount++]=true;
 						}else{
-							if(!loadAttribute(line.substring(startLine,stopLine),attrPointer)){
+							if(!loadAttribute(line.substring(startLine,stopLine),attrIndex)){
 								System.err.println("Error reading attribute! Line: "+lineCount);
 								return false;
 							}
 							ignoredAttributeMask[attributeCount++]=false;
-							attrPointer++;						
+							attrIndex++;						
 						}
 
 						if(line.endsWith("}")){
@@ -227,7 +245,7 @@ public class FileLoaderADX extends FileLoader
 					}//end if
 					// Reading events section
 					if(eventSection==true){
-						if(!loadEvent(line.substring(startLine,stopLine), eventPointer)){
+						if(!loadEvent(line.substring(startLine,stopLine), eventIndex)){
 							System.err.println("Error reading event. Line: "+lineCount);
 							return false;
 						}
@@ -235,16 +253,19 @@ public class FileLoaderADX extends FileLoader
 							bracketOpen=false;
 							eventSection=false;
 						}
-						eventPointer++;
+						eventIndex++;
 					}//end if
 				}//end if(bracketOpen==true)
 			}
 		}while(line!=null); //end while
 
-		if(allDecision==true)
+		if(allDecision==true){
 			myArray.setAllDecValues();
-		System.out.println("Reading file has been done.");
-
+		}
+		
+		if(!FileUtils.closeFile(fileReader))
+			return false;
+		
 		return true;
 	}
 
@@ -252,97 +273,123 @@ public class FileLoaderADX extends FileLoader
 	//	*** this method reads info about one attribute
 	private boolean loadAttribute(String inputLine, int attrPointer)
 	{
-		String decisionValues[]=null;
-		char separators[]=new char[]{' ','\t'};        
-		String[] list=StringUtils.tokenize(inputLine,separators,new char[] {'\"','\''});        
-
-		if(list[list.length-1].equalsIgnoreCase("ignore")==true)
-			return true;
-
-		for(int i=0;i<list.length;i++)
-		{
-			String label=list[i];
-			if(i==0){
-				MyString s = new MyString(label);
-				s.remove('\'');
-				s.remove('\"');
-				myArray.attributes[attrPointer].name=s.toString();
-			}
-			else if(i==1) //attribute type
-			{
-				if(Attribute.convert(label)==-1){
-					System.err.println("Incorrect type of attribute: "+list[0]+" type: "+label);
-					return false;
-				}
-				else
-					myArray.attributes[attrPointer].type = Attribute.convert(label);
-			}else if(i==2){
-				//attribute role
-				if(label.equalsIgnoreCase("ignore")==false && label.toLowerCase().startsWith("decision")==false){
-					System.err.println("Incorrect role of attribute: "+list[0]+" role: "+label);
-					return false;
-				}else{					
-					if(label.toLowerCase().startsWith("decision")==true){
-						if(label.toLowerCase().equalsIgnoreCase("decision")){
-							myArray.setDecAttrIdx(attrPointer);
-							allDecision = true;
-						}else if((decisionValues = decodeDecValues(label))!=null){
-							myArray.setDecAttrIdx(attrPointer);
-							if(decisionValues.length==1 && decisionValues[0].equalsIgnoreCase("all"))
-								allDecision = true;
-							else
-								myArray.setDecValues(decisionValues);
-						}else{
-							System.err.println("Error decoding. Word: "+label);
-							return false;
-						}
-					}                    
+		AttributeDef attr = parseAttribute(inputLine);
+		if(attr != null){
+			myArray.attributes[attrPointer] = (Attribute)attr;
+			if(attr.role == AttributeDef.ROLE_DECISION){
+				myArray.setDecAttrIdx(attrPointer);
+				if(attr.decValues != null && attr.decValues.length>0){
+					myArray.setDecValues(attr.decValues);
+				}else{
+					allDecision = true;
 				}
 			}
-		} 
-		if(myArray.attributes[attrPointer].type==Attribute.UNKNOWN){
-			System.err.println("Type is not dedined for attribute: "+list[0]);
+		}else
 			return false;
-		}
+			
 		return true;
 	}
 	//	************************************************
-	//	**** decodes decision values where input string contains commas
-	private String[] decodeDecValues(String inputString)
+	public static AttributeDef parseAttribute(String inputString)
 	{
-		String valuesChain;
+		AttributeDef attr = new AttributeDef(); 
+		String decisionValues[] = null;
+		String[] list = StringUtils.tokenize(inputString, new char[]{' ','\t'}, new char[] {'\"','\''});        
 
-		//numeric target
-		if(inputString.trim().equalsIgnoreCase("decision"))
+		//concatenate if there is "decision	(all)" not "decision(all)"
+		if(list.length == 4){
+			if(list[2].equalsIgnoreCase("decision")){
+				list[2] = list[2] + list[3];
+			}else{
+				System.err.println("Incorrect definition of the attribute (should be: 'name type role'). There is: " + inputString);
+				return null;				
+			}				
+		}
+		
+		for(int i=0;i<list.length;i++){
+			String label = list[i];
+			if(i==0){
+				//attribute name
+				MyString s = new MyString(label);
+				s.remove('\'');
+				s.remove('\"');
+				attr.name = s.toString();
+			}else if(i==1){
+				//attribute type
+				if(Attribute.type2Int(label) != -1){
+					attr.type = Attribute.type2Int(label);
+				}else{
+					System.err.println("Incorrect type of attribute: "+list[0]+" type: "+label);
+					return null;
+				}
+			}else if(i==2){
+				if(label.equalsIgnoreCase("ignore")){
+					attr.role = AttributeDef.ROLE_IGNORE;
+				}else if(label.toLowerCase().startsWith("decision")){
+						attr.role = AttributeDef.ROLE_DECISION;						
+						decisionValues = parseDecValues(label, ',');
+						if(decisionValues == null)
+							return null;
+						//else if(decisionValues.length > 0)
+						else
+							attr.decValues = decisionValues;						
+				}else{
+					System.err.println("Incorrect role of attribute: "+list[0]+" role: "+label);
+					return null;
+				}					
+			}
+		}
+		
+		if(attr.type==Attribute.UNKNOWN){
+			System.err.println("Type is not defined for attribute: "+list[0]);
 			return null;
-
+		}
+		return attr;
+	}	
+	//	************************************************
+	//	**** decodes decision values where input string contains commas
+	private static String[] parseDecValues(String inputString, char separator)
+	{
+		//numeric target and all
+		if(inputString.trim().equalsIgnoreCase("decision"))
+			return new String[0];
+		
 		if(inputString.indexOf("(")==-1 || inputString.indexOf(")")==-1){
 			System.err.println("Missing bracket!");
 			return null;
-		}
-		else if(inputString.indexOf(")") < inputString.indexOf("(")){
+		}else if(inputString.indexOf(")") < inputString.indexOf("(")){
 			System.err.println("Unexpected bracket closing.");
 			return null;
 		}
 
-		valuesChain=inputString.substring( inputString.indexOf("(")+1,inputString.indexOf(")")).trim();
-		if(valuesChain.length()==0){
+		String valuesString = inputString.substring(inputString.indexOf("(")+1, inputString.indexOf(")")).trim();
+		
+		if(valuesString.length()==0){
 			System.err.println("Decision values are not defined.");
 			return null;
 		}
-		String[] list=StringUtils.tokenizeString(valuesChain,new char[]{separator},false);
-		final int listSize=list.length;
-		String[] decisionValues=new String[listSize];
-
-		for (int i = 0; i < listSize; i++){
-			if (list[i].length() != 0){
-				decisionValues[i] = list[i];
-			}else{
+		String[] decValues = StringUtils.tokenizeString(valuesString, new char[]{separator},false);
+		if(decValues.length == 1 && decValues[0].equalsIgnoreCase("all")){
+			return new String[0];
+		}
+		
+		for (int i = 0; i < decValues.length; i++){
+			if (decValues[i].length() == 0){
 				System.err.println("Missing decision value!");
 				return null;
 			}
 		}
-		return decisionValues;
+		return decValues;
+	}
+	//	************************************************
+	@Override
+	protected boolean readHeaderFile(File inputFile) {
+		return true;
+	}
+	//	************************************************
+	@Override
+	protected File getDataFile(File inputFile) {
+		return inputFile;
 	}
 	//	************************************************
 }

@@ -45,13 +45,13 @@ public class RuleFamily
     protected double scores[];
     
     public static final int precision=5;
-	public boolean verbose=true;
-	public boolean debug=false;    
     public float finalSelectionTime=0;
     
     public static final int SENSITIVITY_NO=0;
     public static final int SENSITIVITY_ARRAY=1;
     public static final int SENSITIVITY_APRIORI=2;
+    
+	public boolean verbose = false;
 	//*************************************
 	public RuleFamily(int decisionValuesNumber,int maxComplexLength,ADXParams adxParams)
 	{
@@ -93,17 +93,14 @@ public class RuleFamily
 			selectorListArray[decValIndex].createSelectorBase(trainArray,decValIndex);
 			if(verbose) System.out.println(" Selectors base created. Selectors base size = "+selectorListArray[decValIndex].size());
 			
-			// START DEBUG INFO
-			if(adxParams.debug) System.out.println(selectorListArray[decValIndex].toString(trainArray));
-			// END DEBUG INFO
+			//System.out.println("DEBUG\n" + selectorListArray[decValIndex].toString(trainArray));
 			
 			if(verbose) System.out.println("Creating rules...");
 			ruleSetArray[decValIndex].createRules(trainArray,selectorListArray[decValIndex],decValIndex);
-			//bofore merging i delete complexes that have p<n           
+			//before merging i delete complexes that have p<n           
             ruleSetArray[decValIndex].deleteComplexesPosLessNeg();
             
-            if(adxParams.mergeCondition!=Complex.MERGE_NO)
-			{
+            if(adxParams.mergeCondition!=Complex.MERGE_NO){
 				if(verbose) System.out.print("Merging rules...");
 				ruleSetArray[decValIndex].mergeRules(selectorListArray[decValIndex],trainArray);
 				if(verbose) System.out.println(" Rules merged.");
@@ -111,15 +108,13 @@ public class RuleFamily
 			
 			if (adxParams.useSensitivity==SENSITIVITY_ARRAY)
 				classSensitivity[decValIndex] = adxParams.getSensitivity(decValIndex);
-            else // SENSITIVITY_NO || SENSITIVITY_APRIORI
-            {
+            else{ // SENSITIVITY_NO || SENSITIVITY_APRIORI
                 double posEvents=trainArray.getADXDomain(trainArray.getDecAttrIdx()).getTotalPositives(decValIndex);                
                 classSensitivity[decValIndex] = posEvents / eventNumber;
-                if(verbose) System.out.println(" Probability of the class occurence = "+ GeneralUtils.format(classSensitivity[decValIndex],precision));
+                if(verbose) System.out.println(" Probability of the class occurence = "+ GeneralUtils.formatFloat(classSensitivity[decValIndex],precision));
             }
 						
-			if(verbose) 
-			{
+			if(verbose){
 				System.out.print("Calculating Coverages...");
 				coverage=calcCoverage(trainArray,ruleSetArray[decValIndex],selectorListArray[decValIndex],decisionValues[decValIndex]);
 				coverage.precision=precision;
@@ -128,7 +123,9 @@ public class RuleFamily
             
             start=System.currentTimeMillis();
             SelectRules selectRules=new SelectRules(); 
-			if(verbose) System.out.print("Selecting significant rules...");
+			if(verbose)
+				System.out.print("Selecting significant rules...");
+			
 			if(adxParams.selSignificantMethod==0)
 				ruleSetArray[decValIndex].deleteComplexesCoversNeg();
 			else if(adxParams.selSignificantMethod==1)
@@ -144,11 +141,9 @@ public class RuleFamily
             
             stop=System.currentTimeMillis();
             finalSelectionTime+=(stop-start)/1000.0f; 
-			
-            if(verbose) System.out.println(" Significant rules have been selected.");
-            
-			if(verbose)
-			{
+			            
+			if(verbose){
+            	System.out.println(" Significant rules have been selected.");
 				System.out.print("Calculating Coverages...");
 				coverage=calcCoverage(trainArray,ruleSetArray[decValIndex],selectorListArray[decValIndex],decisionValues[decValIndex]);				
 				coverage.precision=precision;
@@ -369,9 +364,8 @@ public class RuleFamily
 	{
 		for(int i=0;i<ruleSetArray.length;i++)
 		{
-			ruleSetArray[i].verbose=verbose;
-			ruleSetArray[i].debug=debug;
-			selectorListArray[i].verbose=verbose;			
+			ruleSetArray[i].verbose = verbose;
+			selectorListArray[i].verbose = verbose;			
 		}
 	}
 	//*************************************

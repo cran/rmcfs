@@ -190,7 +190,7 @@ public class GraphViewerBody extends javax.swing.JFrame implements ActionListene
     			connections.findMinMaxID();
 
     			//load also importance file
-    			File importanceFile = new File(experimentPrefix+"_"+MCFSParams.FILESUFIX_IMPORTANCES);
+    			File importanceFile = new File(experimentPrefix+"_"+MCFSParams.FILESUFIX_RI);
     			System.out.println("Loading importances file: " + importanceFile.getAbsolutePath());
     			if(!toolBar.loadImportanceFile(importanceFile))
     				System.out.println("Lading importances failed.");

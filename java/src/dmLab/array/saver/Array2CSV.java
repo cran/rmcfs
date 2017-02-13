@@ -29,8 +29,8 @@ public class Array2CSV extends Array2String
 {	
 	public Array2CSV()
 	{
-		separator=',';
-		nullLabel="NA";
+		separator = ',';
+		nullLabel = "NA";
 	}
 	//************************************
 	@Override

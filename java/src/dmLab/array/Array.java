@@ -28,7 +28,7 @@ import dmLab.array.meta.Attribute;
 
 public abstract class Array implements Cloneable
 {
-	public static String SPACEVALUE="_";
+	public static String SPACE_CHAR="_";
 
 	public Attribute[] attributes;
 	protected int decAttrIdx;

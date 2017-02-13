@@ -48,9 +48,9 @@ public class Coverage
     public String toString()
 	{
 		StringBuffer tmp=new StringBuffer();
-		tmp.append(" Cov: ").append(GeneralUtils.format(coverage,precision));
-		tmp.append(" pCov: ").append(GeneralUtils.format(posCoverage,precision));
-		tmp.append(" nCov: ").append(GeneralUtils.format(negCoverage,precision));		
+		tmp.append(" Cov: ").append(GeneralUtils.formatFloat(coverage,precision));
+		tmp.append(" pCov: ").append(GeneralUtils.formatFloat(posCoverage,precision));
+		tmp.append(" nCov: ").append(GeneralUtils.formatFloat(negCoverage,precision));		
 		return tmp.toString();
 	}
 	//******************************

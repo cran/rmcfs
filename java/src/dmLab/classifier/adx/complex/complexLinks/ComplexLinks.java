@@ -197,16 +197,14 @@ public class ComplexLinks
                 alternativeScore=(currPos/sumPos);
             }
         }
-        if(Double.isNaN(score))
-        {
+        if(Double.isNaN(score)){
             System.err.println("Error! Score is NaN for eventIndex="+eventIndex);
             System.err.println("# sumPos="+sumPos+" sumNeg="+sumNeg);
             System.err.println("# currPos="+currPos+" currNeg="+currNeg);
             System.err.println("# activeComplexes="+activeComplexes+" covered="+covered);
             System.err.println("# probability="+probability+" avgProbability="+avgProbability);
         }
-        else if(Double.isInfinite(score))
-        {
+        else if(Double.isInfinite(score)){
             System.err.println("Error! Score is Infinite for eventIndex="+eventIndex);
             System.err.println("# sumPos="+sumPos+" sumNeg="+sumNeg);
             System.err.println("# currPos="+currPos+" currNeg="+currNeg);

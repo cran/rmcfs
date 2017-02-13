@@ -1,11 +1,15 @@
 ###############################
 #plot.mcfs
 ###############################
-plot.mcfs <- function(x, type=c("ri", "id", "distances", "features", "cv", "cmatrix"),
-                      size=NA,
-                      plot_permutations = F, 
-                      measure = c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"),
-                      l_margin = 10, 
+plot.mcfs <- function(x, type = c("ri", "id", "distances", "features", "cv", "cmatrix", "heatmap"),
+                      size = NA,
+                      ri_permutations = c("max", "all", "sorted", "none"),
+                      diff_bars = TRUE,
+                      features_margin = 10,
+                      cv_measure = c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"),
+                      heatmap_norm = c('none', 'norm', 'scale'),
+                      heatmap_fun = c('median', 'mean'),
+                      heatmap_colors = c('white', 'red'),
                       cex = 1, ...){
   mcfs_result <- x
   if(class(mcfs_result)!="mcfs"){
@@ -14,50 +18,72 @@ plot.mcfs <- function(x, type=c("ri", "id", "distances", "features", "cv", "cmat
   
   size <- ceiling(size)
   
-  type <- type[1]
+  type <- tolower(type[1])
   if(type == "ri"){
-    mcfs.plot.RI(mcfs_result, size, plot_permutations, cex)
+    mcfs.plot.RI(mcfs_result, size = size, ri_permutations, diff_bars, cex = cex)
   }else if(type == "id"){
-    mcfs.plot.ID(mcfs_result, size, cex)
+    mcfs.plot.ID(mcfs_result, size = size, diff_bars, cex = cex)
   }else if(type == "distances"){
-    mcfs.plot.distances(mcfs_result, size, cex)
+    mcfs.plot.distances(mcfs_result, size = size, cex = cex)
   }else if(type == "features"){
-    mcfs.plot.features(mcfs_result, size, cex = 0.8*cex, l_margin)
+    mcfs.plot.features(mcfs_result, size = size, cex = 0.8 * cex, features_margin)
   }else if(type == "cv"){
-    mcfs.plot.cv(mcfs_result, measure, cex)
+    mcfs.plot.cv(mcfs_result, cv_measure, cex = cex)
   }else if(type == "cmatrix"){
     mcfs.plot.cmatrix(mcfs_result)
+  }else if(type == "heatmap"){
+    mcfs.plot.heatmap(mcfs_result, size = size, norm = heatmap_norm, fun = heatmap_fun, colors = heatmap_colors, cex = cex)
   }else{
-    mcfs.plot.RI(mcfs_result, size, plot_permutations, cex)
+    mcfs.plot.RI(mcfs_result, size, ri_permutations, diff_bars, cex)
   }
 }
 
 ###############################
 #mcfs.plot.RI
 ###############################
-mcfs.plot.RI <- function(mcfs_result, size=NA, plot_permutations = F, cex=1){
-  if(plot_permutations & any(names(mcfs_result)=="permutations")){
-    mcfs.plot.importances(mcfs_result$RI, mcfs_result$permutations, mcfs_result$cutoff_value, size, cex)
+mcfs.plot.RI <- function(mcfs_result, size = NA, 
+                         plot_permutations = c("max", "all", "sorted", "none"),
+                         plot_diff_bars = T, cex = 1){
+  
+  if(is.na(size)){
+    size <- min(mcfs_result$cutoff_value * 10, nrow(mcfs_result$RI))
+  }
+  
+  plot_permutations <- tolower(plot_permutations[1])
+  if(!plot_permutations %in% c("max", "all", "sorted", "none"))
+    plot_permutations <- "max"
+      
+  if(plot_permutations != "none" & any(names(mcfs_result)=="permutations")){
+    mcfs.plot.importances(x = mcfs_result$RI, size,
+                          permutations = mcfs_result$permutations, 
+                          cutoff_value = mcfs_result$cutoff_value, 
+                          plot_permutations, plot_diff_bars, cex)
   }else{
-    mcfs.plot.importances(mcfs_result$RI, NULL, mcfs_result$cutoff_value, size, cex)
+    mcfs.plot.importances(x = mcfs_result$RI, size, 
+                          permutations = NULL, 
+                          cutoff_value = mcfs_result$cutoff_value,
+                          plot_permutations = NA, plot_diff_bars, cex)
   }
 }
 
 ###############################
 #mcfs.plot.ID
 ###############################
-mcfs.plot.ID <- function(mcfs_result, size=NA, cex=1){
+mcfs.plot.ID <- function(mcfs_result, size = NA, plot_diff_bars = T, cex = 1){
   if(all(names(mcfs_result)!="ID")){
     warning("ID-Graph edges are not collected. Object 'mcfs_result$ID' does not exist.")
   }else{
-    mcfs.plot.importances(mcfs_result$ID, NULL, NA, size, cex)
+    mcfs.plot.importances(x = mcfs_result$ID, size, 
+                          permutations = NULL, cutoff_value = NA, 
+                          plot_permutations = NA, plot_diff_bars, cex)
   }
 }
 
 ###############################
 #mcfs.plot.importances
 ###############################
-mcfs.plot.importances <- function(x, permutations, cutoff_value=NA, size=NA, cex=1){
+mcfs.plot.importances <- function(x, size = NA, permutations = NULL, cutoff_value = NA,
+                                  plot_permutations = NA, plot_diff_bars = T, cex = 1){
   if(any(names(x) %in% c("RI_norm"))){
     importance <- x$RI_norm
     attribute <- x$attribute
@@ -73,74 +99,107 @@ mcfs.plot.importances <- function(x, permutations, cutoff_value=NA, size=NA, cex
     step <- max(tail(b[maxw/b>5],1),1,na.rm=T)
     abln <- seq(0,maxw,step)
   }else{
-    print("It is not a 'RI' or 'ID' dataframe. It does not contain columns: 'RI_norm' or 'weight'!")
+    stop("Input data.frame is not a 'RI' or 'ID' type. It does not contain columns: 'RI_norm' or 'weight'!")
     return(NULL)    
   }
   
-  #col_hi <- "firebrick"
   col_hi <- "red"
   col_low <- colors()[215]
-  #col_diff <- "dodgerblue"
   col_diff <- "blue"
   
-  #plot importances
-  if(is.na(size))
-    size <- length(importance)
-  importance <- head(importance, size)
+  #set importances
+  if(is.na(size)){
+    #size <- length(importance)
+    size <- min(500, nrow(length(importance)))
+  }
   
-  y_lim <- c(0,max(importance))
+  importance <- head(importance, size)
+  y_lim <- c(0, max(importance))
   y_lim[2] <- y_lim[2] + (y_lim[2] * 0.2)
-  #plot diff  
-  diff_RI <- c(0,abs(diff(importance,lag=1)))
-  b <- barplot(diff_RI, col=col_diff, axes=T, ylab=shortlabel, xlab = "attribute", main=mainlabel,
+  
+  legend_labels <- shortlabel
+  legend_colors <- col_hi
+  legend_lty <- 1
+  legend_lwd <- 3
+  
+  #plot diff bars
+  if(plot_diff_bars){
+    diff_RI <- c(0, abs(diff(importance, lag = 1)))
+    legend_labels <- c(legend_labels, paste0("diff(",shortlabel,")"))
+    legend_colors <- c(legend_colors, col_diff)
+    legend_lty <- c(legend_lty, 1)
+    legend_lwd <- c(legend_lwd, 3)
+    
+  }else{
+    diff_RI <- rep(NA, length(importance))
+  }
+
+  #plot main barplot
+  b <- barplot(diff_RI, col = col_diff, axes = T, ylab = shortlabel, xlab = "attribute", main = mainlabel,
                names.arg=(1:length(diff_RI)), ylim=y_lim, cex.axis = cex, cex.names = cex, cex.lab = cex)
-  #plot importances  
-  lines(x=b, y=importance, type="o", col=col_hi, ylim=y_lim)
-  points(x=b, y=importance, pch = 19, col=col_hi, ylim=y_lim)
+  
+  #add importances to the plot
+  lines(x = b, y = importance, type = "o", col = col_hi, ylim = y_lim)
+  points(x = b, y = importance, pch = 19, col = col_hi, ylim = y_lim)
   
   #flag low important points
   if(!is.na(cutoff_value)){
     lowRI <- importance
     lowRIidx <- 1:length(lowRI)          
-    lowRI[lowRIidx<=cutoff_value] <- NA
+    lowRI[lowRIidx <= cutoff_value] <- NA
     #lines(x=b, y=lowRI, type="o", col=col_low, ylim=y_lim)
     points(x=b, y=lowRI, pch = 19, col=col_low, ylim=y_lim)
   }
   
-  #plot contrast_attr_  
-  if(shortlabel=="RI"){
-    contrastRI <- importance
-    contrastRI[!(1:length(contrastRI) %in% grep("contrast_attr_", attribute))] <- NA
-    #points(x=b, y=contrastRI, pch = 20, col="black", ylim=y_lim)    
-    lines(x=b, y=contrastRI, type="p", col="black", ylim=y_lim)    
-  }
-  legend_labels <- c(shortlabel, paste0("diff(",shortlabel,")"))
-  legend_colors <- c(col_hi,col_diff)
-  legend_lty <- c(1,1)
-  legend_lwd <- c(3,3)
+  #plot contrast_attr_
+  # if(shortlabel=="RI"){
+  #   contrastRI <- importance
+  #   contrastRI[!(1:length(contrastRI) %in% grep("contrast_attr_", attribute))] <- NA
+  #   #points(x=b, y=contrastRI, pch = 20, col="black", ylim=y_lim)    
+  #   lines(x=b, y=contrastRI, type="p", col="black", ylim=y_lim)    
+  # }
   
+  #plot permutations results
   if(!is.null(permutations)){
     #maxRI_color <- "darkgrey"
     maxRI_color <- "#FFD9D9"
     maxRI_lty <- 1
     perm <- permutations[,string.starts.with(names(permutations), "perm_", trim=T, ignore.case=F)]
-    max_RI <- sapply(perm, max, na.rm = TRUE)
-    for(i in 1:length(max_RI)){
-      abline(h = max_RI[i], col = maxRI_color, lty = maxRI_lty)
+    
+    if(plot_permutations == "max"){
+      max_RI <- sapply(perm, max, na.rm = TRUE)
+      for(i in 1:length(max_RI)){
+        abline(h = max_RI[i], col = maxRI_color, lty = maxRI_lty)
+      }
+      legend_labels <- c(legend_labels, "max_perm_RI")
+    }else if(plot_permutations == "all"){
+      for(i in 1:ncol(perm)){
+        curr_perm_name <- names(perm)[i]
+        curr_perm <- head(perm[, curr_perm_name], length(importance))
+        points(x = b, y = curr_perm, col = maxRI_color, pch = 4, ylim = y_lim)
+      }
+      legend_labels <- c(legend_labels, "all_perm_RI")
+    }else if(plot_permutations == "sorted"){
+      for(i in 1:ncol(perm)){
+        curr_perm_name <- names(perm)[i]
+        curr_perm <- head( sort(perm[, curr_perm_name], decreasing = T), length(importance))
+        points(x = b, y = curr_perm, col = maxRI_color, pch = 4, ylim = y_lim)
+      }
+      legend_labels <- c(legend_labels, "sorted_perm_RI")
     }
-    legend_labels <- c(legend_labels, "max_RI")
+    
     legend_colors <- c(legend_colors, maxRI_color)
     legend_lty <- c(legend_lty, maxRI_lty)
     legend_lwd <- c(legend_lwd, 3)
   }
 
   grid()
-  legend('topright',legend_labels, lty=legend_lty, lwd=legend_lwd, col=legend_colors)  
+  legend('topright', legend_labels, lty=legend_lty, lwd=legend_lwd, col=legend_colors)  
 }
 ###############################
 #mcfs.plot.distances
 ###############################
-mcfs.plot.distances <- function(mcfs_result, size=NA, cex=1)
+mcfs.plot.distances <- function(mcfs_result, size = NA, cex = 1)
 {
   dist <- mcfs_result$distances
   #distance commonPart mAvg beta1
@@ -207,11 +266,12 @@ mcfs.plot.distances <- function(mcfs_result, size=NA, cex=1)
 ###############################
 #plot.features
 ###############################
-mcfs.plot.features <- function(mcfs_result, size=NA, cex=0.8, l_margin=10)
+mcfs.plot.features <- function(mcfs_result, size = NA, cex = 0.8, l_margin = 10)
 {    
   if(is.na(size))
-    size <- nrow(mcfs_result$RI)
-  if(size <=0)
+    #size <- nrow(mcfs_result$RI)
+    size <- min(mcfs_result$cutoff_value * 1.2, nrow(mcfs_result$RI))
+  if(size <= 0)
     stop("'size' <= 0")
     
   ranking <- head(mcfs_result$RI, size)
@@ -306,34 +366,36 @@ mcfs.plot.cmatrix <- function(mcfs_result){
 ###############################
 #mcfs.plot.cv
 ###############################
-mcfs.plot.cv <- function(mcfs_result, measure=c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"), cex=1){
+#plot(result, type = "cv", cv_measure = "wacc", cex = 0.8)
+#mcfs_result <- result
+mcfs.plot.cv <- function(mcfs_result, cv_measure = c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"), cex = 1){
   
-  if(all(names(mcfs_result)!="cv_accuracy")){
-    warning("Final CV have not been performed. Object 'mcfs_result$cv_accuracy' does not exist.")  
-  }else{
-    measure <- measure[1]
-    if(mcfs_result$params$mcfs.model %in% c("j48")){
-      ylim <- c(0,100)
-      measure_sufix <- " [%]"
-      measure_mult <- 100
-      if(!tolower(measure) %in% c("acc","wacc"))
-        measure <- "wacc"
-    }
-    
-    if(mcfs_result$params$mcfs.model %in% c("m5")){
-      measure_sufix <- ""
-      measure_mult <- 1
-      if(!tolower(measure) %in% tolower(c("pearson", "MAE", "RMSE", "SMAPE")))
-        measure <- "pearson"
-      if(tolower(measure) == tolower("pearson")){
-        ylim <- c(-1,1)
-      }else if(tolower(measure) == tolower("SMAPE")){
-        ylim <- c(0,1)
-      }else{
-        ylim <- NULL
+    if(all(names(mcfs_result)!="cv_accuracy")){
+      warning("Final CV have not been performed. Object 'mcfs_result$cv_accuracy' does not exist.")  
+    }else{
+      measure <- cv_measure[1]
+      if(is.null(mcfs_result$params$mcfs.model) || mcfs_result$params$mcfs.model %in% c("j48")){
+        ylim <- c(0,100)
+        measure_sufix <- " [%]"
+        measure_mult <- 100
+        if(!tolower(measure) %in% c("acc","wacc")){
+          measure <- "wacc"
+        }
       }
+      if(!is.null(mcfs_result$params$mcfs.model) && mcfs_result$params$mcfs.model %in% c("m5")){
+        measure_sufix <- ""
+        measure_mult <- 1
+        if(!tolower(measure) %in% tolower(c("pearson", "MAE", "RMSE", "SMAPE")))
+            measure <- "pearson"
+        if(tolower(measure) == tolower("pearson")){
+            ylim <- c(-1,1)
+        }else if(tolower(measure) == tolower("SMAPE")){
+            ylim <- c(0,1)
+        }else{
+            ylim <- NULL
+        }
     }
-    
+
     cv_quality_TMP <- mcfs_result$cv_accuracy
     measure_mask <- tolower(names(cv_quality_TMP)) %in% tolower(measure)
     cv_quality_TMP[,measure_mask] <- measure_mult * cv_quality_TMP[,measure_mask]
@@ -377,9 +439,83 @@ mcfs.plot.cv <- function(mcfs_result, measure=c("wacc", "acc", "pearson", "MAE",
 }
 
 ###############################
+#plot.heatmap
+###############################
+mcfs.plot.heatmap <- function(mcfs_result, size = NA, 
+                              norm = c('none', 'norm', 'scale'),
+                              fun = c('median', 'mean'),
+                              colors = c('white', 'red'),
+                              cex = 1)
+{
+  if(is.na(size))
+    size <- mcfs_result$cutoff_value
+  if(is.null(size) | is.na(size) | size <= 0){
+    warning(paste0("Parameter 'size' is NULL, NA or <= 0."))
+    return(NULL)
+  }
+
+  if("data" %in% names(mcfs_result) & !is.null(mcfs_result$data)){
+    data <- mcfs_result$data
+  } else {
+    stop("mcfs_result does not contain 'data' data.frame. It is possible to set it manually: 'mcfs_result$data <- my.input.data'.")
+  }
+  
+  if(size > (ncol(data)-1)){
+    size <- ncol(data)-1
+  }
+    
+  if(!all(head(mcfs_result$RI$attribute,size) %in% names(data)))
+    stop("Input data does not match mcfs_result. Columns names are different.")
+  
+  data.scaled <- filter.data(data, mcfs_result, size)
+  numericCols <- sapply(data.scaled, is.numeric)
+  
+  if(!any(numericCols)){
+    warning("Data does not contain any numerical values. Heatmap cannot be created.")
+    return(NULL)
+  }
+  
+  if(norm[1]=='norm'){
+    data.scaled[, numericCols] <- normalize(data.scaled[, numericCols])
+  }else if(norm[1]=='scale'){
+    data.scaled[, numericCols] <- scale(data.scaled[, numericCols])
+  }else{
+    data.scaled <- data.scaled
+  }
+  #set NA on all nominal input columns
+  mask <- !numericCols
+  mask[names(mask) %in% mcfs_result$target] <- F
+  data.scaled[, mask] <- NA
+  
+  heat.data <- reshape2::melt(data.scaled, id=mcfs_result$target)
+  heat.data <- stats::aggregate(as.numeric(heat.data$value), by=list(heat.data[,1], heat.data[,2]), FUN=fun[1], na.rm=TRUE)
+  names(heat.data) <- c('target','feature','heat.value')
+  #this is only to avoid R check warrnings 
+  #"no visible global function definition for predicted"
+  # because of this statement ggplot aes(x=predicted) 
+  target <- NULL
+  feature <- NULL
+  heat.value <- NULL
+  
+  #heat.data <- ddply(heat.data, .(feature), transform, heat.value = rescale(heat.value, to=c(-1,1)))
+  yaxis.labels <- head(mcfs_result$RI$attribute, size)
+  heatmap <- ggplot(heat.data, aes(target, feature)) + geom_tile(aes(fill = heat.value), colour = "white") +
+    scale_fill_gradient(low = colors[1], high = colors[2]) + xlab(mcfs_result$target) +
+    scale_y_discrete(limits=rev(yaxis.labels)) +
+    theme(axis.title.y = element_text(size = rel(cex))) +
+    theme(axis.title.x = element_text(size = rel(cex))) +
+    theme(axis.text.y = element_text(size = rel(cex))) +
+    theme(axis.text.x = element_text(size = rel(cex))) +
+    theme(legend.title = element_text(size = rel(cex))) +
+    theme(legend.text = element_text(size = rel(cex)))
+  
+  plot(heatmap)
+}
+
+###############################
 #plot.idgraph
 ###############################
-plot.idgraph <- function(x, label.dist = 0.5, cex = 1, ...) {
+plot.idgraph <- function(x, label_dist = 0.5, cex = 1, ...) {
   
   idgraph <- x
   if(!any(class(idgraph) %in% "idgraph"))
@@ -394,8 +530,9 @@ plot.idgraph <- function(x, label.dist = 0.5, cex = 1, ...) {
       curves <- autocurve.idgraph(idgraph)
       opar <- par()$mar
       par(mar=rep(0, 4)) #Give the graph lots of room
-      plot(idgraph, vertex.shape="circle", vertex.label.dist=label.dist, layout=igraph::layout.fruchterman.reingold,
-           vertex.size=vsize, edge.curved=curves, edge.arrow.size=cex, vertex.label.cex=cex)
+      plot(idgraph, vertex.shape="circle", vertex.label.dist=label_dist, layout=igraph::layout.fruchterman.reingold,
+           vertex.size=vsize, edge.curved=curves, edge.width=E(idgraph)$width,
+           edge.arrow.size=cex, vertex.label.cex=cex)
       par(mar=opar)
       #plot(idgraph, vertex.shape="rectangle", vertex.size=2*vsize, vertex.size2=vsize, edge.arrow.size=0.5, edge.curved=curves, vertex.label.cex=cex)
   }

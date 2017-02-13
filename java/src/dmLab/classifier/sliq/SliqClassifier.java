@@ -63,7 +63,6 @@ public class SliqClassifier extends Classifier
 	@Override
     public boolean saveDefinition(String path, String name) throws IOException
 	{
-		if(params.verbose) System.out.print("Saving classifier definition...");
 		params.save(path,name);
 		//this method saves only viualization of the decision tree
 		//there is no metod to load such visualization from the file
@@ -71,7 +70,6 @@ public class SliqClassifier extends Classifier
 		writer = new FileWriter(path+"//"+name+".tree");
 		writer.write(toString());
 		writer.close();
-		if(params.verbose) System.out.println(" Done!");
 		return true;
 	}
 	//****************************************************
@@ -139,7 +137,6 @@ public class SliqClassifier extends Classifier
 			sliqTree.createLeafs(classList);
 			updateClassList(trainArray);
 			//showAttributesLists();
-			if(params.verbose) System.out.println("Tree building - level: " + level);
 			level++;
 		}
 		//evaluateNodesSplits(trainArray);
@@ -164,7 +161,6 @@ public class SliqClassifier extends Classifier
     public boolean test(FArray testArray)
 	{
 		long start,stop;
-		if(params.verbose) System.out.print("Testing...");
 		start=System.currentTimeMillis();
 		predResult.confusionMatrix=new ConfusionMatrix(testArray.getColNames(true)[testArray.getDecAttrIdx()],
 				testArray.getDecValues(),testArray.getDecValuesStr());
@@ -188,7 +184,6 @@ public class SliqClassifier extends Classifier
 		}
 		stop=System.currentTimeMillis();
 		testingTime=(stop-start)/1000.0f;
-		if(params.verbose) System.out.println("Testing is finished!");
 		return true;
 	}
 	//****************************************************
@@ -222,10 +217,8 @@ public class SliqClassifier extends Classifier
 	//private methods
 	private void prune()
 	{
-		if(params.verbose) System.out.println("Prunning the tree...");
 		MdlTreePruning mdlTreePruning = new MdlTreePruning(sliqTree);
 		mdlTreePruning.treePrune();
-		if(params.verbose) System.out.println("Prunning is finished.");
 	}
 	//****************************************************
 	private void evaluateNodesSplits(FArray trainArray)

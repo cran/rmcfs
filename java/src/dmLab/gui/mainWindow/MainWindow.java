@@ -83,8 +83,7 @@ public class MainWindow extends javax.swing.JFrame implements ActionListener
             tabbedPanel.addTab("MCFS-ID",null,mcfsPanel,null);
             //tabbedPanel.addTab("Progress", null, optionsPanel, null);
             
-        } catch (Exception e)
-        {
+        } catch (Exception e){
             e.printStackTrace();
         }
     }

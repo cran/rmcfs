@@ -55,29 +55,21 @@ public class ClassificationParams extends ExperimentParams
     public ClassificationParams()
     {
         super();
-        fileType="run";
+        super.setDefault();
+        setDefault();
     }
 //  *****************************************
     @Override
     public boolean setDefault()
-    {
-    	label="experiment";
-        inputFilesPATH = ".//data//";
-        resFilesPATH = ".//results//";
-        verbose=true;
-        debug=false;
-        inputFileName="";
-        testFileName="";
-        outputFileName="";
-        
-        savePredictionResult=false;
+    {    	
+        savePredictionResult = false;
         model = Classifier.label2int("j48");
-        saveClassifier=true;
-        validationType=VALIDATION_CV;
-        folds=3;
-        repetitions=1;
-        splitRatio=0.66;
-        splitType=SPLIT_UNIFORM;
+        saveClassifier = true;
+        validationType = VALIDATION_CV;
+        folds = 3;
+        repetitions = 1;
+        splitRatio = 0.66;
+        splitType = SPLIT_UNIFORM;
         
 	    return true;
     }
@@ -90,7 +82,6 @@ public class ClassificationParams extends ExperimentParams
         inputFilesPATH = p.inputFilesPATH;
         resFilesPATH = p.resFilesPATH;
         verbose = p.verbose;
-        debug = p.debug;
         inputFileName = p.inputFileName;
         testFileName = p.testFileName;
         outputFileName = p.outputFileName;

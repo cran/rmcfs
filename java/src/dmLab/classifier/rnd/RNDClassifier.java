@@ -32,9 +32,8 @@ import dmLab.classifier.Prediction;
 import dmLab.classifier.attributeIndicators.J48NodeIndicators;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.ExperimentIndicators;
-import dmLab.utils.GeneralUtils;
-import dmLab.utils.cmatrix.QualityMeasure;
 import dmLab.utils.cmatrix.ConfusionMatrix;
+import dmLab.utils.cmatrix.QualityMeasure;
 
 public class RNDClassifier extends Classifier
 {
@@ -57,12 +56,9 @@ public class RNDClassifier extends Classifier
         this.trainArray=trainArray;
         float start,stop;
 		start=System.currentTimeMillis();
-		if(params.verbose) System.out.println("Training...");
 		rand=new Random((long)cfg.seed);
-		if(params.verbose) System.out.println("Training is done!");
 		stop=System.currentTimeMillis();
 		learningTime=(float)((stop-start)/1000.0);
-		if(params.verbose) System.out.println("Training time: "+ GeneralUtils.format(learningTime,2) + " s.");
 		return true;
 	}
 	//*******************************************************
@@ -70,7 +66,6 @@ public class RNDClassifier extends Classifier
     public boolean test(FArray testArray)
 	{
 		float start,stop;		
-		if(params.verbose) System.out.print("Testing...");
 		start=System.currentTimeMillis();
 //		results need to be inserted into specified class
 //		ConfusionMatrix it is unified class to store results
@@ -96,16 +91,10 @@ public class RNDClassifier extends Classifier
 			predResult.predictions[i]=new Prediction(realClassName, predictedClassName,null);
             
 			if(i>threshold && threshold!=0)
-			{
-				if(params.verbose) System.out.print(""+ (int)(100.0*i/testEventsNumber) + "% ");
 				threshold+=interval;
-			}
 		}
-		System.out.print("100% ");
 		stop=System.currentTimeMillis();
 		testingTime=(float)((stop-start)/1000.0);
-		if(params.verbose) System.out.println(" Done!");
-		if(params.verbose) System.out.println("Testing time: "+ GeneralUtils.format(testingTime,2) + " s.");		
 		return true;
 	}
 //	*******************************************
@@ -121,7 +110,6 @@ public class RNDClassifier extends Classifier
 		for(int decisionValIndex=0;decisionValIndex<decisionValues.length;decisionValIndex++)
 		{
 			currentScore=testEvent(array,eventIndex,decisionValIndex); //finding score for each decision
-			if(params.verbose) System.out.print("\t"+decisionValues[decisionValIndex]+" "+ GeneralUtils.format(currentScore,6));
 			if(currentScore>highestScore) //the highest score the highest
 			{
 				highestScoreIndex=decisionValIndex;
@@ -159,21 +147,17 @@ public class RNDClassifier extends Classifier
 	@Override
     public boolean saveDefinition(String path,String name)  throws IOException
     {
-		if(params.verbose) System.out.print("Saving classifier definition...");
 		params.save(path,name);
-		if(params.verbose) System.out.println(" Done!");
 		return true;
 	}
 	//*******************************************************
 	@Override
     public boolean loadDefinition(String path,String name) throws IOException
     {
-		if(params.verbose) System.out.print("Loading classifier definition...");
 		//load classifier parameters
 		params.load(path,name);
 		//load classifier definition e.g. rules, tree structure etc.
 		//this classifier has not such sophisticated definition
-		if(params.verbose) System.out.println("Done!");
 		return true;
 	}
     //*******************************************************   

@@ -48,10 +48,9 @@ public class EnsembleExperiment
     {
         classification=new ClassificationBody(new Random(System.currentTimeMillis()));                
         classification.loadParameters("classification.run");
-        classification.classParams.debug=false;
-        classification.classParams.verbose=false;
-        classification.classParams.saveClassifier=false;
-        classification.classParams.savePredictionResult=false;
+        classification.classParams.verbose = false;
+        classification.classParams.saveClassifier = false;
+        classification.classParams.savePredictionResult = false;
         classification.classParams.validationType=ClassificationParams.VALIDATION_CV;               
         //classification.classParams.folds=3;
         //classification.classParams.repetitions=5;
@@ -67,8 +66,7 @@ public class EnsembleExperiment
             System.err.println("Error in weights setting!");
             return -1;
         }
-        classification.classifier.params.debug=false;
-        classification.classifier.params.verbose=false;
+        classification.classifier.params.verbose = false;
         classification.run();
         
         Acc = classification.predResult.getPredQuality(QualityMeasure.ACC);

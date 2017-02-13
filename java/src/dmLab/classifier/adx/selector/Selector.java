@@ -386,9 +386,9 @@ public class Selector implements Cloneable
 	public String toStringCov()
 	{
         StringBuffer tmp=new StringBuffer();
-        tmp.append("p: "+ GeneralUtils.format(posCoverage,3));
-        tmp.append(" n: "  + GeneralUtils.format(negCoverage,3));
-        tmp.append(" c: "  + GeneralUtils.format(coverage,3));
+        tmp.append("p: "+ GeneralUtils.formatFloat(posCoverage,3));
+        tmp.append(" n: "  + GeneralUtils.formatFloat(negCoverage,3));
+        tmp.append(" c: "  + GeneralUtils.formatFloat(coverage,3));
         return tmp.toString();
 	}
 //	*******************************************************

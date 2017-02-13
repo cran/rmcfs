@@ -145,8 +145,8 @@ public class MyLineChart extends LineChart{
                 //painting labels
                 if(i%scale==0)
                 {
-                    g.drawString(GeneralUtils.format(xValues[i],1),coordinateX,imgHeight);
-                    g.drawString(GeneralUtils.format(yValues[i],1),0,coordinateY);
+                    g.drawString(GeneralUtils.formatFloat(xValues[i],1),coordinateX,imgHeight);
+                    g.drawString(GeneralUtils.formatFloat(yValues[i],1),0,coordinateY);
                 }
                 //drawing lines
                 if(i>=1)

@@ -23,207 +23,162 @@
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 
 import dmLab.array.Array;
 import dmLab.utils.FileUtils;
 import dmLab.utils.StringUtils;
 
 public abstract class FileLoader 
-{
-	public FileType fileType;
-	protected  BufferedReader fileReader;
-	protected String fileName;
-	
+{	
 	protected int eventsNumber;
 	protected int attributesNumber;
 	protected int ignoredAttributesNumber;
-	
-	public char separator=',';
+
+	public boolean trimComments = true;
+	public char separator = ',';
 	protected NullLabels nullLabels;
-	protected String defaultNullLabel="?";
-	public boolean trimComments=true;
-    
+	protected String defaultNullLabel = "?";
+
 	protected boolean ignoredAttributeMask[];
 	protected Array myArray;
-	
-	protected String commentChar="#";
-//****************************************
+
+	protected String commentChar = "#";
+	protected int fileType = FileType.UNKNOWN;
+
+	//****************************************
 	public FileLoader()
 	{		
 		init();
 	}
-//	************************************************
+	//	************************************************
 	public void init()
 	{
-		fileReader=null;
-		fileType = new FileType();
-		nullLabels=new NullLabels(5);
-		fileName="";
-		ignoredAttributeMask=null;
-        eventsNumber=0;
-        attributesNumber=0;
-        ignoredAttributesNumber=0;
-        privateInitializator();
+		nullLabels = new NullLabels(5);
+		ignoredAttributeMask = null;
+		eventsNumber = 0;
+		attributesNumber = 0;
+		ignoredAttributesNumber = 0;
+		myInit();
 	}
-//	************************************************
-//	***  function loads the file
-	public boolean loadFile(Array array, String inputFileName)
+	//	************************************************
+	//	***  function loads the file
+	public boolean loadFile(Array array, File file)
 	{
-		myArray=array;
-		
-		if(!openFile(inputFileName))
-			return false;
-		
-		if(parseInputFile(fileReader)==false){
-			System.err.println("Error Parsing file. File: "+fileName);
-			closeFile();
-			return false;
+		String fileExt = FileUtils.getFileExtension(file.getName());		
+		if(FileType.toType(fileExt) != fileType){
+			System.err.println("Input file is not " + FileType.toTypeStr(fileType) + " type. File: "+file.toString());
+			return false;			
 		}
-		
-		if(!checkIntegration())
-			return false;
-		
-		closeFile();
-				
-		myArray.init(attributesNumber,eventsNumber);
-		ignoredAttributeMask=new boolean [attributesNumber+ignoredAttributesNumber];
-		
-		if(!openFile(inputFileName))
-			return false;
-		
-		if(readInputFile(fileReader)==false){
-			System.err.println("Error reading file. File: "+fileName);
-			closeFile();
-			return false;
-		}
-		closeFile();
-		return true;
-	}
-//	************************************************
-	public boolean openFile(String inputFileName)
-	{      	
-		String fileExtension=FileUtils.getFileExtension(inputFileName);
-		if(FileType.toType(fileExtension)!=-1)
-			fileName=inputFileName;
-		else
-			fileName=inputFileName+"."+fileType.getTypeStr();		
 
-		File file=new File(fileName);
-		if(!file.exists())
-		{
-			System.err.println("File does not exist. File: " + inputFileName);
+		if(!readHeaderFile(file))
 			return false;
-		}	
+
+		System.out.println("Loading data: '" + getDataFile(file).getName() + "'...");
+		myArray = array;
 		
-		try{
-			fileReader = new BufferedReader(new FileReader(fileName));
-		}
-		catch (Exception e) {
-			System.err.println("Error opening file. File: "+fileName);
+		if(parseInputFile(file) == false){
+			System.err.println("Error Parsing file. File: "+getDataFile(file).toString());
 			return false;
 		}
-		return true;
-	}
-//	************************************************
-	public boolean closeFile()
-	{
-		try{
-			fileReader.close();
-		}
-		catch (Exception e) {
-			System.err.println("Error closing file. File: "+fileName);
+
+		if(!checkData())
+			return false;		
+
+		myArray.init(attributesNumber, eventsNumber);
+		ignoredAttributeMask = new boolean [attributesNumber+ignoredAttributesNumber];
+
+
+		if(readInputFile(file)==false){
+			System.err.println("Error reading file. File: "+file.toString());
 			return false;
+		}else{
+			System.out.println("Data loaded.");
 		}
+
+		//System.out.println("DEBUG: \n" + myArray.toString());
 		return true;
 	}
-//	************************************************
-//	*** method returns false if attributes number or events number is 0
-	protected boolean checkIntegration()
+	//	************************************************
+	//	*** method returns false if attributes number or events number is 0
+	protected boolean checkData()
 	{
 		System.out.println("attributes: "+attributesNumber+" events: "+eventsNumber);
-		if(attributesNumber==0)
-		{
-			System.err.println("No attributes defined in input file. File: "+fileName);
+		if(attributesNumber==0){
+			System.err.println("Input data does not contain attributes.");
 			return false;
 		}
-		else if(eventsNumber==0)
-		{
-			System.err.println("No events defined in input file. File: "+fileName);
+		else if(eventsNumber==0){
+			System.err.println("Input data does not contain events.");
 			return false;
 		}
 		return true;
 	}
-//	************************************************
-//	*** this method trims comments
+	//	************************************************
+	//	*** this method trims comments
 	protected String trimComments(String inputLine)
 	{        
-        if(!trimComments)
-            return inputLine;
-        if(inputLine==null)
+		if(!trimComments)
+			return inputLine;
+		if(inputLine==null)
 			return null;
 		if(inputLine.indexOf(commentChar)==-1)
 			return inputLine.trim();
 		else        
-            return inputLine.substring(0,inputLine.indexOf(commentChar)).trim();
+			return inputLine.substring(0,inputLine.indexOf(commentChar)).trim();
 	}
-//	************************************************
+	//	************************************************
 	public void addNullLabel(String nullLabel)
 	{
 		this.nullLabels.add(nullLabel);
 	}
-//	************************************************
+	//	************************************************
 	public void setSeparator(char separator)
 	{
 		this.separator = separator;
 	}
-//  ************************************************
-    //*** this method reads one event
-    protected boolean loadEvent(String inputLine, int row)
-    {
-        int column=0;
-        String[] list=StringUtils.tokenizeString(inputLine,new char[]{separator},false);
-        
-        if(list.length!=(attributesNumber+ignoredAttributesNumber))
-        {
-            System.err.println("Number of values does not equal to attributes number.");
-            return false;
-        }            
-            
-        for(int i=0;i<ignoredAttributeMask.length;i++)
-        {
-            if(!ignoredAttributeMask[i])
-            {
-                String value=list[i];
-                if(nullLabels.containsIgnoreCase(value))
-                    value=defaultNullLabel;
-                
-                if(value.length()!=0)    
-                {
-                    if(!myArray.writeValueStr(column,row,value))
-                    {
-                        System.err.println("Error loading value. Attribute: "+myArray.attributes[column].name+" (#"+i+") value: "+value);
-                        return false;
-                    }
-                    else
-                    	column++;
-                }
-                else
-                {
-                    System.err.println("Empty Value! Attribute: "+myArray.attributes[column].name+" (#"+i+")");
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-//  ************************************************    
-	protected abstract boolean parseInputFile(BufferedReader inputFile);
-//	************************************************
-	protected abstract boolean readInputFile(BufferedReader inputFile);
-//	************************************************
-	protected abstract boolean privateInitializator();
-//  ************************************************
+	//  ************************************************
+	//*** this method reads one event
+	protected boolean loadEvent(String inputLine, int row)
+	{
+		int column=0;
+		String[] list = StringUtils.tokenizeString(inputLine,new char[]{separator}, false);
+
+		if(list.length != (attributesNumber + ignoredAttributesNumber)){
+			System.err.println("Number of values does not equal to defined attributes number. Event: " + row);
+			return false;
+		}     
+
+		for(int i=0;i<ignoredAttributeMask.length;i++){
+			if(!ignoredAttributeMask[i]){
+				String value = list[i];
+				if(nullLabels.containsIgnoreCase(value))
+					value = defaultNullLabel;
+
+				if(value.length()!=0){
+					if(!myArray.writeValueStr(column, row, value)){
+						System.err.println("Error loading value. Attribute: "+myArray.attributes[column].name+" (#"+i+") value: "+value);
+						return false;
+					}else
+						column++;
+				}else{
+					System.err.println("Empty Value! Attribute: "+myArray.attributes[column].name+" (#"+i+")");
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	//	************************************************
+	protected abstract boolean readHeaderFile(File inputFile);
+	//  ************************************************    
+	protected abstract boolean parseInputFile(File inputFile);
+	//	************************************************
+	protected abstract boolean readInputFile(File inputFile);
+	//	************************************************
+	protected abstract boolean myInit();
+	//  ************************************************
+	protected abstract File getDataFile(File inputFile);
+	//  ************************************************
+	
 }

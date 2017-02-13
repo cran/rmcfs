@@ -39,7 +39,7 @@ public class GeneralUtils
 	 * @param precision int how many digits after point
 	 * @return String converted double
 	 */
-	public static String format(double number,int precision)
+	public static String formatFloat(double number, int precision)
 	{
 		String power="";
 		String tempString=Double.toString(number);
@@ -57,6 +57,22 @@ public class GeneralUtils
 		return tempString.substring(0,dotPosition)+power;
 	}
 	//**************************************
+	public static String timeIntervalFormat(float seconds){
+		float s = seconds;
+		
+		String retString;
+		if(s < 1){
+			retString = MathUtils.truncate(seconds, 3) +" s.";			
+		}else if(s < 60){
+			retString = MathUtils.truncate(seconds, 1) +" s.";
+		}else if(s < 3600){			
+			retString = MathUtils.truncate(seconds/60, 1) +" min.";
+		}else{
+			retString = MathUtils.truncate(seconds/(60*60), 1) +" hours";
+		}
+		return retString;
+	}
+	//**************************************
 	public static String getMemStatus()
 	{
 		System.gc();
@@ -72,10 +88,10 @@ public class GeneralUtils
 		double freeMemory = Runtime.getRuntime().freeMemory()/1000000.0;
 		double usedMemory=maxMemory-freeMemory;
 
-		return " - MEMORY Status - "+"free: "+GeneralUtils.format(freeMemory,2)
-				+"M used: "+GeneralUtils.format(usedMemory,2)			
-				+"M total: "+GeneralUtils.format(totalMemory,2)
-				+"M max: "+GeneralUtils.format(maxMemory,2)+"M";
+		return " - MEMORY Status - "+"free: "+GeneralUtils.formatFloat(freeMemory,2)
+				+"M used: "+GeneralUtils.formatFloat(usedMemory,2)			
+				+"M total: "+GeneralUtils.formatFloat(totalMemory,2)
+				+"M max: "+GeneralUtils.formatFloat(maxMemory,2)+"M";
 	}
 	//******************************
 	public static String getCurrDateTime()

@@ -36,6 +36,7 @@ import javax.swing.border.BevelBorder;
 
 import dmLab.gui.dataEditor.components.GlyphButton;
 import dmLab.mcfs.MCFSParams;
+import dmLab.mcfs.mcfsEngine.MCFSAutoParams;
 import dmLab.mcfs.mcfsEngine.MCFSExperiment;
 import dmLab.utils.fileFilters.MyFileFilter;
 
@@ -59,8 +60,8 @@ public class MCFSPanel extends JPanel implements ActionListener
     private JTextField splits;
     private JTextField projections;
     private JTextField projectionSize;
-    private JTextField splitRatio;
-    private JTextField balanceRatio;
+    private JTextField balance;
+    private JTextField threads;
     private JTextField splitSetSize;
     private JTextField cutoffPermutations;
     
@@ -71,7 +72,7 @@ public class MCFSPanel extends JPanel implements ActionListener
 //  *********************************
     public MCFSPanel()
     {
-        mcfsParams=new MCFSParams();
+        mcfsParams = new MCFSParams();
         setDefaultMCFSParameters(mcfsParams);
         initGUI();
     }
@@ -108,7 +109,7 @@ public class MCFSPanel extends JPanel implements ActionListener
         
         projections = new JTextField();
         projections.setBounds(170, 50, 70, 25);
-        projections.setText(Integer.toString(mcfsParams.projections));
+        projections.setText(MCFSAutoParams.valueToString(mcfsParams.projections));
         projections.setPreferredSize(new java.awt.Dimension(63, 21));
         projections.setToolTipText("in most cases a few thousands");
         this.add(projections);
@@ -122,7 +123,7 @@ public class MCFSPanel extends JPanel implements ActionListener
 
         projectionSize = new JTextField();
         projectionSize.setBounds(170, 80, 70, 25);        
-        projectionSize.setText(Float.toString(mcfsParams.projectionSize));
+        projectionSize.setText(MCFSAutoParams.valueToString(mcfsParams.projectionSize));
         projectionSize.setPreferredSize(new java.awt.Dimension(63, 21));
         projectionSize.setToolTipText("<html>if <1 then fraction of original number of attributes is selected (e.g. 0.1 denotes 10% of input attributes)<br> if >1 then absolute number of randomly selected attributes</html>");
         this.add(projectionSize);
@@ -143,17 +144,18 @@ public class MCFSPanel extends JPanel implements ActionListener
         		
         jLabel4 = new JLabel();
         jLabel4.setBounds(10, 140, 150, 25);
-        jLabel4.setText("split ratio:");
+        jLabel4.setText("balance:");
         jLabel4.setFont(new java.awt.Font("Dialog",1,12));
         jLabel4.setPreferredSize(new java.awt.Dimension(91, 28));
         this.add(jLabel4);
 
-        splitRatio = new JTextField();
-        splitRatio.setBounds(170, 140, 70, 25);
-        splitRatio.setText(Float.toString(mcfsParams.splitRatio));
-        splitRatio.setPreferredSize(new java.awt.Dimension(63, 21));
-        splitRatio.setToolTipText("fraction of events taken to training");
-        this.add(splitRatio);
+        balance = new JTextField();
+        balance.setBounds(170, 140, 70, 25);
+        balance.setText(Float.toString(mcfsParams.splitRatio));        
+        balance.setText(MCFSAutoParams.valueToString(mcfsParams.balance));
+        balance.setPreferredSize(new java.awt.Dimension(63, 21));
+        balance.setToolTipText("for highly imbalanced data set it on 2 or higher");
+        this.add(balance);
         
         jLabel6 = new JLabel();
         jLabel6.setBounds(10, 170, 150, 25);
@@ -179,16 +181,16 @@ public class MCFSPanel extends JPanel implements ActionListener
 
         jLabel5 = new JLabel();
         jLabel5.setBounds(10, 10, 150, 25);
-        jLabel5.setText("balance ratio:");
+        jLabel5.setText("Threads:");
         jLabel5.setFont(new java.awt.Font("Dialog",1,12));
         jLabel5.setPreferredSize(new java.awt.Dimension(80, 16));
         jPanel1.add(jLabel5);
         
-        balanceRatio = new JTextField();
-        balanceRatio.setBounds(170, 10, 70, 25);
-        balanceRatio.setText(Float.toString(mcfsParams.balanceRatio));
-        balanceRatio.setPreferredSize(new java.awt.Dimension(37, 16));
-        jPanel1.add(balanceRatio);
+        threads = new JTextField();
+        threads.setBounds(170, 10, 70, 25);
+        threads.setText(Integer.toString(mcfsParams.threadsNumber));
+        threads.setPreferredSize(new java.awt.Dimension(37, 16));
+        jPanel1.add(threads);
 
         jPanel2 = new JPanel();
         jPanel2.setBounds(250, 110, 300, 50);
@@ -247,13 +249,12 @@ public class MCFSPanel extends JPanel implements ActionListener
     //********************************************
     public void startMCFS()
     {
-    	MCFSExperiment mcfs=new MCFSExperiment(System.currentTimeMillis());
         setMCFSParameters(mcfsParams);
-                
-        System.out.println(mcfsParams.toString());
-               
-        mcfs.init(mcfsParams);              
-        Thread t=new Thread(mcfs);
+    	mcfsParams.seed = System.currentTimeMillis();                
+        System.out.println(mcfsParams.toString());        
+    	MCFSExperiment mcfs = new MCFSExperiment(mcfsParams);
+
+        Thread t = new Thread(mcfs);
         t.start();        
     }
 ///***********************************************    
@@ -261,56 +262,50 @@ public class MCFSPanel extends JPanel implements ActionListener
     {
         File file=new File(filePath.getText());
         
-        if(!file.exists())
-        {
+        if(!file.exists()){
             System.err.println("File: '"+filePath.getText()+"' does not exist.");
             return false;
-        }
-        else
-        {
+        }else{
             mcfsParams.inputFilesPATH = file.getPath().substring(0,file.getPath().indexOf(file.getName()));
             mcfsParams.inputFiles = new String[]{file.getName()};
             mcfsParams.inputFileName = file.getName();
-            
         }
-        
+
         try{
-            mcfsParams.splits=(int)Float.parseFloat(splits.getText());            
+            mcfsParams.projectionSize = MCFSAutoParams.valueToFloat("projectionSize", projectionSize.getText());            
+        }
+        catch(NumberFormatException e){
+            System.err.println("Error parsing projectionSize: "+projectionSize.getText());
+            return false;
+        }
+        try{
+            mcfsParams.projections = (int)MCFSAutoParams.valueToFloat("projections", projections.getText());            
+        }
+        catch(NumberFormatException e){
+            System.err.println("Error parsing projections: "+projections.getText());
+            return false;
+        }
+        try{
+            mcfsParams.splits = (int)Float.parseFloat(splits.getText());            
         }
         catch(NumberFormatException e){
             System.err.println("Error parsing: "+splits.getText());
             return false;
         }
-        
-        try{
-            mcfsParams.projections=(int)Float.parseFloat(projections.getText());            
-        }
-        catch(NumberFormatException e){
-            System.err.println("Error parsing: "+projections.getText());
-            return false;
-        }
 
         try{
-            mcfsParams.projectionSize=Float.parseFloat(projectionSize.getText());            
+            mcfsParams.balance = MCFSAutoParams.valueToFloat("balance", balance.getText());            
         }
         catch(NumberFormatException e){
-            System.err.println("Error parsing: "+projectionSize.getText());
-            return false;
-        }
-
-        try{
-            mcfsParams.splitRatio=Float.parseFloat(splitRatio.getText());            
-        }
-        catch(NumberFormatException e){
-            System.err.println("Error parsing: "+splitRatio.getText());
+            System.err.println("Error parsing balance: "+balance.getText());
             return false;
         }
         
         try{
-            mcfsParams.balanceRatio=Float.parseFloat(balanceRatio.getText());            
+            mcfsParams.threadsNumber = Integer.parseInt(threads.getText());            
         }
         catch(NumberFormatException e){
-            System.err.println("Error parsing: "+balanceRatio.getText());
+            System.err.println("Error parsing threads: "+threads.getText());
             return false;
         }
         
@@ -318,10 +313,9 @@ public class MCFSPanel extends JPanel implements ActionListener
             mcfsParams.splitSetSize=Integer.parseInt(splitSetSize.getText());
         }
         catch(NumberFormatException e){
-            System.err.println("Error parsing: "+splitSetSize.getText());
+            System.err.println("Error parsing splitSetSize: "+splitSetSize.getText());
             return false;
         }
-
         
         try{
             mcfsParams.cutoffPermutations=(int)Float.parseFloat(cutoffPermutations.getText());                
@@ -337,11 +331,6 @@ public class MCFSPanel extends JPanel implements ActionListener
     private void setDefaultMCFSParameters(MCFSParams mcfsParams)
     {
     	mcfsParams.setDefault();
-        mcfsParams.contrastAttr = false;
-        mcfsParams.finalCV = true;
-        mcfsParams.progressShow=true;
-        mcfsParams.cutoffPermutations = 0;
-        mcfsParams.threadsNumber = 4;    	
     }
     //********************************************
 }

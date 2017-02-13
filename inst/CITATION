@@ -12,11 +12,11 @@ citEntry(entry = "Article",
   volume       = "24",
   number       = "1",
   pages        = "110--117",
-  url          = "http://bioinformatics.oxfordjournals.org/content/24/1/110.abstract",
+  url          = "https://academic.oup.com/bioinformatics/article-abstract/24/1/110/204931/Monte-Carlo-feature-selection-for-supervised",
 
   textVersion  =
   paste("M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski (2008).",
         "Monte Carlo feature selection for supervised classification.",
         "BIOINFORMATICS, 24(1), 110--117.",
-        "http://bioinformatics.oxfordjournals.org/content/24/1/110.abstract")
+        "https://academic.oup.com/bioinformatics/article-abstract/24/1/110/204931/Monte-Carlo-feature-selection-for-supervised")
 )

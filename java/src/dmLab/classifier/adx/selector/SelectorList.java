@@ -39,7 +39,7 @@ public class SelectorList
 	private int size;
 	private int initSize=1000;
 	public static final int precision=3;
-	public boolean verbose=true;
+	public boolean verbose = false;
 //	*******************************************************
 //	default constructor
 	public SelectorList()
@@ -110,7 +110,9 @@ public class SelectorList
 				}				
 			}
 		}
-		if(verbose) System.out.println("");
+		if(verbose)
+			System.out.println("");
+		
 		return size;
 	}
 //	*******************************************************

@@ -21,7 +21,7 @@
  * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
-package dmLab.mcfs;
+package dmLab.mcfs.mcfsEngine;
 
 import java.util.Random;
 
@@ -60,8 +60,7 @@ public class MCFSFinalCV {
 			if(currSize>0 && currSize<array.colsNumber()-1){
 				FArray topRankingArray = (FArray)SelectFunctions.selectColumns(array, importances, currSize);
 		    	//System.out.println("***topRankingArray***\n"+topRankingArray.toString());		
-
-				System.out.println("*** Running CV experiment on top "+topRankingArray.colsNumber()+" attributes and "+topRankingArray.rowsNumber()+" rows ***");				
+				System.out.println("*** "+topRankingArray.colsNumber()+" attributes and "+topRankingArray.rowsNumber()+" rows ***");				
 				DataFrame step_df=null;
 				for(int j=0;j<repetitions;j++){
 					FArray rep_array = (FArray)selectFunctions.selectRowsRandom(topRankingArray, setSize);
@@ -101,18 +100,16 @@ public class MCFSFinalCV {
 		
 		ClassificationBody classification = new ClassificationBody(random);
 		classification.setParameters(new ClassificationParams());
-		classification.classParams.debug = false;
 		classification.classParams.verbose = false;
 		classification.classParams.saveClassifier = false;
-		classification.classParams.savePredictionResult = false;
-		classification.classParams.classifierCfgPATH = "";
+		classification.classParams.savePredictionResult = false;		
 		classification.classParams.folds = cvFolds;
 		classification.classParams.repetitions = 1;
-		
+				
 		for(int i=0;i<algorithms.length;i++){
 			classification.classParams.model=algorithms[i];
 			classification.initClassifier();
-			System.out.println("Running CV "+cvFolds+" fold. Algorithm: "+Classifier.int2label(algorithms[i]));
+			System.out.println("Running "+cvFolds+" fold CV. Algorithm: "+Classifier.int2label(algorithms[i]));
 			
 			PredictionResult predResult = classification.runCV(array);
 			df.set(i, 0, label);

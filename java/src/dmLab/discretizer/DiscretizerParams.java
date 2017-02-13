@@ -62,7 +62,7 @@ public class DiscretizerParams extends Params
     	discAlgorithm = Discretizer.FAYYAD_IRANI;
         discIntervals=4;
         maxSimilarity=0.5f;
-        verbose=true;
+        verbose = false;
         
 	    return true;
     }
@@ -88,20 +88,19 @@ public class DiscretizerParams extends Params
         discAlgorithm = Integer.valueOf(properties.getProperty("discAlgorithm", "5")).intValue();
         discIntervals = Integer.valueOf(properties.getProperty("discIntervals", "4")).intValue();
         maxSimilarity= Float.valueOf(properties.getProperty("maxSimilarity", "0.5")).floatValue();
-        verbose=Boolean.valueOf(properties.getProperty("verbose", "true")).booleanValue();
+        verbose = Boolean.valueOf(properties.getProperty("verbose", "false")).booleanValue();
         return check(null);
     }
     //*****************************************
     @Override
     public boolean check(FArray array)
     {
-        if (discIntervals <= 0)
-        {
+        if (discIntervals <= 0){
             System.err.println("Error! Incorrect discRanges.");
             return false;
         }
-        if (discAlgorithm <= 0 || discAlgorithm > 10)
-        {
+        
+        if (discAlgorithm <= 0 || discAlgorithm > 10){
             System.err.println("Error! Incorrect discretizationType.");
             return false;
         }        

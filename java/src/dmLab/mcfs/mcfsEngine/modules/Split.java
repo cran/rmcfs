@@ -52,33 +52,23 @@ public class Split
         //shuffle input columns since WEKA always select first attribute if two are identical 
     	inputArray = selectFunctions.shuffleColumns(inputArray);                  
         
-        if (mcfsParams.verbose) 
-        	System.out.println("Splitting input table (ratio: "+mcfsParams.splitRatio+")...");
-
+        //System.out.println("*** MDR DEBUG *** splitting input table (ratio: "+mcfsParams.splitRatio+")...");
         int[] splitMask = selectFunctions.getSplitMaskUniform(inputArray, mcfsParams.splitRatio);
         Array trainTestArrays[] = SelectFunctions.split(inputArray, splitMask);
         FArray trainArray = (FArray)trainTestArrays[0];
         FArray testArray = (FArray)trainTestArrays[1];
 
-        if (mcfsParams.debug){            	
-        	System.out.println("trainArray# "+trainArray.info());
-        	System.out.println("testArray# "+testArray.info());
-        }
-
-        if (mcfsParams.verbose) 
-        	System.out.println("Training phase...");
+        //System.out.println("*** MDR DEBUG *** trainArray# "+trainArray.info());
+        //System.out.println("*** MDR DEBUG *** testArray# "+testArray.info());
+        //System.out.println("Training...");
         classifier.train(trainArray);
         
-        //if (mcfsParams.debug) 
-        //	System.out.println("### DEBUG ### \n"+classifier.toString()+"\n");
- 
-        if (mcfsParams.verbose) 
-        	System.out.println("Testing phase...");
+        //System.out.println("### DEBUG ### \n"+classifier.toString()+"\n"); 
+        //System.out.println("Testing...");
         classifier.test(testArray);
         
-        PredictionResult predResult = classifier.getPredResult();
-        
-        //add Importances
+        //get Prediction Result and add Importances
+        PredictionResult predResult = classifier.getPredResult();        
         classifier.add_RI(attrRI);
         
         //add ID edges 

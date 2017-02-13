@@ -62,7 +62,7 @@ public class ADXClassifier extends Classifier
 		label=labels[ADX];
 		model=ADX;
 		params=new ADXParams();
-		cfg=(ADXParams)params;
+		cfg = (ADXParams)params;
 		
 		discParams = new DiscretizerParams();
 	}
@@ -73,13 +73,10 @@ public class ADXClassifier extends Classifier
     	if(!checkTargetAttr(trainArray))
     		return false;
 
-		if(params.verbose)
-			System.out.println(" Testing...");
 		long start,stop;
 		this.trainArray=trainArray;
 		ruleFamily=new RuleFamily(trainArray.getDecValues().length,trainArray.colsNumber(),cfg);
-		ruleFamily.verbose=params.verbose;
-		ruleFamily.debug=params.debug;
+		ruleFamily.verbose = cfg.verbose;
 		start=System.currentTimeMillis();		
 		if(!discTrainArray(trainArray))
 			return false;
@@ -93,15 +90,14 @@ public class ADXClassifier extends Classifier
 		stop=System.currentTimeMillis();
 		learningTime=(stop-start)/1000.0f;
         trainSetSize=trainArray.rowsNumber();
-		if(params.verbose)
-			System.out.println(" Done!");
 		return true;
 	}
 	//*****************************************
 	private boolean discTrainArray(FArray inputArray){
 		if(!inputArray.isDiscretized()){
-			System.out.println("Warrrning! Input table contains numeric values. Discretization is processed...");
-            DiscFunctions.findRanges(trainArray, discParams);
+			System.out.println("Warning! Input table contains numeric values. Discretization is processed...");
+			discParams.verbose = cfg.verbose;
+			DiscFunctions.findRanges(trainArray, discParams);
             DiscFunctions.applyRanges(trainArray);
             return true;
 		}else{
@@ -136,9 +132,6 @@ public class ADXClassifier extends Classifier
 	{
     	if(!checkTargetAttr(testArray))
     		return false;
-
-		if(params.verbose)
-			System.out.println(" Testing...");
 
 		if(!discTestArray(testArray))
 			return false;
@@ -179,7 +172,7 @@ public class ADXClassifier extends Classifier
 	//*****************************************    
 	private boolean discTestArray(FArray inputArray){
 		if(!inputArray.isDiscretized()){
-			System.out.println("Warrrning! Input table contains numeric values. Discretization is applied...");		
+			System.out.println("Warning! Input table contains numeric values. Discretization is applied...");		
 			inputArray.discRanges = discRangesTrain;
            	DiscFunctions.applyRanges(inputArray);
             return true;
@@ -212,36 +205,23 @@ public class ADXClassifier extends Classifier
 	@Override
     public boolean saveDefinition(String path,String name)
 	{
-		if(params.verbose) System.out.println("Saving classifier definition...");
-		if(params.verbose) System.out.print("Saving training data...");
+		//System.out.println("Saving classifier definition...");
 		Array2File array2File = new Array2File();
         array2File.setFormat(FileType.ADX);
 		array2File.saveFile(trainArray, path+"//"+name);
-		DiscFunctions.saveRanges(trainArray,path+"//"+name);
-		
-		if(params.verbose) System.out.println(" Done!");
-		
-		if(params.verbose) System.out.print("Saving classifier parameters...");
-		params.save(path,name);
-		if(params.verbose) System.out.println(" Done!");
-		
-		if(params.verbose) System.out.print("Saving Selectors...");
+		DiscFunctions.saveRanges(trainArray,path+"//"+name);				
+		params.save(path,name);		
 		ruleFamily.saveSymbolicSelectors(path+"//"+name);
-		ruleFamily.saveSelectors(path+"//"+name);
-		if(params.verbose) System.out.println(" Done!");
-		
-		if(params.verbose) System.out.print("Saving Rules...");
+		ruleFamily.saveSelectors(path+"//"+name);		
 		ruleFamily.saveRuleFamily(path+"//"+name);
-		if(params.verbose) System.out.println(" Done!");
 		return false;
 	}
 	//*****************************************
 	@Override
     public boolean loadDefinition(String path,String name)
 	{
-		if(params.verbose) System.out.println("Loading classifier definition...");
-		
-		if(params.verbose) System.out.println("Loading training data...");
+		//System.out.println("Loading classifier definition...");		
+		//System.out.println("Loading training data...");
         File2Array file2Container=new File2Array();
 		trainArray=new FArray();
 		if(!file2Container.load(trainArray, path+"//"+name+".adx"))
@@ -254,14 +234,14 @@ public class ADXClassifier extends Classifier
 			e1.printStackTrace();
 		}
 		
-		if(params.verbose) System.out.println("Loading classifier parameters...");
+		//System.out.println("Loading classifier parameters...");
 		if(!params.load(path,name))
 			return false;
 		
-		if(params.verbose) System.out.println("Loading rules...");
-		ruleFamily=new RuleFamily(trainArray.getDecValues().length,trainArray.colsNumber(),cfg);
+		//System.out.println("Loading rules...");
+		ruleFamily = new RuleFamily(trainArray.getDecValues().length,trainArray.colsNumber(),cfg);
 		ruleFamily.setTrainArray(trainArray);
-		ruleFamily.verbose=params.verbose;        
+		ruleFamily.verbose = cfg.verbose;        
 		RuleFamilyParser ruleParser=new RuleFamilyParser(ruleFamily,trainArray);
 		
 		String filePrefix=path+"//"+name;
@@ -318,11 +298,8 @@ public class ADXClassifier extends Classifier
                         {
                             Selector selector=ruleFamily.selectorListArray[f].getSelector(complex.getSelectorId(s));
                             selectorIndicators.setIndicators(selector);
-                            if(cfg.debug)
-                            {
-                                System.out.println("Adding selector: "+selector.toString(trainArray));
-                                System.out.println(selectorIndicators.toString());
-                            }       
+                            //System.out.println("Adding selector: "+selector.toString(trainArray));
+                            //System.out.println(selectorIndicators.toString());
                             String attrName=trainArray.attributes[selector.attrIndex].name;
                             importances[0].addImportances(attrName,experimentIndicators,selectorIndicators);
                             importances[f+1].addImportances(attrName,experimentIndicators,selectorIndicators);

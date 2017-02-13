@@ -21,46 +21,35 @@
  * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
-package dmLab.mcfs.mcfsEngine.framework;
+package dmLab.array.meta;
 
-import java.util.Random;
+import java.util.Arrays;
 
-import dmLab.array.FArray;
-import dmLab.utils.ArrayUtils;
-import dmLab.utils.statFunctions.StatFunctions;
+public class AttributeDef extends Attribute
+{  
+	public String[] decValues;
+	public short role;
 
+	public static short ROLE_IGNORE = 0;
+	public static short ROLE_INPUT = 1;
+	public static short ROLE_DECISION = 2;
 
-public class MCFSPermutation extends MCFSFramework implements Runnable 
-{
-	public String permPrefix="_perm";
-
-//	*************************************
-    public MCFSPermutation(Random random) {
-		super(random);
-	}
-//	*************************************
-	@Override
-    public void run()
+	//****************************************
+	public AttributeDef()
 	{
-		mcfsParams.buildID = true;
-		mcfsParams.finalCV = false;
-		mcfsParams.finalRuleset = false;
-		mcfsParams.cutoffMethod = "mean";
-		
-		experimentName = permPrefix+mcfsParams.getExperimentName();               
-        FArray permArray = mcfsArrays.sourceArray; 
-        //System.out.println("*** MCFS-ID & Permutation of Decision Attribute ***");
-        System.out.println("Permutation of decision attribute...");
-        float decColumn[] = permArray.getColumn(permArray.getDecAttrIdx());
-        double[] x = ArrayUtils.float2double(decColumn);
-        ArrayUtils arrayUtils = new ArrayUtils(random);
-        arrayUtils.shuffle(decColumn, 3);
-        double[] y = ArrayUtils.float2double(decColumn);
-        System.out.println("Pearson's correlation after permutation: "+ StatFunctions.pearson(x, y));
-        
-        if(runExperiment(permArray) == null)
-            return;
+		super();
+		decValues = null;
+		role = ROLE_INPUT;
 	}
-//	*************************************
-    
+	//****************************************
+	@Override
+	public String toString()
+	{
+		String ret = name + " " + type2String(type) + " " + role;
+		//if(decValues != null)
+			ret += " " + Arrays.toString(decValues);
+		
+		return ret;
+	}
+	//****************************************
 }

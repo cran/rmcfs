@@ -197,7 +197,7 @@ public class ContainerOperations
         for(int i=0;i<container.attributes.length;i++)
         {
             list[0][i]=container.attributes[i].name;
-            list[1][i]=Attribute.convert(container.attributes[i].type);
+            list[1][i]=Attribute.type2String(container.attributes[i].type);
         }
         return list;
     }

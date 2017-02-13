@@ -2,23 +2,21 @@
 #mcfs
 ###############################
 mcfs <- function(formula, data,
-                         projections = 3000,
-                         projectionSize = 0.05,
-                         splits = 5,
-                         splitRatio = 0.66,
-                         balanceRatio = 1,
-                         splitSetSize = 1000,
-                         cutoffPermutations = 20,
-                         cutoffMethod = c("permutations", "criticalAngle", "kmeans", "mean"),
-                         buildID = TRUE,
-                         finalRuleset = TRUE,
-                         finalCV = TRUE,
-                         finalCVSetSize = 1000,
-                         finalCVRepetitions = 3,
-                         u = 1, 
-                         v = 1,
-                         seed = NA,
-                         threadsNumber = 2)
+                        projections = 'auto',
+                        projectionSize = 'auto',
+                        featureFreq = 100,
+                        splits = 5,
+                        splitSetSize = 1000,
+                        balance = 'auto', 
+                        cutoffMethod = c("permutations", "criticalAngle", "kmeans", "mean"),
+                        cutoffPermutations = 20,
+                        buildID = TRUE,
+                        finalRuleset = TRUE,
+                        finalCV = TRUE,
+                        finalCVSetSize = 1000,
+                        finalCVRepetitions = 3,
+                        seed = NA,
+                        threadsNumber = 2)
 { 
   if(!cutoffMethod[1] %in% c("permutations", "criticalAngle", "kmeans", "mean")){
     stop(paste0("Incorrect 'cutoffMethod' = ", cutoffMethod[1]))
@@ -39,6 +37,7 @@ mcfs <- function(formula, data,
   
   tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
   tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
+  #tmp_dir <- "~/TEMP3/"
   libdir <- gsub("\\\\", .Platform$file.sep, libdir)
   
   config_file <- paste0(tmp_dir, "mcfs.run")
@@ -49,10 +48,10 @@ mcfs <- function(formula, data,
   params$inputFilesPATH = tmp_dir
   params$resFilesPATH = tmp_dir
   params$mcfs.projections = projections
-  params$mcfs.projectionSize = projectionSize
+  params$mcfs.projectionSize = get.projectionSize(length(cols), projectionSize)
   params$mcfs.splits = splits
-  params$mcfs.splitRatio = splitRatio
-  params$mcfs.balanceRatio = balanceRatio  
+  params$mcfs.featureFreq = featureFreq
+  params$mcfs.balance = balance
   params$mcfs.splitSetSize = splitSetSize
   params$mcfs.cutoffPermutations = cutoffPermutations
   params$mcfs.cutoffMethod = cutoffMethod[1]
@@ -61,8 +60,6 @@ mcfs <- function(formula, data,
   params$mcfs.finalCV = finalCV
   params$mcfs.finalCVSetSize = finalCVSetSize
   params$mcfs.finalCVRepetitions = finalCVRepetitions
-  params$mcfs.u = u
-  params$mcfs.v = v
   params$mcfs.threadsNumber = threadsNumber
   if(is.numeric(seed)){
     params$mcfs.seed = seed
@@ -90,13 +87,11 @@ mcfs <- function(formula, data,
   
   #clean temp files
   #cat("Cleaning temporary files...\n")
-  out.files <- get.files.names(tmp_dir, filter=label, ext=c('.csv','.txt','.adx'), fullNames=T, recursive=F)
-  for(i in 1:length(out.files)){
-    if(File.exists(out.files[i])){
-      #cat(paste0("remove ", out.files[i]))
-      file.remove(out.files[i])
-    }
-  }
+  out.files <- get.files.names(tmp_dir, ext=c('.zip','.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
+  #print(out.files)
+  if(length(out.files)>0)
+    delete.files(out.files)
+  
   cat("Done.\n")
   end.time <- Sys.time()
   mcfsResult$exec_time <- end.time - start.time
@@ -109,7 +104,7 @@ mcfs <- function(formula, data,
 #jri.prepare
 ###############################
 jri.prepare <- function(){
-  .jaddClassPath(system.file("jri",c("JRI.jar"), package="rJava"))
+  .jaddClassPath(system.file("jri", c("JRI.jar"), package = "rJava"))
   
   .jcall("java/lang/System", returnSig="V", "setOut",
          .jnew("java/io/PrintStream",
@@ -159,25 +154,29 @@ formula.prepare <- function(formula, data) {
 ###############################
 default.params <- list(verbose = "false", debug = "false", mcfs.progressShow = "false",
                        inputFileName = "", inputFilesPATH = "", resFilesPATH = "",
-                       mcfs.projections = 3000, mcfs.projectionSize = 0.05,
+                       mcfs.projections = 'auto', mcfs.projectionSize = 'auto',
+                       mcfs.projectionSizeMax = 1000,
+                       mcfs.featureFreq = 100,
                        mcfs.splits = 5, mcfs.splitRatio = 0.66,
-                       mcfs.balanceRatio = 1,
                        mcfs.splitSetSize = 1000,
-                       mcfs.contrastAttr = "false",
-                       mcfs.contrastAttrThreshold = 1,
+                       mcfs.balance = 'auto',
+                       mcfs.mode = 1,
+                       mcfs.cutoffMethod = "permutations",
                        mcfs.cutoffPermutations = 20,
                        mcfs.cutoffAlpha = 0.05,
                        mcfs.cutoffAngle = 0.01,
-                       mcfs.cutoffMethod = "mean",
                        mcfs.buildID = "true",
                        mcfs.finalRuleset = "true",
                        mcfs.finalCV = "true",
                        mcfs.finalCVSetSize = 1000,
                        mcfs.finalCVRepetitions = 3,
+                       mcfs.model = "auto", mcfs.progressInterval = 10,
                        mcfs.u = 1, mcfs.v = 1,
-                       mcfs.threadsNumber = 4,
+                       mcfs.contrastAttr = "false",
+                       mcfs.contrastAttrThreshold = 1,
+                       mcfs.zipResult = F,
                        mcfs.seed = NA,
-                       mcfs.progressInterval = 10, mcfs.model = "auto", 
+                       mcfs.threadsNumber = 4,
                        j48.useGainRatio = "true", j48.maxConnectionDepth = 5,
                        adx.useComplexQuality = "true", adx.qMethod = 2, 
                        sliq.useDiversityMeasure = "true"
@@ -207,241 +206,15 @@ save.params.file <- function(params, config_file) {
 }
 
 ###############################
-#write.adx
-###############################
-# data(alizadeh)
-# d <- alizadeh
-# d[5,1] <- Inf
-# d[7,2] <- Inf
-# d[5,3] <- NA
-# d[7,4] <- NA
-# write.adx(d, file="~/ali_test.arff", chunk.size=2000)
-write.adx <- function(x, file = "", target = NA, chunk.size = 100000)
-{
-  if(file == ""){
-    file <- stdout()
-  }else if(is.character(file)) {
-    file <- file(file, "wb")
-    on.exit(close(file))
-  }
-  
-  if(!inherits(file, "connection"))
-    stop("Argument 'file' must be a character string or connection.")
-  
-  if (!is.data.frame(x))
-    x <- data.frame(x)
-  
-  if(is.character(target)) 
-    target <- match(target, names(x))
-  if(is.na(target) || target < 1 || target > ncol(x)) 
-    target <- ncol(x)
-  
-  # for speed create local variables
-  # call these functions only once
-  names.x <- names(x)
-  cols.x <- ncol(x)
-  rows.x <- nrow(x)
-
-  verbose <- F
-  if(cols.x * rows.x > chunk.size)
-    verbose <- T
-
-  if(verbose)
-    cat(paste0("Determining numeric columns...\n"))
-  numeric.cols <- sapply(x[1,], is.numeric)
-  
-  if(verbose)
-    cat(paste0("Saving attributes meta info...\n"))
-  ##### write attributes #####
-  writeLines("attributes", file)
-  writeLines("{", file)
-  
-  attrHeader <- matrix(nrow = length(names.x), ncol = 3, byrow = FALSE)
-  attrHeader[,1] <- paste0(" '",names.x,"'")
-  attrHeader[numeric.cols, 2] <- " numeric"
-  attrHeader[!numeric.cols, 2] <- " nominal"
-  attrHeader[target,3] <- " decision"
-  attrHeader[is.na(attrHeader[,3]),3] <- ""
-  l <- apply(attrHeader, 1, paste, collapse="")
-  cat(l, file=file, sep="\n")
-  
-  writeLines("}", file)
-  writeLines("", file)
-
-  # convert input data to matrix
-  if(verbose)
-    cat("Conversion of input data to character matrix...\n") 
-  x <- df.to.matrix(x, chunk.size, verbose)
-
-  ###### write events ######
-  writeLines("events", file)
-  writeLines("{", file)
-
-  col.steps <- my.seq(chunk.size, cols.x, chunk.size, T)
-  rstep <-  ceiling(chunk.size / cols.x)
-  row.steps <- my.seq(rstep, rows.x, rstep, T)
-  chunks <- length(col.steps) * length(row.steps)
-  
-  #i <- row.steps[1]
-  #j <- col.steps[1]
-  chunk <- 1
-  row.begin <- 1
-  for(i in row.steps) {
-    col.begin <- 1
-    for(j in col.steps) {
-      if(verbose)
-        cat(paste0("Saving events chunk: ", chunk, " of ", chunks,"\n"))
-      # m must be matrix type
-      m <- x[row.begin:i, col.begin:j, drop=FALSE]
-      m <- fix.matrix(m)
-      l <- apply(m, 1, paste, collapse=",")
-      if(j > col.steps[1])
-        cat(',', file=file, sep="")
-      if(length(l)>1 | j==cols.x){
-        cat(l, file=file, sep="\n")
-      }else{
-        cat(l, file=file, sep="")
-      }
-      rm(m,l)
-      col.begin <- j + 1
-      chunk <- chunk + 1
-    }
-    row.begin <- i + 1
-  }
-  writeLines("}", file)
-  
-  if(verbose){
-    cat("Data has been exported.\n")
-  }
-}
-
-###############################
-#write.arff
-###############################
-# data(alizadeh)
-# x <- alizadeh
-# x$nominalAttr <- c(rep("val1",nrow(x)/2),rep("val2",nrow(x)))[1:nrow(x)]
-# d[5,1] <- Inf
-# d[7,2] <- Inf
-# d[5,3] <- NA
-# d[7,4] <- NA
-# write.arff(x, file="~/ali_test.arff", chunk.size=2000)
-write.arff <- function(x, file = "", target = NA, chunk.size = 100000)
-{
-  if(file == "")
-    file <- stdout()
-  else if(is.character(file)) {
-    file <- file(file, "wb")
-    on.exit(close(file))
-  }
-  
-  if(!inherits(file, "connection"))
-    stop("Argument 'file' must be a character string or connection.")
-  
-  #if (!is.data.frame(x) && !is.matrix(x))
-  if (!is.data.frame(x))
-    x <- data.frame(x)
-  
-  if(is.character(target)) 
-    target <- match(target, names(x))
-  if(is.na(target) || target < 1 || target > ncol(x)) 
-    target <- ncol(x)
-  
-  if(target!=ncol(x)){
-    #move decision column to the end
-    decisionName <- names(x)[target]
-    x <- cbind(x[,-target], x[,target])
-    target <- ncol(x)
-    names(x)[target] <- decisionName
-  }  
-  
-  # for speed create local variables
-  # call these functions only once
-  names.x <- names(x)
-  cols.x <- ncol(x)
-  rows.x <- nrow(x)
-
-  verbose <- F
-  if(cols.x * rows.x > chunk.size)
-    verbose <- T
-  
-  if(verbose)
-    cat(paste0("Determining numeric columns...\n"))
-  numeric.cols <- sapply(x[1,], is.numeric)
-  
-  if(verbose)
-    cat(paste0("Saving attributes meta info...\n"))
-  ## Write Attributes
-  writeLines(paste0("@relation ",'"',names(x)[target],'"'), file)  
-  writeLines("", file)
-  
-  attrHeader <- matrix(nrow = length(names.x), ncol = 3, byrow = FALSE)
-  attrHeader[,1] <- "@attribute"
-  attrHeader[,2] <- paste0(" '",names.x,"'")
-  attrHeader[numeric.cols, 3] <- " real"
-  if(any(!numeric.cols)){
-    attrHeader[!numeric.cols, 3] <- sapply(x[,!numeric.cols, drop=F], function(x) paste0(" {", paste(unique(x), collapse=","),"}"))
-  }
-  attrHeader[is.na(attrHeader[,3]),3] <- ""
-  l <- apply(attrHeader, 1, paste, collapse="")
-  cat(l, file=file, sep="\n")
-  
-  # convert input data to matrix
-  if(verbose)
-    cat("Conversion of input data to character matrix...\n") 
-  x <- df.to.matrix(x, chunk.size, verbose)
-  
-  ## Write Events
-  writeLines("", file)
-  writeLines("@data", file)
-  writeLines("", file)
-  
-  col.steps <- my.seq(chunk.size, cols.x, chunk.size, T)
-  rstep <-  ceiling(chunk.size / cols.x)
-  row.steps <- my.seq(rstep, rows.x, rstep, T)
-  chunks <- length(col.steps) * length(row.steps)
-  
-  chunk <- 1
-  row.begin <- 1
-  for(i in row.steps) {
-    col.begin <- 1
-    for(j in col.steps) {
-      if(verbose)
-        cat(paste0("Saving events chunk: ",chunk," of ", chunks,"\n"))
-      # m must be matrix type
-      m <- x[row.begin:i, col.begin:j, drop=FALSE]
-      m <- fix.matrix(m)
-      l <- apply(m, 1, paste, collapse=",")
-      if(j > col.steps[1])
-        cat(',', file=file, sep="")
-      if(length(l)>1 | j==cols.x){
-        cat(l, file=file, sep="\n")
-      }else{
-        cat(l, file=file, sep="")
-      }
-      rm(m,l)
-      col.begin <- j + 1
-      chunk <- chunk + 1
-    }
-    writeLines("", file)
-    row.begin <- i + 1
-  }
-
-  if(verbose){
-    cat("Data has been exported.\n")
-  }
-}
-
-###############################
 #fix.matrix
 ###############################
-fix.matrix <- function(m){
-  m[is.na(m)] = "?"
-  m[is.infinite(m)] <- "?"
+fix.matrix <- function(m, na.char = '?'){
+  m[is.na(m)] <- na.char
+  m[is.infinite(m)] <- na.char
   if(class(m[1,1])=="character"){
     m <- string.trim(m)
-    m[m=="Inf"] <- "?"
-    m[m=="-Inf"] <- "?"
+    m[m=="Inf"] <- na.char
+    m[m=="-Inf"] <- na.char
   }  
   return (m)
 }
@@ -457,28 +230,29 @@ fix.matrix <- function(m){
 # x <- fix.data(x)
 # reshape2::melt(lapply(x, class))
 # showme(x) 
-fix.data <- function(x, type = c("all", "names", "values", "types"), 
-                     source.chars=c(" ",",","/","|","#"), 
-                     destination.char = "_", 
-                     numeric.class=c("difftime"), 
-                     nominal.class=c("factor", "logical", "Date", "POSIXct", "POSIXt"))
+fix.data <- function(x, 
+                     type = c("all", "names", "values", "types"), 
+                     source_chars = c(" ", ",", "/", "|", "#"), 
+                     destination_char = "_", 
+                     numeric_class = c("difftime"), 
+                     nominal_class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))
 {
   if (!is.data.frame(x))
     x <- as.data.frame(x)
   
   if(type[1] %in% c("all","names") ){
     cat("Fixing names...\n")
-    names(x) <- string.replace(string.trim(names(x)), source.chars, destination.char)
+    names(x) <- string.replace(string.trim(names(x)), source_chars, destination_char)
   }
   
   if(type[1] %in% c("all","values") ){
     cat("Fixing values...\n")
-    x <- fix.data.values(x, source.chars, destination.char)
+    x <- fix.data.values(x, source_chars, destination_char)
   }
   
   if(type[1] %in% c("all","types") ){
     cat("Fixing types...\n")
-    x <- fix.data.types(x, numeric.class, nominal.class)
+    x <- fix.data.types(x, numeric_class, nominal_class)
   }  
   return(x) 
 }
@@ -493,13 +267,15 @@ fix.data <- function(x, type = c("all", "names", "values", "types"),
 # d$art2 <- rep("  aac bb  ",nrow(d))
 # d$art2[3:13] <- ""
 # fix.data.values(d)
-fix.data.values <- function(x, sourceChars = c(" ",",","/","|","#"), destinationChar = "_")
+fix.data.values <- function(x, 
+                            source_chars = c(" ", ",", "/", "|", "#"), 
+                            destination_char = "_")
 {
   x[x == "?"] <- NA
-  nominal.class <- c("character", "factor", "Date", "POSIXct", "POSIXt")
+  nominal_class <- c("character", "factor", "Date", "POSIXct", "POSIXt")
   df.class <- reshape2::melt(lapply(x, class))
   colnames(df.class) <- c("classname", "colname")
-  nominalMask <- df.class$classname %in% nominal.class
+  nominalMask <- df.class$classname %in% nominal_class
   
   x.nominal <- x[,nominalMask, drop=F]
   #dplyr version
@@ -511,7 +287,7 @@ fix.data.values <- function(x, sourceChars = c(" ",",","/","|","#"), destination
   #x.nominal <- apply(x.nominal, c(1,2), FUN = string.trim)
   #x.nominal <- apply(x.nominal, c(1,2), FUN = string.empty.as.na)
 
-  x.nominal <- apply(x.nominal, c(1,2), FUN = string.replace, sourceChars=sourceChars, destinationChar=destinationChar)
+  x.nominal <- apply(x.nominal, c(1,2), FUN = string.replace, sourceChars=source_chars, destinationChar=destination_char)
   x[nominalMask] <- x.nominal
   
   return(x)
@@ -520,13 +296,14 @@ fix.data.values <- function(x, sourceChars = c(" ",",","/","|","#"), destination
 ###############################
 #fix.data.types
 ###############################
-fix.data.types <- function(x, numeric.class = c("difftime"), 
-                           nominal.class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))
+fix.data.types <- function(x, 
+                           numeric_class = c("difftime"), 
+                           nominal_class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))
 {
   df.class <- reshape2::melt(lapply(x, class))
   colnames(df.class) <- c("classname", "colname")
-  fixCols.toNumeric <- unique(df.class$colname[df.class$classname %in% numeric.class])
-  fixCols.toNominal <- unique(df.class$colname[df.class$classname %in% nominal.class])
+  fixCols.toNumeric <- unique(df.class$colname[df.class$classname %in% numeric_class])
+  fixCols.toNominal <- unique(df.class$colname[df.class$classname %in% nominal_class])
   mask.toNumeric <- df.class$colname %in% fixCols.toNumeric
   mask.toNominal <- df.class$colname %in% fixCols.toNominal
   
@@ -551,9 +328,12 @@ filter.data <- function(data, mcfs_result, size = NA){
   if(class(mcfs_result)!="mcfs")
     stop("Input object is not 'mcfs' class.")
   
-  size <- get.size.param(size, mcfs_result$cutoff_value)
-  if(is.null(size))
+  if(is.na(size))
+    size <- mcfs_result$cutoff_value
+  if(is.null(size) | is.na(size) | size <= 0){
+    warning(paste0("Parameter 'size' is NULL, NA or <= 0."))
     return(NULL)
+  }
   
   fdata <- data[,names(data) %in% as.character(head(mcfs_result$RI,size)$attribute)]
   target.data.frame <- data.frame(data[,mcfs_result$target])
@@ -655,13 +435,13 @@ read.target <- function(fileName){
 read.RI <- function(fileName){
   ranking <- NULL
   if(File.exists(fileName)){
-  ranking <- read.table(fileName, sep=",", header = TRUE, stringsAsFactors = FALSE)
-  ranking <- ranking[, names(ranking) %in% c('attribute', 'projections', 'classifiers', 'crudeRI', 'nodes', 'RI_norm')]
-  # crudeRI is now nodes
-  names(ranking)[names(ranking) %in% c('crudeRI')] <- 'nodes'
-  ranking <- ranking[order(-ranking$RI_norm),]
-  position <- 1:nrow(ranking)
-  ranking <- cbind(position,ranking)
+    ranking <- read.table(fileName, sep=",", header = TRUE, stringsAsFactors = FALSE)
+    ranking <- ranking[, names(ranking) %in% c('attribute', 'projections', 'classifiers', 'crudeRI', 'nodes', 'RI_norm')]
+    # crudeRI is now nodes
+    names(ranking)[names(ranking) %in% c('crudeRI')] <- 'nodes'
+    ranking <- ranking[order(-ranking$RI_norm),]
+    position <- 1:nrow(ranking)
+    ranking <- cbind(position,ranking)
   }else{
     stop(paste0("File: '",fileName,"' does not exists."))
   }
@@ -712,6 +492,17 @@ import.result <- function(path, label){
     stop(paste0("Path does not exist. Path: ", path))
   }
   
+  tmp_dir <- NULL
+  zip_file <- paste0(path, label, '.zip')
+  if(File.exists(zip_file)){
+    tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
+    tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
+    #tmp_dir <- "~/TEMP/"
+    #print(paste0("Extracting '",basename(zip_file),"' file..."))
+    utils::unzip(zip_file, exdir = file.path(tmp_dir))
+    path <- tmp_dir
+  }
+  
   #print(paste0("Loading '",label,"' results..."))
   ri_file <- file.path(path, paste0(label, "__importances.csv"))
   if(!File.exists(ri_file))
@@ -729,10 +520,18 @@ import.result <- function(path, label){
   topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
   jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
   predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
+  data_file <- file.path(path, paste0(label, "_data.adh"))
+  data_csv_file <- file.path(path, paste0(label, "_data.csv"))
   params_file <- file.path(path, paste0(label, ".run"))
   
   mcfsResult <- list()
-  
+  mcfsResult$data <- NULL
+  if(File.exists(data_file)){
+    mcfsResult$data <- read.adh(data_file)
+  }else if(File.exists(data_csv_file)){
+    mcfsResult$data <- utils::read.csv(data_csv_file, header = T, sep=',', na.strings = c("NA", "NaN", "?") , stringsAsFactors = F)
+  }
+
   params <- read.params(params_file)
   if(File.exists(matrix_file)){
     mcfsResult$target <- read.target(matrix_file)
@@ -740,7 +539,7 @@ import.result <- function(path, label){
     mcfsResult$target <- params$target
   }
   mcfsResult$RI <- read.RI(ri_file)
-  
+
   if(File.exists(id_file)){
     mcfsResult$ID <- read.ID(id_file)
   }
@@ -771,71 +570,96 @@ import.result <- function(path, label){
     warning(paste0("Result does not contain all needed data.frames: [",missing,"] are missing."))
   }
   
+  # clean temporary files
+  if(!is.null(tmp_dir)){
+    tmp.files <- get.files.names(tmp_dir, filter=label, ext=c('.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
+    delete.files(tmp.files)
+  }
+  
   return(mcfsResult)
 }
 
 ###############################
 #export.result
 ###############################
-export.result <- function(mcfs_result, path, label = "rmcfs", save.rds = FALSE){
-  
+export.result <- function(mcfs_result, path, label = "rmcfs", zip = TRUE){
+
+  zip_file <- paste0(path, label, '.zip')
+  tmp_dir <- NULL
+  if(zip){
+    tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
+    tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
+    path <- tmp_dir
+  }
+
   if(class(mcfs_result) != "mcfs")
     stop("Input object is not 'mcfs' class.")
   
-  dir.create(file.path(path), showWarnings=F, recursive=T)
+  #in any case create the directory if it does not exist
+  dir.create(file.path(path), showWarnings = F, recursive = T)
   
-  if(save.rds){
-    saveRDS(mcfs_result,file=paste0(path, label, "_.rds"))
-  }else{
-    ri_file <- file.path(path, paste0(label, "__RI.csv"))
-    id_file <- file.path(path, paste0(label, "_ID.csv"))
-    distances_file <- file.path(path, paste0(label, "_distances.csv"))
-    matrix_file <- file.path(path, paste0(label, "_cmatrix.csv"))
-    cutoff_file <- file.path(path, paste0(label, "_cutoff.csv"))
-    cv_file <- file.path(path, paste0(label, "_cv_accuracy.csv"))
-    permutations_file <- file.path(path, paste0(label, "_permutations.csv"))    
-    topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
-    jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
-    predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
-    params_file <- file.path(path, paste0(label, ".run"))
+  ri_file <- file.path(path, paste0(label, "__RI.csv"))
+  id_file <- file.path(path, paste0(label, "_ID.csv"))
+  distances_file <- file.path(path, paste0(label, "_distances.csv"))
+  matrix_file <- file.path(path, paste0(label, "_cmatrix.csv"))
+  cutoff_file <- file.path(path, paste0(label, "_cutoff.csv"))
+  cv_file <- file.path(path, paste0(label, "_cv_accuracy.csv"))
+  permutations_file <- file.path(path, paste0(label, "_permutations.csv"))    
+  topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
+  jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
+  predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
+  data_file <- file.path(path, paste0(label, "_data.csv"))
+  params_file <- file.path(path, paste0(label, ".run"))
     
-    write.csv(mcfs_result$RI, file=ri_file, row.names = F)
-    write.csv(mcfs_result$ID, file=id_file, row.names = F)
-    write.csv(mcfs_result$distances, file=distances_file, row.names = F)
-    #save cmatrix
-    if(any(names(mcfs_result)=="cmatrix")){
-      cmatrix <- as.data.frame(mcfs_result$cmatrix)
-      cmatrix <- cbind(rownames(cmatrix),cmatrix)
-      colnames(cmatrix)[1] <- mcfs_result$target
-      write.csv(cmatrix, file=matrix_file, row.names = F)
-    }
-    #save cmatrix
-    if(any(names(mcfs_result)=="predictionStats")){
-      write.csv(mcfs_result$predictionStats, file=predictionStats_file, row.names = F)
-    }
-    #save cutoff
-    write.csv(mcfs_result$cutoff, file=cutoff_file, row.names = F)
-    #save cv_accuracy
-    if(any(names(mcfs_result)=="cv_accuracy")){
-      write.csv(mcfs_result$cv_accuracy, file=cv_file, row.names = F)
-    }    
-    #save permutations
-    if(any(names(mcfs_result)=="permutations")){
-      write.csv(mcfs_result$permutations, file=permutations_file, row.names = F)
-    }
-    
-    #save top ranking
-    topRanking <- head(mcfs_result$RI, mcfs_result$cutoff_value)
+  write.csv(mcfs_result$RI, file=ri_file, row.names = F)
+  write.csv(mcfs_result$ID, file=id_file, row.names = F)
+  write.csv(mcfs_result$distances, file=distances_file, row.names = F)
+  #save cmatrix
+  if(any(names(mcfs_result)=="cmatrix")){
+    cmatrix <- as.data.frame(mcfs_result$cmatrix)
+    cmatrix <- cbind(rownames(cmatrix),cmatrix)
+    colnames(cmatrix)[1] <- mcfs_result$target
+    write.csv(cmatrix, file=matrix_file, row.names = F)
+  }
+  #save cmatrix
+  if(any(names(mcfs_result)=="predictionStats")){
+    write.csv(mcfs_result$predictionStats, file=predictionStats_file, row.names = F)
+  }
+  #save cutoff
+  write.csv(mcfs_result$cutoff, file=cutoff_file, row.names = F)
+  #save cv_accuracy
+  if(any(names(mcfs_result)=="cv_accuracy")){
+    write.csv(mcfs_result$cv_accuracy, file=cv_file, row.names = F)
+  }    
+  #save permutations
+  if(any(names(mcfs_result)=="permutations")){
+    write.csv(mcfs_result$permutations, file=permutations_file, row.names = F)
+  }
+  #save top ranking
+  topRanking <- head(mcfs_result$RI, mcfs_result$cutoff_value)
+  if(!any(names(topRanking) %in% "position") & nrow(topRanking) > 0){
     position <- 1:nrow(topRanking)
     topRanking <- cbind(position, topRanking)
-    write.csv(topRanking, file=topRanking_file, row.names = F)
-    
-    if(any(names(mcfs_result)=="jrip")){
-      writeChar(mcfs_result$jrip, jrip_file)
-    }
-    
-    if(any(names(mcfs_result)=="params")){
-      save.params.file(mcfs_result$params, params_file)
+  }
+  write.csv(topRanking, file=topRanking_file, row.names = F)
+  #save jrip rules
+  if(any(names(mcfs_result)=="jrip")){
+    writeChar(mcfs_result$jrip, jrip_file)
+  }
+  #save params
+  if(any(names(mcfs_result)=="params")){
+    save.params.file(mcfs_result$params, params_file)
+  }
+  #save data
+  if(any(names(mcfs_result)=="data")){
+    write.csv(mcfs_result$data, file=data_file, row.names = F)
+  }
+  
+  if(zip){
+    if(!is.null(tmp_dir)){
+      tmp.files <- get.files.names(tmp_dir, filter=label, ext=c('.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
+      utils::zip(zip_file, files = file.path(tmp.files), flags = "-jq")
+      delete.files(tmp.files)
     }
   }
 }
@@ -843,7 +667,7 @@ export.result <- function(mcfs_result, path, label = "rmcfs", save.rds = FALSE){
 ###############################
 #artificial.data
 ###############################
-artificial.data <- function(rnd.features = 500, size = c(40, 20, 10), corruption = c(0,2,4), seed = NA){
+artificial.data <- function(rnd_features = 500, size = c(40, 20, 10), corruption = c(0,2,4), seed = NA){
   if(length(size) != 3){
     warning("Length of 'size' parameter does not equal to 3. Default values c(40, 20, 10) are used.")
     corruption <- c(40, 20, 10)
@@ -864,7 +688,7 @@ artificial.data <- function(rnd.features = 500, size = c(40, 20, 10), corruption
   A[class=="A"][rnd[class=="A"]<=(sort(rnd[class=="A"]))[corruption[1]]] <- "0"
   B[class=="B"][rnd[class=="B"]<=(sort(rnd[class=="B"]))[corruption[2]]] <- "0"
   C[class=="C"][rnd[class=="C"]<=(sort(rnd[class=="C"]))[corruption[3]]] <- "0"
-  d <- data.frame(matrix(runif(rnd.features*length(class)), ncol=rnd.features))
+  d <- data.frame(matrix(runif(rnd_features*length(class)), ncol=rnd_features))
   d <- cbind(d,data.frame(A1=A, A2=A, B1=B, B2=B, C1=C, C2=C, class))
   return(d)
 }
@@ -879,8 +703,7 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE,
     stop("Input object is not 'mcfs' class.")
   
   if(all(names(mcfs_result)!="ID")){
-    warning("ID-Graph edges are not collected. Object 'mcfs_result$ID' does not exist.")
-    return (NULL)
+    stop("ID-Graph edges are not collected. Object 'mcfs_result$ID' does not exist.")
   }
   
   if(is.na(size))

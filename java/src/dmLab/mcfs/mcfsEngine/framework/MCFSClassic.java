@@ -35,13 +35,8 @@ public class MCFSClassic extends MCFSFramework implements Runnable
 	@Override
 	public void run()
 	{   
-		saveResutFiles = true;
 		experimentName = mcfsParams.getExperimentName();
-
-		System.out.println("***************************");
-		System.out.println("***       MCFS-ID       ***");
-		System.out.println("***************************");        
-
+		//System.out.println("*** MCFS-ID ***");
 		runExperiment(mcfsArrays.sourceArray);
 
 		return;        

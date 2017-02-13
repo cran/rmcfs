@@ -28,10 +28,10 @@ import java.awt.Color;
 
 public class Attribute implements Cloneable
 {
-  public static final short UNKNOWN=0;
-  public static final short NOMINAL=1;
-  public static final short NUMERIC=2;
-  public static final short INTEGER=3;
+  public static final short UNKNOWN = 0;
+  public static final short NOMINAL = 1;
+  public static final short NUMERIC = 2;
+  public static final short INTEGER = 3;
   
   public String name;
   public short type;
@@ -39,11 +39,11 @@ public class Attribute implements Cloneable
 //****************************************
   public Attribute()
   {
-    name=null;
-    type=UNKNOWN;    
+    name = null;
+    type = UNKNOWN;    
   }
 //****************************************
-   public static String convert(short type)
+   public static String type2String(short type)
    {
      if(type == NOMINAL)
        return "nominal";
@@ -55,7 +55,7 @@ public class Attribute implements Cloneable
        return null;
    }
 //****************************************
-   public static short convert(String type)
+   public static short type2Int(String type)
    {
      if(type.equalsIgnoreCase("nominal"))
        return NOMINAL;
@@ -80,7 +80,7 @@ public class Attribute implements Cloneable
                new Color(213,255,213),//NOMINAL=1
                new Color(213,213,255),//NUMERIC=2
                new Color(255,255,213)};//INTEGER=3
-       return colors[convert(type)];
+       return colors[type2Int(type)];
    }
 // ********************************************
    @Override
