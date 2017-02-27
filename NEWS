@@ -1,6 +1,9 @@
 *******************
 ***  R rmcfs    ***
 *******************
+1.2.3
+	minor fix in cleaning temporary files
+
 1.2.2
 	minor fix in uncompression input zip files
 	

@@ -493,14 +493,14 @@ import.result <- function(path, label){
   }
   
   tmp_dir <- NULL
-  zip_file <- paste0(path, label, '.zip')
+  zip_file <- file.path(paste0(path, label, '.zip'))
   if(File.exists(zip_file)){
     tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
-    tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
+    tmp_dir <- file.path(gsub("\\\\", .Platform$file.sep, tmp_dir))
     #tmp_dir <- "~/TEMP/"
     #print(paste0("Extracting '",basename(zip_file),"' file..."))
     utils::unzip(zip_file, exdir = file.path(tmp_dir))
-    path <- tmp_dir
+    path <- file.path(tmp_dir)
   }
   
   #print(paste0("Loading '",label,"' results..."))
@@ -573,7 +573,7 @@ import.result <- function(path, label){
   # clean temporary files
   if(!is.null(tmp_dir)){
     tmp.files <- get.files.names(tmp_dir, filter=label, ext=c('.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
-    delete.files(tmp.files)
+    delete.files(file.path(tmp.files))
   }
   
   return(mcfsResult)
@@ -584,12 +584,12 @@ import.result <- function(path, label){
 ###############################
 export.result <- function(mcfs_result, path, label = "rmcfs", zip = TRUE){
 
-  zip_file <- paste0(path, label, '.zip')
   tmp_dir <- NULL
+  zip_file <- file.path(paste0(path, label, '.zip'))
   if(zip){
     tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
     tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
-    path <- tmp_dir
+    path <- file.path(tmp_dir)
   }
 
   if(class(mcfs_result) != "mcfs")
@@ -659,7 +659,7 @@ export.result <- function(mcfs_result, path, label = "rmcfs", zip = TRUE){
     if(!is.null(tmp_dir)){
       tmp.files <- get.files.names(tmp_dir, filter=label, ext=c('.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
       utils::zip(zip_file, files = file.path(tmp.files), flags = "-jq")
-      delete.files(tmp.files)
+      delete.files(file.path(tmp.files))
     }
   }
 }
