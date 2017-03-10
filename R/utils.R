@@ -227,26 +227,32 @@ open.plot.file <- function(filename, width, height, res = 72){
 ###############################
 delete.files <- function(files){
   if(length(files)>0){
-  for(i in 1:length(files)){
-    if(File.exists(files[i])){
-      #cat(paste0("remove ", files[i]))
-      file.remove(files[i])
+    for(i in 1:length(files)){
+      if(File.exists(files[i])){
+        #cat(paste0("remove ", files[i]))
+        file.remove(files[i])
+      }
     }
   }
-}
 }
 
 ###############################
 #build.cmatrix
 ###############################
-#x1 <- round(runif(100, 0.0, 3.0))
-#x2 <- round(runif(100, 0.0, 3.0))
-#build.cmatrix(x1,x2)
+# x1 <- round(runif(100, 0.0, 3.0))
+# x2 <- round(runif(100, 0.0, 3.0))
+# build.cmatrix(x1,x2)
 build.cmatrix <- function(real, predicted, levels = NULL){
+  real <- as.character(real)
+  predicted <- as.character(predicted)
   if(is.null(levels)){
-    levels <- as.character(unique(c(real,predicted)))
+    levels <- as.character(unique(c(real, predicted)))
   }
-  cmatrix <- table(factor(real,levels), factor(predicted,levels))
+  if(length(levels)<2){
+    warning(paste0("Cannot build confusion matrix, levels = ", levels))
+    return(NULL)
+  }
+  cmatrix <- table(factor(real, levels), factor(predicted, levels))
   cmatrix <- as.data.frame.matrix(cmatrix)
   cmatrix <- as.matrix(cmatrix)
   colnMat <-  colnames(cmatrix)

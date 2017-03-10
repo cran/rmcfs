@@ -6,7 +6,7 @@
 }
 \usage{fix.data(x, 
           type = c("all", "names", "values", "types"), 
-          source_chars = c(" ", ",", "/", "|", "#"), 
+          source_chars = c(" ", ",", "/", "|", "#", "-"), 
           destination_char = "_", 
           numeric_class = c("difftime"), 
           nominal_class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))}

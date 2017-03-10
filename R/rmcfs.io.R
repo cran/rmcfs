@@ -23,12 +23,9 @@ read.adh <- function(file = ""){
 read.zip <- function(file, fileFormat){
   if(File.exists(file)){
     if(file.extension(file) == 'zip'){
-      tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
-      tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
-      #tmp_dir <- "~/TEMP3/"
-      #print(paste0("Extracting '",basename(file),"' file..."))
-      utils::unzip(file, exdir = file.path(tmp_dir))
-      file_path <- paste0(tmp_dir, drop.file.extension(basename(file)), ".", fileFormat)
+      tmp_dir <- tempdir()
+      utils::unzip(file, exdir = tmp_dir)
+      file_path <- file.path(tmp_dir, paste0(drop.file.extension(basename(file)), ".", fileFormat))
     }else if(file.extension(file) == fileFormat){
       file_path <- file
     }else{
@@ -246,18 +243,17 @@ write.zip <- function(x, file, target, chunk_size, zip, fileFormat)
     zip <- F
     fileDir <- ""
   }else{
-    fileDir <- paste0(dirname(file),'/')
+    fileDir <- dirname(file)
   }
   
   if(zip){
-    tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
-    tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
+    tmp_dir <- tempdir()
   }else{
     tmp_dir <- fileDir
   }
   
-  dataFileName <- paste0(tmp_dir, basename(fileName))
-  zipFileName <- paste0(fileDir, sub(paste0('\\.',fileFormat), '', basename(fileName)), '.zip')
+  dataFileName <- file.path(tmp_dir, basename(fileName))
+  zipFileName <- file.path(fileDir, paste0(sub(paste0('\\.',fileFormat), '', basename(fileName)), '.zip'))
   
   if(fileFormat == "adx"){
     export.adx(x, dataFileName, target, chunk_size)

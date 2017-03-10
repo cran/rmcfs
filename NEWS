@@ -1,6 +1,9 @@
 *******************
 ***  R rmcfs    ***
 *******************
+1.2.4
+	minor fix in processing temporary paths
+	
 1.2.3
 	minor fix in cleaning temporary files
 

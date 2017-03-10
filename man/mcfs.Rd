@@ -144,7 +144,7 @@ mcfs(formula, data,
   
   # Export graph to graphML (XML structure)
   path <- tempdir()
-  igraph::write.graph(gid, file = paste0(path, "/artificial.graphml"), 
+  igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
               format = "graphml", prefixAttr = FALSE)
   
   # Export and import results to/from csv files

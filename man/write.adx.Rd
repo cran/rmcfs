@@ -24,5 +24,5 @@
   #Fix input data to be consistent with ARFF and ADX formats. 
   #It is not necessary but for some data can help to export in proper format.
   d <- fix.data(d)
-  write.adx(d, file = paste0(tempdir(), "/alizadeh.adx"), target = "class")
+  write.adx(d, file = file.path(tempdir(), "alizadeh.adx"), target = "class")
 }

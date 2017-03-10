@@ -35,18 +35,13 @@ mcfs <- function(formula, data,
     stop("Decision attribute contains only 1 value.")
   }
   
-  tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
-  tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
-  #tmp_dir <- "~/TEMP3/"
-  libdir <- gsub("\\\\", .Platform$file.sep, libdir)
-  
-  config_file <- paste0(tmp_dir, "mcfs.run")
+  tmp_dir <- tempdir()
+  config_file <- file.path(tmp_dir, "mcfs.run")
   input_file_name <- paste0(label, ".adx")
-  
   params <- default.params
   params$inputFileName = input_file_name
-  params$inputFilesPATH = tmp_dir
-  params$resFilesPATH = tmp_dir
+  params$inputFilesPATH = paste0(gsub("\\\\", .Platform$file.sep, tmp_dir), .Platform$file.sep)
+  params$resFilesPATH = paste0(gsub("\\\\", .Platform$file.sep, tmp_dir), .Platform$file.sep)
   params$mcfs.projections = projections
   params$mcfs.projectionSize = get.projectionSize(length(cols), projectionSize)
   params$mcfs.splits = splits
@@ -71,7 +66,7 @@ mcfs <- function(formula, data,
   save.params.file(params, config_file)
   
   cat("Exporting input data...\n")
-  write.adx(data, file=paste0(tmp_dir, input_file_name), target=target)
+  write.adx(data, file=file.path(tmp_dir, input_file_name), target=target)
   
   cat("Running MCFS-ID...\n")
   cdir <- getwd()
@@ -87,10 +82,9 @@ mcfs <- function(formula, data,
   
   #clean temp files
   #cat("Cleaning temporary files...\n")
-  out.files <- get.files.names(tmp_dir, ext=c('.zip','.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
-  #print(out.files)
-  if(length(out.files)>0)
-    delete.files(out.files)
+  tmp.files <- get.files.names(tmp_dir, ext=c('.zip','.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
+  if(length(tmp.files)>0)
+    delete.files(tmp.files)
   
   cat("Done.\n")
   end.time <- Sys.time()
@@ -232,7 +226,7 @@ fix.matrix <- function(m, na.char = '?'){
 # showme(x) 
 fix.data <- function(x, 
                      type = c("all", "names", "values", "types"), 
-                     source_chars = c(" ", ",", "/", "|", "#"), 
+                     source_chars = c(" ", ",", "/", "|", "#", "-"), 
                      destination_char = "_", 
                      numeric_class = c("difftime"), 
                      nominal_class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))
@@ -492,37 +486,34 @@ import.result <- function(path, label){
     stop(paste0("Path does not exist. Path: ", path))
   }
   
-  tmp_dir <- NULL
-  zip_file <- file.path(paste0(path, label, '.zip'))
+  zip_file <- file.path(path, paste0(label, '.zip'))
   if(File.exists(zip_file)){
-    tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
-    tmp_dir <- file.path(gsub("\\\\", .Platform$file.sep, tmp_dir))
-    #tmp_dir <- "~/TEMP/"
-    #print(paste0("Extracting '",basename(zip_file),"' file..."))
-    utils::unzip(zip_file, exdir = file.path(tmp_dir))
-    path <- file.path(tmp_dir)
+    zip <- T
+    tmp_dir <- tempdir()
+    utils::unzip(zip_file, exdir = tmp_dir)
+  }else{
+    zip <- F
+    tmp_dir <- path
   }
-  
-  #print(paste0("Loading '",label,"' results..."))
-  ri_file <- file.path(path, paste0(label, "__importances.csv"))
+  ri_file <- file.path(tmp_dir, paste0(label, "__importances.csv"))
   if(!File.exists(ri_file))
-    ri_file <- file.path(path, paste0(label, "__RI.csv"))
+    ri_file <- file.path(tmp_dir, paste0(label, "__RI.csv"))
   
-  id_file <- file.path(path, paste0(label, "_connections.csv"))
+  id_file <- file.path(tmp_dir, paste0(label, "_connections.csv"))
   if(!File.exists(id_file))
-    id_file <- file.path(path, paste0(label, "_ID.csv"))
+    id_file <- file.path(tmp_dir, paste0(label, "_ID.csv"))
   
-  distances_file <- file.path(path, paste0(label, "_distances.csv"))
-  matrix_file <- file.path(path, paste0(label, "_cmatrix.csv"))
-  cutoff_file <- file.path(path, paste0(label, "_cutoff.csv"))
-  cv_file <- file.path(path, paste0(label, "_cv_accuracy.csv"))
-  permutations_file <- file.path(path, paste0(label, "_permutations.csv"))
-  topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
-  jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
-  predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
-  data_file <- file.path(path, paste0(label, "_data.adh"))
-  data_csv_file <- file.path(path, paste0(label, "_data.csv"))
-  params_file <- file.path(path, paste0(label, ".run"))
+  distances_file <- file.path(tmp_dir, paste0(label, "_distances.csv"))
+  matrix_file <- file.path(tmp_dir, paste0(label, "_cmatrix.csv"))
+  cutoff_file <- file.path(tmp_dir, paste0(label, "_cutoff.csv"))
+  cv_file <- file.path(tmp_dir, paste0(label, "_cv_accuracy.csv"))
+  permutations_file <- file.path(tmp_dir, paste0(label, "_permutations.csv"))
+  topRanking_file <- file.path(tmp_dir, paste0(label, "_topRanking.csv"))
+  jrip_file <- file.path(tmp_dir, paste0(label, "_jrip.txt"))
+  predictionStats_file <- file.path(tmp_dir, paste0(label, "_predictionStats.csv"))
+  data_file <- file.path(tmp_dir, paste0(label, "_data.adh"))
+  data_csv_file <- file.path(tmp_dir, paste0(label, "_data.csv"))
+  params_file <- file.path(tmp_dir, paste0(label, ".run"))
   
   mcfsResult <- list()
   mcfsResult$data <- NULL
@@ -571,11 +562,10 @@ import.result <- function(path, label){
   }
   
   # clean temporary files
-  if(!is.null(tmp_dir)){
+  if(zip){
     tmp.files <- get.files.names(tmp_dir, filter=label, ext=c('.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
-    delete.files(file.path(tmp.files))
+    delete.files(tmp.files)
   }
-  
   return(mcfsResult)
 }
 
@@ -584,32 +574,29 @@ import.result <- function(path, label){
 ###############################
 export.result <- function(mcfs_result, path, label = "rmcfs", zip = TRUE){
 
-  tmp_dir <- NULL
-  zip_file <- file.path(paste0(path, label, '.zip'))
-  if(zip){
-    tmp_dir <- paste(tempdir(), .Platform$file.sep, sep="")
-    tmp_dir <- gsub("\\\\", .Platform$file.sep, tmp_dir)
-    path <- file.path(tmp_dir)
-  }
-
   if(class(mcfs_result) != "mcfs")
     stop("Input object is not 'mcfs' class.")
   
   #in any case create the directory if it does not exist
   dir.create(file.path(path), showWarnings = F, recursive = T)
-  
-  ri_file <- file.path(path, paste0(label, "__RI.csv"))
-  id_file <- file.path(path, paste0(label, "_ID.csv"))
-  distances_file <- file.path(path, paste0(label, "_distances.csv"))
-  matrix_file <- file.path(path, paste0(label, "_cmatrix.csv"))
-  cutoff_file <- file.path(path, paste0(label, "_cutoff.csv"))
-  cv_file <- file.path(path, paste0(label, "_cv_accuracy.csv"))
-  permutations_file <- file.path(path, paste0(label, "_permutations.csv"))    
-  topRanking_file <- file.path(path, paste0(label, "_topRanking.csv"))
-  jrip_file <- file.path(path, paste0(label, "_jrip.txt"))
-  predictionStats_file <- file.path(path, paste0(label, "_predictionStats.csv"))
-  data_file <- file.path(path, paste0(label, "_data.csv"))
-  params_file <- file.path(path, paste0(label, ".run"))
+  if(zip){
+    tmp_dir <- tempdir()
+  }else{
+    tmp_dir <- path
+  }
+
+  ri_file <- file.path(tmp_dir, paste0(label, "__RI.csv"))
+  id_file <- file.path(tmp_dir, paste0(label, "_ID.csv"))
+  distances_file <- file.path(tmp_dir, paste0(label, "_distances.csv"))
+  matrix_file <- file.path(tmp_dir, paste0(label, "_cmatrix.csv"))
+  cutoff_file <- file.path(tmp_dir, paste0(label, "_cutoff.csv"))
+  cv_file <- file.path(tmp_dir, paste0(label, "_cv_accuracy.csv"))
+  permutations_file <- file.path(tmp_dir, paste0(label, "_permutations.csv"))    
+  topRanking_file <- file.path(tmp_dir, paste0(label, "_topRanking.csv"))
+  jrip_file <- file.path(tmp_dir, paste0(label, "_jrip.txt"))
+  predictionStats_file <- file.path(tmp_dir, paste0(label, "_predictionStats.csv"))
+  data_file <- file.path(tmp_dir, paste0(label, "_data.csv"))
+  params_file <- file.path(tmp_dir, paste0(label, ".run"))
     
   write.csv(mcfs_result$RI, file=ri_file, row.names = F)
   write.csv(mcfs_result$ID, file=id_file, row.names = F)
@@ -656,11 +643,10 @@ export.result <- function(mcfs_result, path, label = "rmcfs", zip = TRUE){
   }
   
   if(zip){
-    if(!is.null(tmp_dir)){
+      zip_file <- file.path(path, paste0(label, '.zip'))
       tmp.files <- get.files.names(tmp_dir, filter=label, ext=c('.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
-      utils::zip(zip_file, files = file.path(tmp.files), flags = "-jq")
-      delete.files(file.path(tmp.files))
-    }
+      utils::zip(zip_file, files = tmp.files, flags = "-jq")
+      delete.files(tmp.files)
   }
 }
 

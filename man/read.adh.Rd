@@ -17,6 +17,6 @@
   data(alizadeh)
   d <- alizadeh
   
-  write.adh(d, file = paste0(tempdir(), "/alizadeh.adh"), target = "class")
-  d <- read.adh(file = paste0(tempdir(), "/alizadeh.adh"))
+  write.adh(d, file = file.path(tempdir(), "alizadeh.adh"), target = "class")
+  d <- read.adh(file = file.path(tempdir(), "alizadeh.adh"))
 }

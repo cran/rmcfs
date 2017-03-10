@@ -46,6 +46,6 @@ The number of top features included and the number of ID-Graph edges can be cust
 
   # Export graph to graphML (XML structure)
   path <- tempdir()
-  igraph::write.graph(gid, file = paste0(path, "/artificial.graphml"), 
+  igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
             format = "graphml", prefixAttr = FALSE)
 }
