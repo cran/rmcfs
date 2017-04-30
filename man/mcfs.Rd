@@ -15,7 +15,7 @@ M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski, 
 mcfs(formula, data,
     projections = 'auto',
     projectionSize = 'auto',
-    featureFreq = 100,
+    featureFreq = 150,
     splits = 5,
     splitSetSize = 1000,
     balance = 'auto',
@@ -34,7 +34,7 @@ mcfs(formula, data,
   \item{data}{defines input \emph{data.frame} containing all features with decision attribute included. This data.frame must contain proper types of columns. Columns \code{character}, \code{factor}, \code{Date}, \code{POSIXct}, \code{POSIXt} are treated as nominal/categorical and remaining columns as numerical/continuous. Decision attribute defined by \code{formula} can be nominal or numerical.}
   \item{projections}{defines the number of subsets (projections) with randomly selected features. This parameter is usually set to a few thousands and is denoted in the paper as \emph{s}. By default it is set to 'auto' and this value is based on size of input data set and \emph{featureFreq} parameter.}
   \item{projectionSize}{defines the number of features in one subset. It can be defined by an absolute value (e.g. 100 denotes 100 randomly selected features) or by a fraction of input attributes (e.g. 0.05 denotes 5\% of input features). This parameter is denoted in the paper as \emph{m}. If is set to 'auto' then \emph{projectionSize} equals to 
-  \eqn{1.05d^{0.6}}, where \emph{d} is the number of input features. Minimum number of features in one subset is 1.}
+  \eqn{\sqrt{d}}, where \emph{d} is the number of input features. Minimum number of features in one subset is 1.}
   \item{featureFreq}{determines how many times each input feature should be randomly selected when \code{projections = 'auto'}.}
   \item{splits}{defines the number of splits of each subset. This parameter is denoted in the paper as \emph{t}. The size of the training set in the input subset is always set on 66\%.}
   \item{splitSetSize}{determines whether to limit input dataset size. It helps to speedup computation for data sets with a large number of objects. If the parameter is larger than 1, it determines the number of objects that are drawn at random for each of the \eqn{s \cdot t} decision trees. If \code{splitSetSize = 0} then the mcfs uses all objects in each iteration.}

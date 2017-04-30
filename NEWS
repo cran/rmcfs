@@ -1,6 +1,13 @@
 *******************
 ***  R rmcfs    ***
 *******************
+1.2.5
+	function import.result() is fixed for empty results
+	functions import.result() and export.result() have default value for parameer: path = "./"
+	heatmaps are more readable now
+	parameter projectionSize by default is set on sqrt(d)
+	parameter featureFreq by default is set on 150
+	
 1.2.4
 	minor fix in processing temporary paths
 	

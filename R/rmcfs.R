@@ -4,7 +4,7 @@
 mcfs <- function(formula, data,
                         projections = 'auto',
                         projectionSize = 'auto',
-                        featureFreq = 100,
+                        featureFreq = 150,
                         splits = 5,
                         splitSetSize = 1000,
                         balance = 'auto', 
@@ -226,7 +226,7 @@ fix.matrix <- function(m, na.char = '?'){
 # showme(x) 
 fix.data <- function(x, 
                      type = c("all", "names", "values", "types"), 
-                     source_chars = c(" ", ",", "/", "|", "#", "-"), 
+                     source_chars = c(" ", ",", "/", "|", "#", "-", "(", ")"), 
                      destination_char = "_", 
                      numeric_class = c("difftime"), 
                      nominal_class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))
@@ -262,7 +262,7 @@ fix.data <- function(x,
 # d$art2[3:13] <- ""
 # fix.data.values(d)
 fix.data.values <- function(x, 
-                            source_chars = c(" ", ",", "/", "|", "#"), 
+                            source_chars = c(" ", ",", "/", "|", "#", "-", "(", ")"), 
                             destination_char = "_")
 {
   x[x == "?"] <- NA
@@ -381,7 +381,8 @@ read.ID.list <- function(fileName) {
   d <- do.call("rbind", lapply(a, process_row))
   if(is.null(d))
     return (NULL)
-  
+  if(is.na(d[1,2]))
+    return (NULL)
   weights <- sapply(d[,3],function(s) return(as.numeric(substr(s, 1, nchar(s)-1))))
   d <- data.frame(edge_a=d[,1], edge_b=d[,2], weight=weights, stringsAsFactors = FALSE)
   d <- d[order(-d[,3]),]
@@ -480,7 +481,7 @@ read.params <- function(fileName){
 ###############################
 #import.result
 ###############################
-import.result <- function(path, label){
+import.result <- function(path = "./", label){
   
   if(!dir.exists(file.path(path))){
     stop(paste0("Path does not exist. Path: ", path))
@@ -572,7 +573,7 @@ import.result <- function(path, label){
 ###############################
 #export.result
 ###############################
-export.result <- function(mcfs_result, path, label = "rmcfs", zip = TRUE){
+export.result <- function(mcfs_result, path = "./", label = "rmcfs", zip = TRUE){
 
   if(class(mcfs_result) != "mcfs")
     stop("Input object is not 'mcfs' class.")

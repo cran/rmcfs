@@ -206,16 +206,16 @@ drop.file.extension <- function(x){
 ###############################
 #open.plot.file
 ###############################
-open.plot.file <- function(filename, width, height, res = 72){
+open.plot.file <- function(filename, width = 800, height = 600, res = 72){
   ext <- file.extension(filename)
   if (ext == "png") {
     png(filename, width=width, height=height, res = 72)
   } else if (ext == "pdf") {
     # pdf size is set by default
-    pdf(filename)
+    pdf(filename, width=width/100, height=height/100)
   } else if (ext == "svg") {
     # pdf size is set by default
-    svg(filename)
+    svg(filename, width=width/100, height=height/100)
   } else{
     png(paste0(filename,".png"), width=width, height=height, res = 72)
   }
@@ -322,7 +322,7 @@ calc.wacc <- function(cmatrix){
 ###############################
 get.projectionSize <- function(data_size, projectionSize = NA){
   if(tolower(trimws(projectionSize)) == 'auto' || is.na(projectionSize)){
-    projection_size <- max(floor(1.05*(data_size^0.6)), 1)
+    projection_size <- max(floor(sqrt(data_size)), 1)
   }else{
     projection_size <- projectionSize
   }

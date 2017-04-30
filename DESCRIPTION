@@ -1,8 +1,8 @@
 Package: rmcfs
 Title: The MCFS-ID Algorithm for Feature Selection and Interdependency
         Discovery
-Version: 1.2.4
-Date: 2017-03-09
+Version: 1.2.5
+Date: 2017-04-30
 Authors@R: c(person('Michal', 'Draminski', role = c('aut', 'cre'), email = 'michal.draminski@ipipan.waw.pl'),
               person('Jacek', 'Koronacki', role = c('aut'), email = 'jacek.koronacki@ipipan.waw.pl'),
               person('Julian', 'Zubek', role = c('ctb'), email = 'j.zubek@phd.ipipan.waw.pl'))
@@ -15,10 +15,10 @@ License: GPL-3
 URL: http://www.ipipan.eu/staff/m.draminski/mcfs.htm
 LazyData: yes
 NeedsCompilation: no
-Packaged: 2017-03-09 17:09:11 UTC; mdraminski
+Packaged: 2017-04-30 09:57:57 UTC; mdraminski
 Author: Michal Draminski [aut, cre],
   Jacek Koronacki [aut],
   Julian Zubek [ctb]
 Maintainer: Michal Draminski <michal.draminski@ipipan.waw.pl>
 Repository: CRAN
-Date/Publication: 2017-03-10 11:49:57
+Date/Publication: 2017-04-30 19:30:05 UTC

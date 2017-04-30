@@ -4,7 +4,7 @@
 \description{
   Saves csv files with result obtained by the MCFS-ID.
 }
-\usage{export.result(mcfs_result, path, label = "rmcfs", zip = TRUE)}
+\usage{export.result(mcfs_result, path = "./", label = "rmcfs", zip = TRUE)}
 \arguments{  
   \item{mcfs_result}{result of the MCFS-ID experiment returned by \code{\link{mcfs}} function.}
   \item{path}{path to the MCFS-ID result *.csv files.}

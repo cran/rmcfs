@@ -502,13 +502,13 @@ mcfs.plot.heatmap <- function(mcfs_result, size = NA,
   heatmap <- ggplot(heat.data, aes(target, feature)) + geom_tile(aes(fill = heat.value), colour = "white") +
     scale_fill_gradient(low = colors[1], high = colors[2]) + xlab(mcfs_result$target) +
     scale_y_discrete(limits=rev(yaxis.labels)) +
-    theme(axis.title.y = element_text(size = rel(cex))) +
-    theme(axis.title.x = element_text(size = rel(cex))) +
-    theme(axis.text.y = element_text(size = rel(cex))) +
-    theme(axis.text.x = element_text(size = rel(cex))) +
+    theme(axis.title.y = element_blank()) +
+    theme(axis.title.x = element_text(size = rel(cex), colour = "black")) +
+    theme(axis.text.x = element_text(size = rel(cex), colour = "black", face = "bold")) +
+    theme(axis.text.y = element_text(size = rel(cex), colour = "black")) +
     theme(legend.title = element_text(size = rel(cex))) +
-    theme(legend.text = element_text(size = rel(cex)))
-  
+    theme(legend.text = element_text(size = rel(cex))) +
+    labs(fill='color key') 
   plot(heatmap)
 }
 

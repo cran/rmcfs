@@ -4,7 +4,7 @@
 \description{
   Reads csv result files produced by the MCFS-ID Java module.
 }
-\usage{import.result(path, label)}
+\usage{import.result(path = "./", label)}
 \arguments{  
   \item{path}{path to the MCFS-ID results *.csv files.}
   \item{label}{experiment label for results files (name of the data).}
