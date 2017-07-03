@@ -15,9 +15,7 @@
 }
 
 \examples{
-  # Load rmcfs library.
-  library(rmcfs)
-  
+
   # Load alizadeh dataset.
   data(alizadeh)
   d <- alizadeh

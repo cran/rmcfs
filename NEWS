@@ -1,6 +1,10 @@
 *******************
 ***  R rmcfs    ***
 *******************
+1.2.6
+	function filter.data() is now refine.data()
+	testthat environment added
+	
 1.2.5
 	function import.result() is fixed for empty results
 	functions import.result() and export.result() have default value for parameer: path = "./"

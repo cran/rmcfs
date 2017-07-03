@@ -315,9 +315,9 @@ fix.data.types <- function(x,
 }
 
 ###############################
-#filter.data
+#refine.data
 ###############################
-filter.data <- function(data, mcfs_result, size = NA){
+refine.data <- function(data, mcfs_result, size = NA){
   
   if(class(mcfs_result)!="mcfs")
     stop("Input object is not 'mcfs' class.")

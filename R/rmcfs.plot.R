@@ -400,7 +400,7 @@ mcfs.plot.cv <- function(mcfs_result, cv_measure = c("wacc", "acc", "pearson", "
     measure_mask <- tolower(names(cv_quality_TMP)) %in% tolower(measure)
     cv_quality_TMP[,measure_mask] <- measure_mult * cv_quality_TMP[,measure_mask]
     measure <- names(cv_quality_TMP)[measure_mask]
-    pivot <- reshape2::acast(cv_quality_TMP, algorithm ~ label, value.var=measure)
+    pivot <- reshape2::acast(cv_quality_TMP, algorithm ~ label, value.var=measure, fun.aggregate = sum)
     
     #library(RColorBrewer)
     #darkcols <- brewer.pal(8, "Dark2")
@@ -467,7 +467,7 @@ mcfs.plot.heatmap <- function(mcfs_result, size = NA,
   if(!all(head(mcfs_result$RI$attribute,size) %in% names(data)))
     stop("Input data does not match mcfs_result. Columns names are different.")
   
-  data.scaled <- filter.data(data, mcfs_result, size)
+  data.scaled <- refine.data(data, mcfs_result, size)
   numericCols <- sapply(data.scaled, is.numeric)
   
   if(!any(numericCols)){

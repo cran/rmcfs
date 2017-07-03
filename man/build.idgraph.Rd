@@ -26,10 +26,8 @@ The number of top features included and the number of ID-Graph edges can be cust
 \value{\emph{igraph/idgraph} S3 object that can be: plotted in R, exported to graphML (XML format) or saved as csv or rds files.}
 
 \examples{
-  ### Set up java parameter and load rmcfs package
-  options(java.parameters = "-Xmx4g")
-  library(rmcfs)
-  
+  \dontrun{
+
   # create input data
   adata <- artificial.data(rnd_features = 10)
   showme(adata)
@@ -48,4 +46,6 @@ The number of top features included and the number of ID-Graph edges can be cust
   path <- tempdir()
   igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
             format = "graphml", prefixAttr = FALSE)
+
+  }
 }

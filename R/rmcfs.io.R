@@ -491,12 +491,6 @@ export.arff <- function(x, file = "", target = NA, chunk_size = 100000)
 ###############################
 #export.events
 ###############################
-# library(rmcfs)
-# data(alizadeh)
-# d <- alizadeh
-# d[1,1] <- Inf
-# d[2,2] <- Inf
-# export.events(d, file="~/ali_test.csv", header = T, na.char = 'NA', chunk_size=2000)
 export.events <- function(x, file = '', header = FALSE, na.char = '?', chunk_size = 100000, verbose = FALSE){
   if(file == ""){
     file <- stdout()

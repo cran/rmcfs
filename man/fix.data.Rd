@@ -27,10 +27,7 @@
 \value{data.frame with fixed values and types (depends on \code{type} parameter).}
 
 \examples{
-  ### Set up java parameter and load rmcfs package
-  options(java.parameters = "-Xmx4g")
-  library(rmcfs)
-  
+
   # Load alizadeh dataset.
   data(alizadeh)
   alizadeh <- alizadeh[1:500]

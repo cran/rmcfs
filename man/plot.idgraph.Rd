@@ -17,10 +17,7 @@
 }
 
 \examples{
-  ### Set up java parameter and load rmcfs package
-  options(java.parameters = "-Xmx4g")
-  library(rmcfs)
-  
+  \dontrun{
   # create input data
   adata <- artificial.data(rnd_features = 10)
   showme(adata)
@@ -33,4 +30,6 @@
   # and top 12 interdependencies and plot all nodes
   gid <- build.idgraph(result, size = 6, size_ID = 12, plot_all_nodes = TRUE)
   plot(gid, label_dist = 1)
+  
+  }
 }

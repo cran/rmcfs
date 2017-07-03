@@ -12,9 +12,6 @@
 \value{the result of the MCFS-ID experiment returned by \code{\link{mcfs}} function.}
 
 \examples{
-  ### Set up java parameter and load rmcfs package
-  options(java.parameters = "-Xmx4g")
-  library(rmcfs)
 
   # create input data
   adata <- artificial.data(rnd_features = 10)

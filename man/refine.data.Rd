@@ -1,10 +1,10 @@
-\name{filter.data}
-\alias{filter.data}
+\name{refine.data}
+\alias{refine.data}
 \title{Filters input data}
 \description{
    Selects columns from input data based on the highest RIs of attributes.
 }
-\usage{filter.data(data, mcfs_result, size = NA)}
+\usage{refine.data(data, mcfs_result, size = NA)}
 \arguments{
   \item{data}{input data.frame.}
   \item{mcfs_result}{result from \code{\link{mcfs}} function.}
@@ -14,10 +14,7 @@
 \value{data.frame with selected columns.}
 
 \examples{
-  ### Set up java parameter and load rmcfs package
-  options(java.parameters = "-Xmx4g")
-  library(rmcfs)
-  
+
   # create input data
   adata <- artificial.data(rnd_features = 10)
   showme(adata)
@@ -26,5 +23,5 @@
   result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 10,
                   finalCV = FALSE, finalRuleset = FALSE, threadsNumber = 2)
 
-  head(filter.data(adata, result, size = result$cutoff_value))
+  head(refine.data(adata, result, size = result$cutoff_value))
 }

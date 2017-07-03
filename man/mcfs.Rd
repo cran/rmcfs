@@ -78,13 +78,10 @@ mcfs(formula, data,
 }
 
 \examples{
+  \dontrun{
   ####################################
   ######### Artificial data ##########
   ####################################
-  
-  ### Set up java parameter and load rmcfs package
-  options(java.parameters = "-Xmx4g")
-  library(rmcfs)
 
   # create input data and review it
   adata <- artificial.data(rnd_features = 10)
@@ -151,7 +148,6 @@ mcfs(formula, data,
   export.result(result, path = path, label = "artificial")
   result <- import.result(path = path, label = "artificial")
 
-  \dontrun{
   ####################################
   ########## Alizadeh data ###########
   ####################################
