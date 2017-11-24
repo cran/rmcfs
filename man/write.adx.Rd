@@ -15,12 +15,11 @@
 
 \examples{
 
-  # Load alizadeh dataset.
-  data(alizadeh)
-  d <- alizadeh
+  # create artificial data
+  adata <- artificial.data(rnd_features = 1000)
   
   #Fix input data to be consistent with ARFF and ADX formats. 
   #It is not necessary but for some data can help to export in proper format.
-  d <- fix.data(d)
-  write.adx(d, file = file.path(tempdir(), "alizadeh.adx"), target = "class")
+  adata <- fix.data(adata)
+  write.adx(adata, file = file.path(tempdir(), "adata.adx"), target = "class")
 }

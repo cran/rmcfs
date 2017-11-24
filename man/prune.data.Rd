@@ -1,10 +1,10 @@
-\name{refine.data}
-\alias{refine.data}
+\name{prune.data}
+\alias{prune.data}
 \title{Filters input data}
 \description{
    Selects columns from input data based on the highest RIs of attributes.
 }
-\usage{refine.data(data, mcfs_result, size = NA)}
+\usage{prune.data(data, mcfs_result, size = NA)}
 \arguments{
   \item{data}{input data.frame.}
   \item{mcfs_result}{result from \code{\link{mcfs}} function.}
@@ -23,5 +23,5 @@
   result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 10,
                   finalCV = FALSE, finalRuleset = FALSE, threadsNumber = 2)
 
-  head(refine.data(adata, result, size = result$cutoff_value))
+  head(prune.data(adata, result, size = result$cutoff_value))
 }

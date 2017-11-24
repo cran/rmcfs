@@ -34,6 +34,9 @@ mcfs <- function(formula, data,
   if(length(unique(data[,target])) == 1){
     stop("Decision attribute contains only 1 value.")
   }
+  if(any(is.na(data[,target])) == T){
+    stop("Decision attribute contains NA values.")
+  }
   
   tmp_dir <- tempdir()
   config_file <- file.path(tmp_dir, "mcfs.run")
@@ -315,9 +318,9 @@ fix.data.types <- function(x,
 }
 
 ###############################
-#refine.data
+#prune.data
 ###############################
-refine.data <- function(data, mcfs_result, size = NA){
+prune.data <- function(data, mcfs_result, size = NA){
   
   if(class(mcfs_result)!="mcfs")
     stop("Input object is not 'mcfs' class.")

@@ -28,11 +28,10 @@
 
 \examples{
 
-  # Load alizadeh dataset.
-  data(alizadeh)
-  alizadeh <- alizadeh[1:500]
+  # create artificial data
+  adata <- artificial.data(rnd_features = 1000)
   
   # Fix data types and data values - remove "," " " "/" from values and fix data types
   # This function may help if mcfs has any problems with input data
-  alizadeh.fixed <- fix.data(alizadeh)
+  adata.fixed <- fix.data(adata)
 }

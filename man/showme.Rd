@@ -20,7 +20,7 @@
 
 \examples{
 
-  # Load alizadeh dataset.
-  data(alizadeh)
-  showme(alizadeh)
+  # create artificial data
+  adata <- artificial.data(rnd_features = 1000)
+  showme(adata)
 }

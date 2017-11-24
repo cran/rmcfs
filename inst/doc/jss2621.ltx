@@ -1,0 +1,796 @@
+\documentclass[a4paper, 12pt]{article}
+
+%\VignetteIndexEntry{The rmcfs Package}
+%\VignetteEngine{R.rsp::tex}
+%\VignetteKeyword{R}
+%\VignetteKeyword{package}
+%\VignetteKeyword{rmcfs}
+%\VignetteKeyword{MCFS-ID}
+
+
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{authblk}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{listings}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{csquotes}
+\usepackage{doi}
+\usepackage{url}
+
+\usepackage{fancyhdr}
+ 
+\pagestyle{fancy}
+\fancyhf{}
+%\rhead{rmcfs}
+\lhead{Accepted for publication in the Journal of Statistical Software}
+\rfoot{Page \thepage}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  language=R,                     % the language of the code
+  basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+  numbers=left,                   % where to put the line-numbers
+  numberstyle=\tiny\color{gray},  % the style that is used for the line-numbers
+  stepnumber=1,                   % the step between two line-numbers. If it's 1, each line
+                                  % will be numbered
+  numbersep=5pt,                  % how far the line-numbers are from the code
+  backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  frame=single,                   % adds a frame around the code
+  rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=b,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  title=\lstname,                 % show the filename of files included with \lstinputlisting;
+                                  % also try caption instead of title
+  keywordstyle=\color{black},      % keyword style
+  commentstyle=\color{dkgreen},   % comment style
+  stringstyle=\color{mauve},      % string literal style
+  escapeinside={\%*}{*)},         % if you want to add a comment within your code
+  morekeywords={*,...}            % if you want to add more keywords to the set
+} 
+
+
+\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
+\newcommand{\tab}[1]{\hspace{.2\textwidth}\rlap{#1}}
+\newcommand{\code}[1]{\textbf{\emph{#1}}}
+
+%% almost as usual
+\author[1]{Micha\l{} Drami{\'n}ski}
+\author[1]{Jacek Koronacki}
+\title{\textit{rmcfs}: An \textit{R} Package for Monte Carlo Feature Selection and Interdependency Discovery}
+
+\affil[1]{
+  Institute of Computer Science\\
+  Polish Academy of Sciences\\
+  Jana Kazimierza 5, 01-248 Warsaw, Poland\\
+  E-mail: \url{michal.draminski@ipipan.waw.pl}\\
+  URL: \url{http://www.ipipan.eu/staff/m.draminski/}
+}
+
+\begin{document}
+\maketitle
+
+%% an abstract and keywords
+\begin{abstract}
+	We describe an \textit{R} package \textit{rmcfs} that implements an algorithm for ranking features from high dimensional data according to their importance for a given supervised classification task. The ranking is performed prior to addressing the classification task per se. This \textit{R} package is the new and extended version of the MCFS (Monte Carlo feature selection) algorithm whose early version was published in 2005. The package provides an easy \textit{R} interface, a set of tools to review results and the new ID (Interdependency Discovery) component. The algorithm can be used on continuous and/or categorical features (e.g., gene expression and phenotypic data) to produce objective ranking of features with a statistically well-defined cutoff between informative and non-informative ones. Moreover, the directed ID-Graph that presents interdependencies between informative features is provided.
+\end{abstract}
+
+{\bf Keywords:} MCFS-ID, feature selection, high-dimensional problems, \textit{Java}, \textit{R}, ID-Graph
+
+\section[Introduction]{Introduction}\label{section:intro}
+
+In the area of feature ranking and selection for high-dimensional supervised classification, a very significant progress has been achieved in the past two decades. For a brief account, up to 2002, see \cite{Dudoit:2003} and for an extensive survey and somewhat later developments see \cite{Saeys:2007}. Without coming to details let us note that feature selection can be {\it wrapped} around the classifier construction or directly built ({\it embedded}) into the classifier construction, and not performed prior to addressing the classification task per se by {\it filtering} out noisy features first and keeping only informative ones for building a classifier. An early and successful method with embedded feature selection included, not mentioned by \cite{Saeys:2007}, was developed by Tibshirani et al. (see \cite{Tibshirani:2002}, \cite{Tibshirani:2003}). More recently and within non-filter approaches, a Bayesian technique of automatic relevance determination, the use of support vector machines, and the use of ensembles of classifiers, all these either alone or in combination, have proved promising. For further details see \cite{Li:2002}, \cite{Lu:2007}, \break \cite{Chrysostomou:2008} and the literature there.
+
+
+Moreover, the last developments by the late Leo Breiman deserve special attention. In his Random Forests (RFs), he proposed to make use of the so-called variable (i.e., feature) importance for feature selection. Determination of the importance of the variable is not necessary for random forest construction, but it is a subroutine performed in parallel to building the forest; cf. \cite{Breiman:2008}. Ranking features by variable importance can thus be considered to be a by-product of building the classifier. At the same time, nothing prevents one from using such variable importances within, say, the embedded approach; cf., e.g., \cite{Diaz:2006}. In any case, feature selection by measuring variable importance in random forests should be seen as a very promising method, albeit under one proviso. Namely, the problem with variable importance as originally defined is that it is biased towards variables with many categories; cf. \cite{Strobl:2007}, \cite{Archer:2008}, \cite{Nicodemus:2010}. Accordingly, proper debiasing is needed, in order to obtain true ranking of features; cf. \cite{Strobl:2008}. And, however sound such debiasing may be, it incurs much additional computational cost. For an excellent and recent survey on RFs, their properties and capabilities, see \cite{ziegler:2014}.
+
+
+Most recently, much work has been done to: (i) give embedded feature selection procedures, in particular those used within RFs (whether biased or unbiased), a clear statistical meaning; and (ii) better understand RFs' capability of discovering interdependencies between features; cf. \cite{Paul:2015} (see also \cite{Huynh:2012} and the literature there for (i)) and \cite{wright:2016} and the literature there for (ii).
+
+
+In 2005, a novel, effective and reliable method for ranking features according to their importance for a given supervised classification task has been introduced by \cite{Draminski:2005}. The method, which relies on Monte Carlo approach to select informative features and was fully developed in \cite{Draminski:2008} as Monte Carlo feature selection algorithm or MCFS, is capable of incorporating interdependencies between features. It bears some remote similarity to the RF methodology, but differs entirely in the way features ranking is performed. Specifically, our method does not require debiasing (cf. \cite{Draminski:2010}) and is conceptually simpler. A more important and newer result is that it provides explicit information about interdependencies among features (cf. \cite{Draminski:2010}, where an early version of the MCFS algorithm with an interdependency discovery, or ID, component has been introduced; see also \cite{Kierczak:2009}, \cite{Kierczak:2010}).
+
+
+In this paper, we present an \textit{R} package that implements the most recent version of the MCFS-ID algorithm. In particular, the ideas from \cite{Draminski:2010} have been substantially expanded in \cite{Draminski:2016} by providing not only the ranking of features but also the directed ID-Graph that presents interdependencies between informative features. Within our approach, discovering interdependencies builds on identifying features which "cooperate" in determining that some samples belong to one class, another samples to another class, still another to still another class and so on. It is worthwhile to emphasize that this is completely different from the usual approach which aims at finding features that are similar in some sense. Instead, it can be said that our way to discover interdependencies between features amounts to determining multidimensional dependency between the classes and sequences of features. In this sense, we are in fact interested in \textit{contextual (or predictive) interdependencies between features}, since the dependency in question requires the context of class information.
+
+
+Let us emphasize that we do not aim at classification. While in our approach we heavily rely on using classifiers, we do not use them for the classification task per se. Indeed, we use classifiers only to: (i) rank features according to their importance with respect to their discriminative power to distinguish between classes; (ii) discover interdependencies between features. Given the top features found in step (i), one can later use them for classification by any classifier, but this is neither required nor of our interest. And clearly, step (ii) is aimed at something vastly different from sheer solving the classification task.
+
+The procedure is particularly well suited to dealing with high-dimensional data including "small $n$ large $p$ problems", i.e., those with a small number of objects (records, samples) versus several orders of magnitude greater number of features for each object.
+
+The procedure from \cite{Draminski:2008} and \cite{Draminski:2016} for Monte Carlo feature selection and interdependency discovery is briefly recapitulated in Section \ref{section:mcfs-id}. In Section \ref{section:R package}, an overview of \textit{rmcfs} package and its major \textit{R} functions is provided. In Section \ref{section:example} we demonstrate the use of the package \textit{rmcfs} by performing mcfs algorithm and building ID-Graph for simulated data. We close with concluding remarks in Section \ref{section:summary}.
+
+
+\section{MCFS-ID algorithm}\label{section:mcfs-id}
+
+\subsection{Feature selection - the MCFS part}\label{subsection:mcfs}
+
+We begin with a brief recapitulation of our MCFS; see \cite{Draminski:2008}, which can be consulted for details as well as rationale and statistical validation of our approach to feature selection.
+
+We consider a particular feature to be important, or informative, if it is likely to take part in the process of classifying samples into classes "more often than not". This "readiness" of a feature to take part in the classification process, termed relative importance of a feature, is measured via intensive use of classification trees. In the main step of the procedure, we estimate relative importance of features by constructing thousands of trees for randomly selected subsets of features.
+
+More precisely, out of all $d$ features, $s$ subsets of $m$ features are randomly
+selected, $m$ being fixed and $m << d$, and for each subset of features, $t$
+trees are constructed and their performance is assessed (one can easily see
+that the procedure is essentially the same as that of the Random Subspace
+Method, the fact the authors were not aware of at the time they wrote their
+proposal; cf \cite{Ho:1998}).
+
+Each of the $t$ trees in the inner loop is trained and evaluated on a different, randomly selected training and test sets that come from a split of the full set of training data into two subsets: each time, out of all $n$ samples, 2/3 of the samples are drawn at random for training in such a way as to preserve proportions of classes from the full set of training data, and the remaining samples are used for testing. See Figure \ref{fig:main_step_block} for a block diagram of the procedure.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/mcfs_main_diagram.pdf}
+\caption{Block diagram of the main step of the MCFS procedure.}
+\label{fig:main_step_block}
+\end{figure}
+
+
+The relative importance of feature $g_k$, $\mbox{\rm RI}_{g_k}$, is defined as:
+\begin{equation}\label{eq:RI}
+\mbox{\rm RI}_{g_k} = \sum_{\tau = 1}^{s \cdot t} \mbox{\rm wAcc}^u_{\tau} \sum_{n_{g_k}(\tau)}
+\mbox{\rm GR}(n_{g_k}(\tau)) \left( \frac{\mbox{\rm no. in }
+n_{g_k}(\tau)}{\mbox{\rm no. in } \tau} \right)^v,
+\end{equation}
+where summation is over all $s \cdot t$ trees and, within each $\tau$-th tree,
+over all nodes
+$n_{g_k}(\tau)$ of that tree on which the split is made on feature $g_k$,
+$\mbox{\rm wAcc}_{\tau}$ stands for the weighted accuracy of the $\tau$'s tree,
+$\mbox{\rm GR}(n_{g_k}(\tau))$ stands for gain ratio for node $n_{g_k}(\tau)$,
+$(\mbox{\rm no. in } n_{g_k}(\tau))$ denotes the number
+of samples in node $n_{g_k}(\tau)$,
+$(\mbox{\rm no. in } \tau)$ denotes the number
+of samples in the root of the $\tau$-th tree, and $u$ and $v$ are fixed
+positive reals (now set to 1 by default; cf. \cite{Draminski:2010}). The normalizing factor
+$(\mbox{\rm no. in } \tau)$, which has the same value for all $\tau$, has
+been included mainly for computational reasons.
+
+With $u$ and $v$ set to 1, there are three parameters, $m$, $s$ and $t$ to be set by an experimenter. Note that, overall, $s \cdot t$ trees are constructed and evaluated in the main step of the procedure. Both $s$ and $t$ should be sufficiently large, so that each feature has a chance to appear in many different subsets of features and randomness due to inherent variability in the data is properly accounted for. The choice of subset size $m$ of features selected for
+each series of $t$ experiments should take into account the trade-off between
+the need to prevent informative features from being masked too severely by the
+relatively most important ones and the natural requirement that $s$ be not too
+large. Indeed, the smaller $m$, the smaller the chance of masking the
+occurrence of a feature. However, a larger $s$ is then needed, since all
+features should have a high chance of being selected into many subsets of the
+features. For classification problems of dimension $d$ ranging from several
+thousands to hundreds of thousands, we have found that taking $m$ equal to a few
+hundreds (say, $m=300-500$) and $t$ equal to maximum 20 (even $t=5$ usually
+suffices) is a good choice in terms of reliability and overall computational
+cost of the procedure.
+Finally, for a given $m$, $s$ can be made a running parameter of the procedure, and the procedure executed for increasing $s$ until the rankings
+of top scoring $p$\% features prove (almost) the same for successive values of the $s$.
+
+\subsection{Determining the cutoff value}\label{subsection:cutoff}
+
+The above procedure provides one with a ranking of features. However, this ranking as such does not enable one to discern between informative and non-informative features. A cutoff between these two types of features is needed and we propose to determine it by one of 5 different methods (one of them being still under development). Note that finding the cutoff point is related to separating features with large enough RI values from the rest.
+
+Available methods:
+\begin{itemize}
+\item criticalAngle - The critical angle method is based on the plot of the features' RIs in decreasing order of size, with the corresponding features equally spaced along the abscissa. The plot can be seen as piecewise linear function, where each linear segment joins two neighboring RIs. Roughly speaking, the cutoff (placed on the abscissa) corresponds to this point on the plot where the slope of consecutive segments changes significantly and lastingly from large to small.
+
+\item Kmeans - The method is based on clustering the RI values into two clusters by the k-means algorithm. It sets the cutoff where the two clusters are separated. This method is quite valuable when data contains a subset of very informative features.
+
+\item Permutations (max RI) - The method consists in permuting the decision attribute at least 20 times and running the mcfs algorithm for each permutation. The set of the maximal RIs from all these experiments is assumed approximately normally distributed and a critical value based on the the one-sided (upper-tailed) Student's $t$~test (at 95\% significance level) is provided. A feature is declared informative if its RI in the original ranking (without any permutation) exceeds the obtained critical value. A more detailed description of this method is included in \cite{Draminski:2010}.
+
+\item Permutations (z-score) - The method consists in permuting the decision attribute at least 30 times and running the mcfs algorithm for each permutation. For each feature, a separate distribution of the obtained RI values is constructed. For each feature, its RI in the original ranking (without any permutation) is compared against the corresponding distribution of RIs from the experiments with permuted decision attribute (the $z$~test is used this time). This method has been described and studied in \cite{Bornelov:2016}. It gives similar results to the previous one but needs more mcfs runs. Along with that, however, it gives a separate $p$~value for each feature.
+
+\item contrastAttributes - The method consists in permuting all $d$ features to obtain the so-called contrast features, including them into the dataset and running the mcfs. Given RIs of the contrast features, a statistical test can be used to find a cutoff between the informative and non-informative original features. This method is under development and is currently off.
+\end{itemize}
+
+ Given our experience and taking into account its sound statistical foundation, we recommend most the Permutations (max RI) method. However, it may sometimes prove very conservative in the sense that it may give a highly limited set of informative features. On the other hand, if there are no meaningful features, the method will discover this fact and the set of informative features will prove empty. Finally, one has to admit that using the Permutations method requires much caution. Actually, proper significance level should be chosen adaptively, depending on the data under consideration. Instead of adding this kind of complexity to the way the cutoff is determined, we set (by default) the final cutoff value to be the mean of all the obtained cutoffs.
+
+
+\subsection{Interdependency discovery -  the ID part}\label{subsec:id}
+
+Once features are ranked by the MCFS procedure, a natural issue to be raised concerns possible interdependencies among the informative features. In this subsection, we describe shortly a way to present such interdependencies in the form of a directed graph.
+
+The interdependencies among features are often modeled using interactions,
+similarly as in experimental design and analysis of variance. Perhaps the most widely used approach to recognizing interdependencies is finding correlations between features or finding groups of features that behave in some sense similarly across samples. A classical bioinformatics example of this problem is finding co-regulated features, most often genes or, rather more precisely, their expression profiles. Searching groups of similar features is usually done with the help of various clustering techniques, frequently specially tailored to a task at hand. See \cite{Smyth:2003}, \cite{Hastie:2001}, \cite{Saeys:2007}, \cite{Gyenesei:2007} and the literature there. Our approach to interdependency discovery is significantly different in that we focus on identifying features that "cooperate" in determining that a sample belongs to a particular class. The initial idea was presented in \cite{Draminski:2010} but the current version provides directed ID-Graphs and is based on an improved interdependency measure (cf. \cite{Draminski:2016}).
+
+Our ID-Graph is based on aggregating information provided by all the $s \cdot t$ trees (see Figure \ref{fig:main_step_block}). %
+However, let us begin by noting that, for a single classification tree, a set of decision rules defining each class is provided by this tree's paths. Each decision rule is produced as a conjunction of conditions imposed on the particular features which in fact point to conditional interdependencies between the features. Our trust in the decision rules that are learned by any single rule-based classifier, and thus in the discovered interdependencies, is naturally limited. Moreover, the classifier is trained on just one training set and therefore our conclusions are necessarily dependent on the classifier and are conditional upon the training set. In the case of classification trees, the problem is aggravated by their high variance, i.e., their tendency to provide varying results even for slightly different training sets. Accordingly, in order to overcome these problems and provide more objective results, the MCFS-ID procedure rests on building thousands of classification trees.
+
+To see how an ID-Graph is built, let us recall that each node in each of the multitude of classification trees represents a feature on which a split is made. Now, for each node in each classification tree its all antecedent nodes can be taken into account along the path to which the node belongs; note that each node in a tree has only one parent and thus for the given node we simply consider its parent, then the parent of the parent and so on. In practice, the maximum possible depth of such analysis, i.e., the number of antecedents considered, if available before the tree's root is attained, is set to some predetermined value, which is the procedure's parameter (its default value being 5). For each pair [$antecedent \; node$ $\rightarrow$ $given \; node$] we add one directed edge to our ID-Graph from $antecedent \; node$ to $given \; node$. Let us emphasize again that a node is equated with the feature it represents and thus any directed edge found is in fact an edge joining two uniquely determined features in a directed way. The edges are found along the paths in all the $s \cdot t$ MCFS-ID trees. Clearly, the same edge can appear more than once even in a single tree.
+
+The strength of the interdependence between two nodes, actually two features, connected by a directed edge, termed ID weight of a given edge, or ID weight for short, is equal to the gain ratio (GR) in the given node multiplied by the fraction of objects in the given node and the antecedent node. Thus, for node $n_k (\tau)$ in $\tau$-th tree, $\tau= 1, \dots, s \cdot t$, and its antecedent node $n_i (\tau)$, ID weight of the directed edge from $n_i (\tau)$ to $n_k (\tau)$, denoted $w[n_i (\tau) \rightarrow n_k (\tau)]$, is equal to
+
+\begin{equation}
+w[n_i (\tau) \rightarrow n_k (\tau)] = \mbox{\rm GR}(n_k (\tau))
+\left( \frac{\mbox{\rm no. in } n_{k}(\tau)}{\mbox{\rm no. in } n_i (\tau)} \right),
+\end{equation}
+where $\mbox{\rm GR} (n_k (\tau))$ stands for gain ratio for node $n_k (\tau)$,
+$(\mbox{\rm no. in } n_k (\tau))$ denotes the number
+of samples in node $n_k(\tau)$ and
+$(\mbox{\rm no. in } n_i (\tau)$ denotes the number of samples in node $n_i(\tau)$.
+
+The final ID-Graph is based on the sums of all ID weights for each pair \break [$antecedent \; node$ $\rightarrow$ $given \; node$]; i.e., for each directed edge found, its ID weights are summed over all occurrences of this edge in all paths of all MCFS classification trees. For a given edge, it is this sum of ID weights which becomes the ID weight of this edge in the final ID-Graph. The following pseudo code (alg. \ref{alg:IDGraph}) describes the calculation:
+
+\begin{algorithm}[h]
+\caption{ID-Graph building procedure}
+\label{alg:IDGraph}
+\begin{algorithmic}
+
+\State $w[n_{\delta} \rightarrow n] = 0$
+\For {$\tau_k \in T$}
+    \For {$n \in \tau_k$}
+        \For {$\delta  \in D$}
+            \State $n_{\delta} = \delta\mbox{\rm -th } \mbox{\rm antecedent of  } n$
+            \State $w[n_{\delta}  \rightarrow n] =  w[n_{\delta}  \rightarrow n] + \mbox{\rm GR}(n) \left( \frac{\mbox{\rm no. in $n$}} {\mbox{\rm no. in $n_{\delta}$}} \right)$
+        \EndFor
+    \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+where $T$ denotes the set of all $s \cdot t$ trees and $D = \{1, 2, \dots, depth \}$ with $depth$ being the predetermined number of antecedents considered.
+
+Note that an edge $n_i \rightarrow n_k$ from node $n_i$ to node $n_k$ is directed as is the edge (if found) from $n_k$ to $n_i$, ($n_k \rightarrow n_i$). Interestingly, in most cases of ID-Graphs, we find that one of such two edges is dominating, i.e., has a much larger ID weight than the other. Whenever it happens, it means that not only $n_i$ and $n_k$ form a sound partial decision (a part of a conjunction rule) but also that their succession in the directed rule is not random.
+
+The ID-Graph is a way to present interdependencies that follow from all of the MCFS classification trees. Each path in a tree represents a decision rule and by analyzing all tree paths we in fact analyze decision rules to find the most frequently observed features that along with other features form good decision rules. The ID-Graph thus presents some patterns that frequently occur in thousands of classification trees built by the MCFS procedure.
+
+In sum, an ID-Graph provides a general roadmap that not only shows all the most variable attributes that allow for efficient classification of the objects but, moreover, it points to possible interdependencies between the attributes and, in particular, to a hierarchy between pairs of attributes. High differentiation of the values of ID weights in the ID-Graph gives strong evidence that some interdependencies between some features are much stronger than others and that they create some patterns/paths calling for interpretation based on background knowledge.
+
+
+Let us conclude this subsection with a short comparison of our approach to discovering interdependencies between features and that based on the RFs (cf. \cite{wright:2016}). Most importantly, we take full advantage of the Monte Carlo mechanism, what makes direct examination of possible interactions superfluous. Indeed, nothing like, e.g., pairwise permutation importance for pairs of features needs to be calculated. Moreover, due to the form of (2), in particular since the summands in the ID weights of pairs of features do not depend in any way on prediction performance of the trees involved in calculation of these summands, we can hope for no masking of interaction effects measured by ID weights by marginal effects (as yet, this last claim has not been confirmed by a thorough simulation study). And, last but not least, ours are directed interactions.
+
+
+Clearly, only ID Graphs for strong interdependencies (interactions) are of interest. It is readily seen that such graphs can equally easily be constructed for discovering two-way interactions when each of the two features involved or only one of them, or even none of them is of large relative importance, i.e., gives a strong marginal effect (except for the XOR interaction of two features with no marginal effects).   
+
+It should be noticed, however, that the ID weights are calculated in a way which makes them incomparable with relative importances of individual features. To put it otherwise, both measures give us only rankings (from the greatest to the smallest) of, respectively: features w.r.t. their relative importance; and strengths of pairwise interactions, albeit without direct information on predictive ability of any interaction. 
+
+
+
+
+\section[The R package]{The \textit{R} package \textit{rmcfs}}\label{section:R package}
+
+The \textit{R} package \textit{rmcfs} contains 13 user functions and one example dataset borrowed from \cite{Alizadeh:2000}. All of them are described in standard \textit{R} package documentation (pdf file available as supplementary material) and their description is also available by \textit{R} built-in help system. Here we will focus only on major \textit{rmcfs} functionality covered by the following set of functions:
+
+\begin{itemize}
+	\item\code{mcfs()} performs Monte Carlo feature selection and interdependence discovery (MCFS-ID) on a given data set. It uses C4.5 trees (\emph{j48}) as implemented in WEKA 3-6-10, see \cite{Hall:2009}.
+	\item\code{plot.mcfs()} {S3 method for class \emph{mcfs} equivalent to \code{plot()}. It plots various aspects of the MCFS-ID result.}
+	\item\code{print.mcfs()} {S3 method for class \emph{mcfs} equivalent to \code{print()}. It prints basic information of the MCFS-ID results: top features, cutoff values, confusion matrix obtained for $s \cdot t$ trees and classification rules obtained by RIPPER (\emph{JRip}) algorithm.}
+	\item\code{build.idgraph()} constructs the ID-Graph based on the result returned by the \code{mcfs} function.
+	\item \code{plot.idgraph()} visualizes the ID-Graph. It is a S3 method for object class \emph{idgraph} equivalent to \code{plot()}.
+\end{itemize}
+
+\subsection[Function mcfs]{Function \code{mcfs}}\label{subsection:function_mcfs}
+
+The function \code{mcfs} can be used to build feature ranking, find the cutoff and evaluate classification performance of a set of top features. It is used as:
+
+\begin{lstlisting}
+mcfs(formula, data,
+  projections = "auto",
+  projectionSize = "auto",
+  featureFreq = 150,
+  splits = 5,
+  splitSetSize = 1000,
+  balance = "auto",
+  cutoffMethod = c("permutations", "criticalAngle", "kmeans", "mean"),
+  cutoffPermutations = 20,    
+  buildID = TRUE,
+  finalRuleset = TRUE,
+  finalCV = TRUE,    
+  finalCVSetSize = 1000,
+  finalCVRepetitions = 3,    
+  seed = NA,        
+  threadsNumber = 2)
+\end{lstlisting}	
+  
+
+and takes the following arguments:
+\begin{itemize}
+  \item\code{formula} {specifies decision attribute and relation between class and other attributes (e.g., \code{class~.}).}
+  \item\code{data} {defines input \emph{data.frame} containing all features with decision attribute included.}  
+  \item\code{projections} {defines the number of subsets with randomly selected features. This parameter is usually set to a few thousands and is denoted in Equation \ref{eq:RI} as \emph{s}. By default it is set to \code{"auto"} and this value is based on size of input data set and \code{featureFreq} parameter.}  
+  \item\code{projectionSize} {defines the number of features in one subset. It can be defined by an absolute value (e.g., 100 denotes 100 randomly selected features) or by a fraction of input attributes (e.g., 0.05 denotes 5\% of input features). This parameter is denoted in Equation \ref{eq:RI} as \emph{m}. If it is set to \code{"auto"} then \code{projectionSize} equals to $\sqrt{d}$, where \emph{d} is the number of input features. Minimum number of input features in one subset is 1.}  
+  \item\code{featureFreq} {determines how many times each input feature should be randomly selected when \code{projections = "auto"}. By default each feature should be drawn 150 times.}
+  \item\code{splits} {defines the number of splits of each subset. This parameter is denoted in Equation \ref{eq:RI} as \emph{t} and by default set on 5.}
+  \item\code{splitSetSize} {determines whether to limit input dataset size. It helps to speedup computation for data sets with a large number of objects. If the parameter is larger than 1, it determines the number of objects that are drawn at random for each of the $s \cdot t$ decision trees. If \code{splitSetSize = 0} then the mcfs uses all objects in each iteration.}  
+  \item\code{balance} {determines the way to balance classes. It should be set to 2 or higher if input dataset contains heavily unbalanced classes. Each subset \emph{s} will contain all the objects from the least frequent class and randomly selected set of objects from each of the remaining classes. This option helps to select features that are important for discovering a relatively rare class. The parameter defines the maximal imbalance ratio. If the ratio is set to 2, then subset \emph{s} will contain the number of objects from each class (but the least frequent one) proportional to the square root of the class size $\sqrt{size(c)}$. If \code{balance = 0} then balancing is turned off. If \code{balance = 1} it is on but does not change the size of classes. Default value is \code{"auto"}.}
+  \item\code{cutoffMethod} {determines the final cutoff method. Default value is \code{"permutations"}.}  
+  \item\code{cutoffPermutations} {determines the number of permutation runs. It needs at least \code{cutoffPermutations = 20} for a statistically significant result. Minimum is 3 however 0 turns off permutation method.} 
+  \item\code{buildID} {if \code{= TRUE}, Interdependencies Discovery is on and all ID-Graph edges are collected.}
+  \item\code{finalRuleset} {if \code{= TRUE}, classification rules (by RIPPER algorithm) are created on the basis of the final set of features.}
+  \item\code{finalCV} {if \code{= TRUE}, it runs cross validation (cv) experiments on the final set of features. The following set of classifiers is used: C4.5, NB, SVM, kNN, logistic regression and RIPPER.}
+  \item\code{finalCVSetSize} {limits the number of objects used in the final cv experiment. For each cv repetition, the objects are selected randomly from the uniform distribution.}
+  \item\code{finalCVRepetitions} {defines the number of repetitions of the cv experiment. The more repetitions, the more stable result.}
+  \item\code{seed} {seed for random number generator in \textit{Java}. By default seed is random. Replication of the result is possible only if \code{threadsNumber = 1}.}
+  \item\code{threadsNumber} {number of threads to use in computation. More threads needs more CPU cores as well as memory usage is a bit higher. It is recommended to set this value equal to or less than CPU available cores.}
+\end{itemize}
+
+Function \code{mcfs} produces S3 object that is a list of the following components:
+
+\begin{itemize}
+  \item{data}{input data.frame limited to the top important features set.}
+  \item\code{target} {decision attribute name.}
+  \item\code{RI} {\emph{data.frame} that contains all features with relevance score sorted from the most relevant to the least relevant. This is the ranking of features.}
+  \item\code{ID} {\emph{data.frame} that contains features interdependencies as graph edges. It can be converted into a graph object by \code{build.idgraph} function.}
+  \item\code{distances} {\emph{data.frame} that contains convergence statistics of subsequent projections.}
+  \item\code{cmatrix} {confusion matrix obtained from all $s \cdot t$ decision trees.}
+  \item\code{cutoff} {\emph{data.frame} that contains cutoff values obtained by the following methods: criticalAngle, kmeans, permutations (max RI) and the last one $mean$ value based of all cutoff values.}
+ \item\code{cutoff\_value} {the number of features chosen as informative by the method defined by parameter \code{cutoffMethod}.}
+ \item\code{cv\_accuracy} {\emph{data.frame} that contains classification  results obtained by cross validation performed on \code{cutoff\_value} features. This \emph{data.frame} exists if \code{finalCV = TRUE}.}
+  \item\code{permutation} {this \emph{data.frame} contains results of permutation experiments: all RI values obtained from all permutation experiments; RI obtained for reference MCFS experiment (i.e, the experiment on the original data); $p$~values from Anderson-Darling normality test applied separately for each feature to the \code{cutoffPermutations} RI set; $p$~values from Student-t test applied separately for each feature to the \code{cutoffPermutations} RI vs. reference RI. All these $p$~values are related to Permutation (z-score) method (see Section \ref{subsection:cutoff}). This \emph{data.frame} exists if \code{cutoffPermutations > 0}.}
+ \item\code{jrip} {classification rules (produced by RIPPER algorithm) and related cv statistics obtained for \code{cutoff\_value} features for this algorithm.}
+ \item\code{params} {all settings used by MCFS-ID.}
+ \item\code{exec\_time} {execution time of MCFS-ID.}
+\end{itemize}
+
+Admittedly, one can become overwhelmed by the sheer number of input parameters but in most applications the \code{mcfs} function can be used with the set of default/recommended parameters (as in Section \ref{section:example}).
+
+\subsection[Function plot.mcfs]{Function \code{plot.mcfs}}\label{subsection:function_plot.mcfs}
+
+Function to plot \code{mcfs} result is defined as follows:
+
+\begin{lstlisting}
+plot.mcfs(x,
+  type = c("ri", "id", "distances", "features", "cv", "cmatrix", "heatmap"),
+  size = NA,
+  ri_permutations = c("max", "all", "sorted", "none"),
+  diff_bars = TRUE,
+  features_margin = 10,
+  cv_measure = c("wacc", "acc", "pearson", "MAE", "RMSE", "SMAPE"),
+  heatmap_norm = c("none", "norm", "scale"),
+  heatmap_fun = c("median", "mean"),
+  heatmap_colors = c("white", "red"),
+  cex = 1, ...)
+\end{lstlisting}	
+
+and takes the following arguments:
+\begin{itemize}
+    \item\code{x} {\emph{mcfs} S3 object - the result of the MCFS-ID experiment returned by \code{mcfs} function.}
+    \item\code{type}
+	\begin{itemize}
+		\item\code{ri} {plots top features set with their RIs as well as max RI obtained from permutation experiments. Red color denotes important features.}
+		\item\code{id} {plots top ID values obtained from the MCFS-ID.}
+		\item\code{distances} {plots distances (convergence diagnostics of the algorithm) between subsequent feature rankings obtained during the MCFS-ID experiment.}
+		\item\code{features} {plots top features set along with their RI. It is a horizontal barplot that shows important features in red color and non important in grey.}
+		\item\code{cv} {plots cross validation results based on the top features.}
+		\item\code{cmatrix} {plots the confusion matrix obtained on all $s \cdot t$ trees.}
+		\item\code{heatmap} {plots heatmap results based on top features. Only numeric features can be presented on the heatmap.}
+\end{itemize}
+  \item\code{size} {number of features to plot.}
+  
+  \item\code{ri\_permutations} {if \code{type = "ri"} and \code{ri\_permutations = "max"}, then it additionally shows horizontal lines that correspond to max RI values obtained from each single permutation experiment.}
+  \item\code{diff\_bars} {if \code{type = "ri"} or \code{type = "id"} and \code{diff\_bars = TRUE}, then it shows difference values for RI or ID values.}
+  \item\code{features\_margin} {if \code{type = "features"}, then it determines the size of the left margin of the plot.}
+  \item\code{cv\_measure} {if \code{type = "cv"}, then it determines the type of accuracy shown in the plot: weighted or unweighted/balanced accuracy (\code{"wacc"} or \code{"acc"}). If target attribute is numeric it is possible to review one of the following prediction quality measures: (\code{"pearson"}, \code{"MAE"}, \code{"RMSE"}, \code{"SMAPE"}).}
+  \item\code{heatmap\_norm} {if \code{type = "heatmap"}, then it defines type of input data normalization \code{"none"} - without any normalization, \code{"norm"} - normalization within range [-1,1], \code{"scale"} - standardization/centering by mean and stdev.}
+  \item\code{heatmap\_fun} {if \code{type = "heatmap"}, then it determines calculation \code{"mean"} or \code{"median"} within the class to be shown as heatmap color intensity.}
+  \item\code{heatmap\_colors} {if \code{type = "heatmap"}, then it defines low and hi colors on the heatmap.}
+  \item\code{cex} {size of fonts.}
+  \item\code{...} {additional plotting parameters.}
+\end{itemize}
+
+
+\subsection[Function build.idgraph]{Function \code{build.idgraph}}\label{subsection:function_build.idgraph}
+
+Function to build ID-Graph is defined as follows:
+
+\begin{lstlisting}
+build.idgraph(mcfs_result,
+  size = NA,
+  size_ID = NA,
+  self_ID = FALSE,
+  plot_all_nodes = FALSE,
+  size_ID_mult = 3,
+  size_ID_max = 100)
+\end{lstlisting}
+
+
+and takes the following arguments:
+\begin{itemize}
+  \item \code{mcfs\_result} results returned by \code{mcfs} function.
+  \item\code{size} number of top features to select. If \code{size = NA}, then \code{size} is defined by\\ \code{mcfs\_result\$cutoff\_value} parameter.
+  \item\code{size\_ID} {number of interdependencies (edges in ID-Graph) to be included. If \code{size\_ID=NA}, then parameter \code{size\_ID} is defined by multiplication \code{size\_ID\_mult}*\code{size}.}
+  \item\code{self\_ID} if \code{= TRUE}, then include self-loops from ID-Graph.
+  \item\code{plot\_all\_nodes} if \code{=  TRUE}, then include all nodes, even if they are not connected to any other node (isolated nodes).
+  \item\code{size\_ID\_mult} {If \code{size\_ID\_mult = 3} there will be 3 times more edges than features (nodes) presented in the ID-Graph. It works only if \code{size = NA} and \code{size\_ID = NA}}.
+  \item\code{size\_ID\_max} {maximum number of interactions to be included in the ID-Graph (the upper limit).}
+\end{itemize}
+
+It produces S3 \emph{idgraph/igraph} object that can be: plotted in R, exported to graphML (in XML format) or saved as csv or rds files.
+
+\subsection[Function plot.idgraph]{Function \code{plot.idgraph}}\label{subsection:function_plot.idgraph}
+
+Function to plot ID-Graph is defined as follows:
+
+\begin{lstlisting}
+plot.idgraph(x,
+  label.dist = 0.5,
+  cex = 1)
+\end{lstlisting}
+
+and takes the following arguments:
+\begin{itemize}
+	\item\code{graph} \emph{idgraph/igraph} S3 object representing feature interdependencies. This object is produced by \code{build.idgraph} function.
+	\item\code{label.dist} {space between the node's label and the corresponding node in the plot.}
+	\item\code{cex} {size of fonts.}
+\end{itemize}
+
+\section[Example]{Example}\label{section:example}
+
+First of all make sure you have \textit{Java} installed on your computer and then install \textit{rmcfs} from CRAN repository:
+
+\begin{lstlisting}
+R> install.packages("rmcfs")
+\end{lstlisting}
+
+Before loading the package, set \textit{Java} parameters (we set the maximum size of memory allocated by \textit{Java} at 2 GB) and then load the library.
+
+\begin{lstlisting}
+R> options(java.parameters = "-Xmx2g")
+R> library("rmcfs")
+\end{lstlisting}
+
+When this is done, then the entire \textit{R} environment is ready to run the example below.
+
+\subsection[Data]{The artificial data}\label{subsection:artificialData}
+
+To review and understand the MCFS-ID algorithm we suggest to create and use an extraordinarily simple example data set. It consists of objects from 3 classes, \emph{A}, \emph{B} and \emph{C}, that contain 40, 20 and 10 objects, respectively (70 objects altogether). For each object, we create 6 binary features (\emph{A1}, \emph{A2}, \emph{B1}, \emph{B2}, \emph{C1} and \emph{C2}) that are 'ideally' or 'almost ideally' correlated with \emph{class} feature. If an object's \emph{'class'} equals \emph{'A'}, then its features \emph{A1} and \emph{A2} are set to class value \emph{'A'}; otherwise \emph{A1 = A2 = 0}. If an object's \emph{'class'} is \emph{'B'} or \emph{'C'}, we proceed analogously, but we introduce some random corruption to 2 observations from class \emph{'B'} and to 4 observations from class \emph{'C'}: in the former case, for each of the two observations and both attributes \emph{B1/B2}, we randomly replace their value \emph{'B'} by '0' and in the latter case, again for each of the four observations and both attributes \emph{C1/C2}, we randomly replace their value \emph{'C'} by '0'. The data also contains additional 500 random numerical features with uniformly [0,1] distributed values. Thus we end up with 6 nominal important features (3 pairs with different levels of importance for classification) and 500 randomly distributed.
+
+\begin{lstlisting}
+R> set.seed(0)
+R> class <- c(rep("A",40), rep("B",20), rep("C",10))
+R> A <- B <- C <- rep("0", length(class))
+R> A[class == "A"] <- "A"
+R> B[class == "B"] <- "B"
+R> C[class == "C"] <- "C"
+R> rnd <- runif(length(class))
+R> B[class == "B"][rnd[class == "B"] <= (sort(rnd[class == "B"]))[2]] <- "0"
+R> C[class == "C"][rnd[class == "C"] <= (sort(rnd[class == "C"]))[4]] <- "0"
+R> d <- data.frame(matrix(runif(500 * length(class)), ncol = 500))
+R> d <- cbind(d, data.frame(A1 = A, A2 = A, B1 = B, B2 = B,
++  C1 = C, C2 = C, class))
+\end{lstlisting}
+
+Once input data is created, we can review, e.g., the last few columns and rows of it:
+\begin{lstlisting}
+R> d[50:70, 497:507]
+
+         X497       X498       X499       X500 A1 A2 B1 B2 C1 C2 class
+50 0.20466809 0.56092946 0.95223478 0.70965238  0  0  B  B  0  0     B
+51 0.11404115 0.29816202 0.04477183 0.03345120  0  0  B  B  0  0     B
+52 0.02938875 0.21069288 0.20364813 0.94183044  0  0  B  B  0  0     B
+53 0.49005094 0.12659981 0.22824847 0.81885672  0  0  B  B  0  0     B
+54 0.12656223 0.71003559 0.12826985 0.57745653  0  0  B  B  0  0     B
+55 0.84182080 0.02133940 0.98461836 0.18093354  0  0  B  B  0  0     B
+56 0.24221154 0.32765974 0.36310019 0.78545327  0  0  0  0  0  0     B
+57 0.49214327 0.12442556 0.61966539 0.58656922  0  0  B  B  0  0     B
+58 0.74438287 0.81923355 0.87711323 0.45680401  0  0  B  B  0  0     B
+59 0.06014164 0.95796935 0.81141427 0.65610882  0  0  B  B  0  0     B
+60 0.34402144 0.46230511 0.98609784 0.65171840  0  0  B  B  0  0     B
+61 0.01665507 0.35895054 0.92959504 0.66303803  0  0  0  0  C  C     C
+62 0.53326256 0.54672994 0.94477699 0.53642020  0  0  0  0  C  C     C
+63 0.92763065 0.15789376 0.33911702 0.37232281  0  0  0  0  0  0     C
+64 0.42980634 0.15969091 0.11927503 0.61437815  0  0  0  0  C  C     C
+65 0.20276997 0.29115349 0.23746162 0.79282321  0  0  0  0  0  0     C
+66 0.76193072 0.18045207 0.13270288 0.26172409  0  0  0  0  C  C     C
+67 0.12037553 0.13130389 0.68910685 0.99061888  0  0  0  0  0  0     C
+68 0.88857332 0.95222348 0.07483475 0.94459348  0  0  0  0  C  C     C
+69 0.20723421 0.42698189 0.77679508 0.49228194  0  0  0  0  C  C     C
+70 0.15157902 0.08401528 0.94564002 0.03452377  0  0  0  0  0  0     C
+\end{lstlisting}
+
+The number of objects in each class is equal to:
+
+\begin{lstlisting}
+R> table(d$class)
+
+ A  B  C
+40 20 10
+\end{lstlisting}
+
+
+Package \textit{rmcfs} includes function \code{artificial.data} that creates above example dataset.
+\begin{lstlisting}
+R> d <- artificial.data(rnd_features = 500, corruption = c(0,2,4), seed = 0)
+\end{lstlisting}
+
+
+\subsection[MCFS-ID on artificial data]{MCFS-ID on artificial data}\label{subsection:mcfs_artificialData}
+
+Let us run mcfs on the created data. If the given CPU is HT (Hyper-Threading) quad core, we recommend setting up to 8 threads for processing because the efficiency gain of multithreaded processing is limited by the number of physical CPU cores. However, in the example below, we use 1 thread to get perfect reproducibility, since the implemented multithreaded mechanism is asynchronous. For a standard PC and 1 thread, it may take around 2 minutes, but we observe nearly linear dependence between number of threads running on physical cores and speed of calculation (see Section \ref{subsection:mcfs_realData}). Parameter \code{cutoffPermutations} is set to 5 for this simple example dataset, but for real data we recommend default 20.
+
+\begin{lstlisting}
+R> result <- mcfs(class~., d, cutoffPermutations = 5, seed = 0,
++  threadsNumber = 1)
+R> result$exec_time
+
+Time difference of 2.622107 mins
+\end{lstlisting}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/distances.pdf}
+\caption{Distance function and common part.}
+\label{fig:distance}
+\end{figure}
+
+After successfully running MCFS-ID algorithm we can check convergence of the algorithm (see Figure \ref{fig:distance}). The distance function shows the difference between two consecutive rankings - zero means no changes between two rankings (see the left Y axis). Common part gives the fraction of features that overlap for two different rankings (see the right Y axis). Ranking stabilizes over a number of iterations: distance tends to zero and common part tends to 1. Beta1 shows the slope of the tangent of a smoothed distance function. If Beta1 tends to 0 (the right Y axis) then the distance is given by a flat line.
+
+\begin{lstlisting}
+R> plot(result, type = "distances")
+\end{lstlisting}
+
+
+Now we can check the cutoff value for various methods and review the result for the default one.
+
+\begin{lstlisting}
+R> print(result$cutoff)
+
+         method      minRI size    minID
+1 criticalAngle 0.02667534   22       NA
+2        kmeans 0.33329248    6       NA
+3  permutations 0.07494005    6 5.029552
+4          mean 0.03540977   11       NA
+\end{lstlisting}
+
+
+\begin{lstlisting}
+R> result$cutoff_value
+
+[1] 6
+\end{lstlisting}
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/maxRI.pdf}
+\caption{RIs and maximal RIs from permutation experiments for top 50 features.}
+\label{fig:maxRI}
+\end{figure}
+
+By default, the final cutoff value is equal to the value obtained from the method based on permutations of the decision attribute. The mean obtained from all methods is in our example equal to 11. The mean cutoff value is larger than actual number of informative features since the critical angle method takes into consideration only the shape of the RI distribution. Input parameter \code{cutoffMethod} for the \code{mcfs} function determines the method which we want to use as the oracle. Since cutoff value is determined by \code{result\$cutoff\_value}, %$
+the user may change it according to his/her will. This value is used by \code{plot} function.
+
+We may plot RI values in decreasing order for the top, e.g., 50 features. See Figure \ref{fig:maxRI}. The line with red/grey dots gives RI values, the blue vertical barplot gives difference $\delta$ between consecutive RI values. Informative features are separated from non-informative ones by the cutoff value and are presented in the plot as red and grey dots, respectively. We can also view all maximal RIs obtained from all permutation experiments (parameter \code{plot\_permutations = TRUE}) - Figure \ref{fig:maxRI} shows these 5 maximal RIs as horizontal red lines. The distribution of the max RI values determines the cutoff value.
+
+
+\begin{lstlisting}
+R> plot(result, type = "ri", size = 50, plot_permutations = TRUE)
+\end{lstlisting}
+
+
+
+
+Similarly, we can plot ID weights in decreasing order for the top, e.g., 50 ID-Graph edges. 
+%See Figure \ref{fig:ID}.
+
+\begin{lstlisting}
+R> plot(result, type = "id", size = 50)
+\end{lstlisting}
+
+%\begin{figure}[ht]
+%\centering
+%\includegraphics[width=0.8\columnwidth]{Figures/id.pdf}
+%\caption{IDs weights for top 50 ID-Graph edges.}
+%\label{fig:ID}
+%\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/topFeatures.pdf}
+\caption{Top features selected by MCFS-ID.}
+\label{fig:topFeatures}
+\end{figure}
+
+
+Now, we can review labels and RIs of the top features. The resulting plot is presented in Figure \ref{fig:topFeatures}. One can see that all six features are highly important  and their RIs are much higher than those of other features. The set of informative features is flagged in red in the plot. Features \emph{A1} and \emph{A2} have substantially higher RI values because they 'ideally' separate the largest class and in most cases they appear in the root node. The second level of a tree may be determined by either of \emph{B1}, \emph{B2}, \emph{C1} and \emph{C2}, but in our case features \emph{B1/B2} are less corrupted by "noise" and hence they are much more informative than features \emph{C1/C2}. Notice that all pairs (\emph{A1/A2}, \emph{B1/B2}, \emph{C1/C2}) have similar RIs and all the resulting importance levels are consistent with the corruption level introduced to our artificial data.
+% The figure shows that MCFS-ID evaluates exactly the same attributes on the same level of importance and there is no shadowing effect (highly important attribute does not cover others and they are selected and evaluated).
+
+\begin{lstlisting}
+R> plot(result, type = "features", size = 10)
+\end{lstlisting}
+
+Finally, we can build and visualize ID-Graph. By default, we plot all the edges that connect 6 informative features as defined by \code{result\$cutoff\_value}.%$
+
+\begin{lstlisting}
+R> gid <- build.idgraph(result)
+R> plot(gid, label_dist = 1)
+\end{lstlisting}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\columnwidth]{Figures/idgraph.pdf}
+\caption{ID-Graph for artificial data.}
+\label{fig:IDGraph}
+\end{figure}
+
+In the ID-Graphs, as seen in Figure \ref{fig:IDGraph}, some additional information is conveyed with the help of suitable graphical means. The color intensity of a node is proportional to the corresponding feature's $\mbox{\rm RI}$. The size of a node is proportional to the number of edges related to this node. The width and level of darkness of an edge is proportional to the ID weight of this edge. Since we would like to review only the strongest ID weights let us plot ID-Graph with only 12 top edges (\code{size\_ID = 12}).
+
+\begin{lstlisting}
+R> gid <- build.idgraph(result, size_ID = 12)
+R> plot(gid, label_dist = 1)
+\end{lstlisting}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\columnwidth]{Figures/idgraph12.pdf}
+\caption{ID-Graph for artificial data, limited to top 6 features and top 12 ID weights.}
+\label{fig:IDGraph12}
+\end{figure}
+
+In Figure \ref{fig:IDGraph12}, top 6 features along with top 12 ID weights are presented. Notice that the two most important features, \emph{A1} and \emph{A2}, point to all another ones, while \emph{B1} and \emph{B2} point to \emph{C1} and \emph{C2}. The directions of edges reproduce paths in decision trees. If features \emph{A1}, \emph{A2} determine the root nodes, then the leafs are \emph{B1}, \emph{B2}, \emph{C1} or \emph{C2}. If features \emph{B1}, \emph{B2} determine the root nodes then the leafs are \emph{C1}, \emph{C2}. Interestingly and correctly, the ID-Graph (in both Figures \ref{fig:IDGraph} and \ref{fig:IDGraph12}) does not show any connection between identical features (e.g., between \emph{A1} and \emph{A2}). Indeed, such features do not cooperate in distinguishing between classes, since they are the same!
+
+For top features set, when the execution of MCFS-ID has been finished, the procedure runs 10 fold cross validation (cv) on 6 different classifiers (see Figure \ref{fig:cv_result}). Each cv is repeated 3 (defined by \code{finalCVRepetitions} parameter) times and the mean value of accuracy and weighted accuracy are gathered. Since the weighted accuracy is equal to the mean over all true positive rates (TPR), it is more meaningful for datasets with unbalanced classes. In our example, given the first two features from the ranking, \emph{A1} and \emph{A2}, only 66\% weighted accuracy can be achieved, since only class \emph{A} can then be separated and the remaining objects can be labeled as \emph{B} - we perfectly classify 2 out of 3 classes (and hence wacc=66\%). For 6 and more top features the accuracy depends on an algorithm and a given cv experiment. CV plot presents the result for \code{result\$cutoff\_value} features (red label on X axis ) and its multiple (0.25, 0.5, 0.75, 1, 1.25, 1.5, 2).%$
+
+\begin{lstlisting}
+R> plot(result, type = "cv", measure = "wacc")
+\end{lstlisting}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/cv_result.pdf}
+\caption{Cross Validation results for top features. Selected cutoff value is flagged by red color on the X axis.}
+\label{fig:cv_result}
+\end{figure}
+
+The RIPPER algorithm is a rule-based classifier and thus it provides the user with classification rules. Function \code{print()} provides in particular the rules and their classification ability.
+
+
+\begin{lstlisting}
+R> print(result)
+
+JRIP classification rules created on top 6 features:
+JRIP rules:
+===========
+
+(A1 = 0) and (B1 = 0) => class=C (12.0/2.0)
+(A1 = 0) => class=B (18.0/0.0)
+ => class=A (40.0/0.0)
+
+Number of Rules : 3
+
+RIPPER CV Result (10 folds repeated 3 times)
+Confusion Matrix
+			predicted
+class	B	C	A
+B	54.0	6.0	0.0
+C	2.0	26.0	2.0
+A	0.0	0.0	120.0
+
+Accuracy = 0.9523
+WeightedAccuracy = 0.9222
+
+True Positive Rate
+	A: 1.0
+	B: 0.9
+	C: 0.8666
+False Positive Rate
+	A: 0.0222
+	B: 0.0133
+	C: 0.0333
+
+\end{lstlisting}
+
+
+\subsection[MCFS-ID on real data]{MCFS-ID on real data}\label{subsection:mcfs_realData}
+
+In order to present practical usability of the algorithm we used Arcene dataset downloaded from UCI repository (\url{https://archive.ics.uci.edu/ml/datasets/Arcene}). Arcene's task is to distinguish cancer versus normal patterns from mass-spectrometric data. This is a two-class classification problem with 10000 continuous input variables and 100 objects used for training. This dataset was one of 5 datasets of the NIPS 2003 feature selection challenge; see \cite{guyon:2004}. After running MCFS-ID on its default parameters we obtained the ranking of features that we used for prediction on the validation set. Starting from 1 up to 200 top features we repeatedly trained SVM and applied it on 100 new objects (unseen during the feature selections and training the model) from the validation dataset. For over 100 top features classification accuracy is almost 99\% and for over 175 top features it achieves 100\% (see Figure \ref{fig:arcene_prediction}; this almost or strictly perfect accuracy follows from the task's low complexity and small size of the validation set - unfortunately, a larger test set with class labels is unavailable).
+
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/arcene_prediction.pdf}
+\caption{Prediction result on validation set vs the number of top features used to train SVM classifier.}
+\label{fig:arcene_prediction}
+\end{figure}
+
+It should be expected that some combination of top features from the ranking and features that reveal strongest two-way interdependencies (interactions) with those top ones may comprise a very good set of features to classify on. Note that such strong interdependencies, measured by the ID weights, may occur between pairs of features each of which is of high relative importance and, perhaps equally or almost equally likely, between features only one of which has high value of RI. Indeed, a feature with low value of RI may prove a good helper of the other feature to increase predictive power of the latter through a directed interaction with the former. In order to confirm this claim we first selected 200 features with the highest RI and then built ID-Graph for 50 edges with the highest ID weights and such that each edge connects a feature from the aforementioned set of 200 features with any other feature (see Figure \ref{fig:arcene_idgraph}). Concatenation of features 
+present in the ID Graph with top 10 features gave us 58 features with 9 of them present both in the top 10 and in the graph:
+%present in the ID Graph with top 10 features gave us 58 features with 9 of them out of the top 200:
+
+
+\begin{lstlisting}
+[1] "V1184" "V5473" "V698"  "V8502" "V8806" "V7197" "V4290" "V1476" "V7899"
+[10] "V9743" "V7542" "V4183" "V9050" "V3206" "V6292" "V4352" "V2448" "V4557"
+[19] "V893"  "V504"  "V4542" "V2227" "V2278" "V7696" "V4970" "V8623" "V9082"
+[28] "V130"  "V5112" "V2080" "V3170" "V9213" "V2057" "V4895" "V7530" "V7014"
+[37] "V8976" "V8904" "V4322" "V1046" "V4513" "V1322" "V9104" "V5417" "V9358"
+[46] "V4738" "V4301" "V8132" "V9319" "V787"  "V9477" "V3956" "V3014" "V9884"
+[55] "V8506" "V7319" "V2247" "V7748"
+\end{lstlisting}
+
+
+Thus obtained set of features was used to train SVM model and determine its classification quality on the validation set. For the 58 features we obtained 98\% accuracy.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/arcene_idgraph_200_50.pdf}
+\caption{ID-Graph created for Arcene dataset. Top 50 edges, each connecting a feature from the top 200 with some other one.}
+\label{fig:arcene_idgraph}
+\end{figure}
+
+To verify convergence of our MCFS heuristic procedure we have run the algorithm three times on the same training data - each time with a different seed. All three runs were made using the same default parameters as before. Having obtained all three rankings, we compared the three sets of top 100 features. As many as 92 features were present in all three rankings, no matter what was the starting seed. Below we present top twenty features from the first run and their positions in the rankings for the remaining two runs.
+
+%   attribute position_1 position_2 position_3       RI_1       RI_2       RI_3
+%1      V1184          1          1          1 0.16273354 0.16675761 0.16087797
+%2      V8502          2          2          2 0.13933404 0.13792649 0.13783737
+%3      V5473          3          3          3 0.12607212 0.13063191 0.12595993
+%4       V698          4          4          4 0.12340937 0.12459127 0.12468133
+%5      V7197          5          6          5 0.11787608 0.11107323 0.11729026
+%6      V4290          6          5          6 0.10628119 0.11929534 0.11646078
+%7      V7899          7         10          7 0.09623387 0.09282612 0.09913677
+%8      V9104          8          7          9 0.09288203 0.09745601 0.09421046
+%9      V7748          9          8          8 0.09106498 0.09582192 0.09440550
+%10     V9050         10         12         10 0.08834712 0.08008516 0.08883123
+%11     V1476         11          9         11 0.08615670 0.09296459 0.08593654
+%12     V8904         12         14         15 0.08037879 0.07636328 0.07546507
+%13     V5015         13         11         12 0.07877903 0.08279975 0.08315889
+%14     V6928         14         17         14 0.07826981 0.07407381 0.08052390
+%15       V86         15         16         16 0.07641423 0.07441122 0.07502061
+%16     V7696         16         15         19 0.07448662 0.07526176 0.07052537
+%17      V436         17         13         13 0.07334419 0.07805594 0.08124941
+%18     V6986         18         24         27 0.07261838 0.06768807 0.06552084
+%19     V3339         19         19         18 0.07182527 0.06910843 0.07208790
+%20     V9082         20         28         24 0.07154425 0.06593642 0.06864055
+
+
+\begin{lstlisting}
+   attribute position_1 position_2 position_3      RI_1      RI_2      RI_3
+1      V1184          1          1          1 0.1627335 0.1667576 0.1608779
+2      V8502          2          2          2 0.1393340 0.1379264 0.1378373
+3      V5473          3          3          3 0.1260721 0.1306319 0.1259599
+4       V698          4          4          4 0.1234093 0.1245912 0.1246813
+5      V7197          5          6          5 0.1178760 0.1110732 0.1172902
+6      V4290          6          5          6 0.1062811 0.1192953 0.1164607
+7      V7899          7         10          7 0.0962338 0.0928261 0.0991367
+8      V9104          8          7          9 0.0928820 0.0974560 0.0942104
+9      V7748          9          8          8 0.0910649 0.0958219 0.0944055
+10     V9050         10         12         10 0.0883471 0.0800851 0.0888312
+11     V1476         11          9         11 0.0861567 0.0929645 0.0859365
+12     V8904         12         14         15 0.0803787 0.0763632 0.0754650
+13     V5015         13         11         12 0.0787790 0.0827997 0.0831588
+14     V6928         14         17         14 0.0782698 0.0740738 0.0805239
+15       V86         15         16         16 0.0764142 0.0744112 0.0750206
+16     V7696         16         15         19 0.0744866 0.0752617 0.0705253
+17      V436         17         13         13 0.0733441 0.0780559 0.0812494
+18     V6986         18         24         27 0.0726183 0.0676880 0.0655208
+19     V3339         19         19         18 0.0718252 0.0691084 0.0720879
+20     V9082         20         28         24 0.0715442 0.0659364 0.0686405
+\end{lstlisting}
+
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\columnwidth]{Figures/arcene_timeVsThreads.pdf}
+\caption{Execution time vs number of threads (Arcene data).}
+\label{fig:arcene_threads}
+\end{figure}
+
+To analyze scalability of our current implementation we run \code{mcfs} procedure for a multiple number of threads for three different Intel CPUs machines. The result presented in Figure \ref{fig:arcene_threads} shows an initially nearly linear relation between time and threads number: $time(th) = time(th=1)/th$, where $th$ is the number of threads, for 14 cores CPU. Experiments show that the gain in speed highly depends on the architecture of the given CPU. Since Hyper-Threading (HT) technology is based on utilizing the same physical core by two threads simultaneously, it can only give a boost to the speed when the CPU is not well utilized by a single thread. For a multicore system (2x14), we noticed that there is no gain in speed from 16 threads on. We profiled the application to find possible concurrency between threads and locks for critical section execution but it has proved not to be the case. There are many other issues that can affect \textit{Java} multithreading program such as: memory bandwidth, L3 cache size limitation, or frequent Garbage Collector execution (see \cite{qian:2015}). However multithreading allows to run calculation 7 times faster by using 8 threads vs 1  on 14 cores CPU (49 sec vs 340 sec respectively).
+
+
+\section[Summary]{Summary}\label{section:summary}
+
+In this paper, we have presented \textit{rmcfs} package that can be successfully used for feature selection and interdependencies discovery. Here, we have discussed one extraordinarily simple usage example and only one example using a real-life dataset, but the MCFS-ID algorithm has been proved in the past studies as very useful technique to limit the number of features and select the informative ones in various real high-dimensional porblems; see \cite{Draminski:2008}, \cite{Kierczak:2009}, \cite{Kierczak:2010}, \cite{Khaliq:2015}, \cite{Enroth:2012}, \cite{Draminski:2016}. The ranking of features can be used to review features one by one (starting from the top) even in the case of BIG DATA. Using the MCFS, one can build rule sets on top features and review their meaning; see \cite{Bornelov:2014}. The ID part presents interdependencies between features in a consistent and comprehensive way. It shows not simple correlations but nonlinear relations between features that may reveal causality in the data (to be inferred from or confirmed by suitable background knowledge); see \cite{Draminski:2016}. The novelty of the paper lies in presenting: (i)  a concise and comprehensive description of an \textit{R} package that automatically implements proper (default) settings of all crucial MCFS-ID parameters to obtain reliable results for data of any given size; (ii) ways of determining the cut-off value between informative and non-informative features; (iii) scalability analysis of current implementation of the \textit{rmfcs}; (iv) an illustration of using discovered interdependencies (interactions) to advantage in classification tasks.
+
+
+\section*{Acknowledgements}
+We thank our close collaborators, Jan Komorowski, Michal J. Dabrowski, Klev Diamanti, Marcin Kierczak and Marcin Kruczyk, who have built on the MCFS-ID, most notably by providing a host of new insights and results within the area of bioinformatics. Our thanks also to Julian Zubek who wrote some pieces of the \textit{R} code. Last but not least, we thank the anonymous reviewers for most valuable comments and insightful suggestions.
+
+%\bibliography{jss2621}
+
+\input{jss2621_bib.ltx}
+
+\end{document}
+
+

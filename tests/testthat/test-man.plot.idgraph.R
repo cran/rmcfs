@@ -2,6 +2,9 @@ context("man.plot.idgraph")
 
 ##################################################################
 test_that("man build.idgraph", {
+  options(java.parameters = "-Xmx4g")
+  require(testthat)
+  require(rmcfs)
   
   # create input data
   adata <- artificial.data(rnd_features = 10)

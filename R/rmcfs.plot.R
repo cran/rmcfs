@@ -467,7 +467,7 @@ mcfs.plot.heatmap <- function(mcfs_result, size = NA,
   if(!all(head(mcfs_result$RI$attribute,size) %in% names(data)))
     stop("Input data does not match mcfs_result. Columns names are different.")
   
-  data.scaled <- refine.data(data, mcfs_result, size)
+  data.scaled <- prune.data(data, mcfs_result, size)
   numericCols <- sapply(data.scaled, is.numeric)
   
   if(!any(numericCols)){

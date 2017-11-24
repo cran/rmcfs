@@ -11,10 +11,9 @@
 
 \examples{
 
-  # Load alizadeh dataset.
-  data(alizadeh)
-  d <- alizadeh
-  
-  write.adh(d, file = file.path(tempdir(), "alizadeh.adh"), target = "class")
-  d <- read.adh(file = file.path(tempdir(), "alizadeh.adh"))
+  # create artificial data
+  adata <- artificial.data(rnd_features = 1000)
+
+  write.adh(adata, file = file.path(tempdir(), "adata.adh"), target = "class")
+  adata <- read.adh(file = file.path(tempdir(), "adata.adh"))
 }

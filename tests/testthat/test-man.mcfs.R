@@ -2,6 +2,9 @@ context("man.mcfs")
 
 ##################################################################
 test_that("man mcfs artificial", {
+  options(java.parameters = "-Xmx4g")
+  require(testthat)
+  require(rmcfs)
   
   # create input data and review it
   adata <- artificial.data(rnd_features = 10)

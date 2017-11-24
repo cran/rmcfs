@@ -151,9 +151,13 @@ mcfs(formula, data,
   ####################################
   ########## Alizadeh data ###########
   ####################################
-  
   # Load Alizadeh dataset.
-  data(alizadeh)
+  # A 4026 x 62 gene expression data matrix of log-ratio values. The last column contains 
+  # the annotations of the 62 samples with respect to the cancer types C, D, F.
+  # The data are from the lymphoma/leukemia study of A. Alizadeh et al., Nature 403:503-511 (2000), 
+  # http://llmpp.nih.gov/lymphoma/index.shtml
+  alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", 
+                        stringsAsFactors = F)
   showme(alizadeh)
   
   # Fix data types and data values - replace characters such as "," " " "/" etc. 
