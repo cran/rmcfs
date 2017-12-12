@@ -1,13 +1,13 @@
-ce50db22322527bf86fef838f33588ec *DESCRIPTION
+8e04d4df60cf12160107a4ac173c2b89 *DESCRIPTION
 dfa3921183280475ee946abde0d13fc5 *LICENSE.note
 a547d14593883ea894ee1105ccaec8fa *NAMESPACE
-4d7ee9f824e6566413ee0130ddcbd99a *NEWS.md
+9cc7a6e7c7c04497f202dd02fa899911 *NEWS.md
 cbaa7710ab306601bfb73527af6084fb *R/onLoad.R
 5f5c5459e8f0a052054c3395bccdedf6 *R/rmcfs.R
 a755d2725aa6916867b4917c87abe4ca *R/rmcfs.io.R
 99c75ad3087d84a3ddeab89d2a573793 *R/rmcfs.plot.R
 ba5eeec82426f04e8a242ac98ec406db *R/utils.R
-7f076c44a8e1601af037fed3f808cc9d *build/vignette.rds
+69b5cb13d5efd22c89e2b715a8ca3b77 *build/vignette.rds
 3f68492c9d05c2bddca829ada1c9b6a8 *inst/CITATION
 2e5f9984443b92d8ada57b4626477cd4 *inst/cfg/adx.cfg
 9769125e89d27e2bd4d4ca7218d8592d *inst/cfg/bayesNet.cfg
@@ -24,8 +24,8 @@ e1c811278b6fc3b631a3d77c12bf44bb *inst/cfg/knn.cfg
 49362be073a4519d8c7dfb2c7d778656 *inst/cfg/rnd.cfg
 9e010f639e8944f4e3dc3bc40f5d76d0 *inst/cfg/sliq.cfg
 3a53ddc9030882d889e03295f1c4c82b *inst/cfg/svm.cfg
-a93aa8105cf5ba37b9bc90b05ca323fd *inst/doc/jss2621.ltx
-88c88e41633066aa889e55caabcd9b2d *inst/doc/jss2621.pdf
+097610514fe5de5e72a786c84389939c *inst/doc/jss2621.ltx
+17f35ee29cacfee20423293c8693c601 *inst/doc/jss2621.pdf
 f6be558e44de25df08b9f515b2a7ffee *inst/java/colt-1.2.0.jar
 aaab22ffe2b7c366d2b8fe7dc3573976 *inst/java/dmLab.jar
 ba82c5ed3822b3c54fa41dab2ee3ab1f *inst/java/jdistlib-0.4.1-bin.jar
@@ -318,5 +318,4 @@ c49a6c611519dae33724cefc82289d68 *vignettes/Figures/idgraph.pdf
 c95b50863eedbe4cbbc51d7d6553733f *vignettes/Figures/maxRI.pdf
 b4cd599d4f94fbe49c8aacb69c3b6ad2 *vignettes/Figures/mcfs_main_diagram.pdf
 7ca526ac4092f0eb89ba03f88d91ea87 *vignettes/Figures/topFeatures.pdf
-a93aa8105cf5ba37b9bc90b05ca323fd *vignettes/jss2621.ltx
-7d8f3f333205aa07cfc0ce9c86b82338 *vignettes/jss2621_bib.ltx
+097610514fe5de5e72a786c84389939c *vignettes/jss2621.ltx

@@ -1,5 +1,9 @@
 # rmcfs - changes
 
+Version 1.2.8
+=============
+* vignette bibliography file removed
+
 Version 1.2.7
 =============
 * mcfs check whether decision attribute contains NA values
