@@ -12,6 +12,7 @@
 \value{the result of the MCFS-ID experiment returned by \code{\link{mcfs}} function.}
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # create input data
   adata <- artificial.data(rnd_features = 10)
@@ -25,6 +26,8 @@
   path <- tempdir()
   export.result(result, path = path, label = "artificial")
   result <- import.result(path = path, label = "artificial")
+  
+  }###dontrunend
 }
 
 

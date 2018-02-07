@@ -27,6 +27,7 @@
 \value{data.frame with fixed values and types (depends on \code{type} parameter).}
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # create artificial data
   adata <- artificial.data(rnd_features = 1000)
@@ -34,4 +35,6 @@
   # Fix data types and data values - remove "," " " "/" from values and fix data types
   # This function may help if mcfs has any problems with input data
   adata.fixed <- fix.data(adata)
+  
+  }###dontrunend
 }

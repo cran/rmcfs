@@ -13,7 +13,8 @@
 }
 
 \examples{
-
+  \dontrun{###dontrunbegin
+  
   # create input data
   adata <- artificial.data(rnd_features = 10)
   showme(adata)
@@ -26,4 +27,6 @@
   path <- tempdir()
   export.result(result, path = path, label = "artificial")
   result <- import.result(path = path, label = "artificial")
+  
+  }###dontrunend
 }

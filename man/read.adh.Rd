@@ -10,10 +10,13 @@
 }
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # create artificial data
   adata <- artificial.data(rnd_features = 1000)
 
   write.adh(adata, file = file.path(tempdir(), "adata.adh"), target = "class")
   adata <- read.adh(file = file.path(tempdir(), "adata.adh"))
+  
+  }###dontrunend
 }

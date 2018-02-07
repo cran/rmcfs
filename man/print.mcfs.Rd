@@ -12,6 +12,7 @@
 }
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # create input data
   adata <- artificial.data(rnd_features = 10)
@@ -23,4 +24,6 @@
 
   # Print basic information about mcfs result.
   print(result)
+  
+  }###dontrunend
 }

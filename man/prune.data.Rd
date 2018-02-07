@@ -14,6 +14,7 @@
 \value{data.frame with selected columns.}
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # create input data
   adata <- artificial.data(rnd_features = 10)
@@ -24,4 +25,6 @@
                   finalCV = FALSE, finalRuleset = FALSE, threadsNumber = 2)
 
   head(prune.data(adata, result, size = result$cutoff_value))
+
+  }###dontrunend  
 }

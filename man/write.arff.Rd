@@ -15,6 +15,7 @@
 }
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # create artificial data
   adata <- artificial.data(rnd_features = 1000)
@@ -23,4 +24,6 @@
   #It is not necessary but for some data can help to export in proper format.
   adata <- fix.data(adata)
   write.arff(adata, file = file.path(tempdir(), "adata.arff"), target = "class")
+  
+  }###dontrunend
 }

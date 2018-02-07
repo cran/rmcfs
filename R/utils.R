@@ -328,3 +328,15 @@ get.projectionSize <- function(data_size, projectionSize = NA){
   }
   return(projection_size)
 }
+
+###############################
+#get.JavaVersion
+###############################
+get.JavaVersion <- function(){
+  .jinit()
+  jv <- .jcall("java/lang/System", "S", "getProperty", "java.runtime.version")
+  if(substr(jv, 1L, 1L) == "1") {
+    jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
+  }
+  return(jvn)
+}

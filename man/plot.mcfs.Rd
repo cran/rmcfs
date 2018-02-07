@@ -40,6 +40,7 @@
 }
 
 \examples{
+  \dontrun{###dontrunbegin
 
   # Create input data.
   adata <- artificial.data(rnd_features = 10)
@@ -77,4 +78,6 @@
   # Plot & print out confusion matrix. This matrix is the result of 
   # all classifications performed by all decision trees on all s*t datasets.
   plot(result, type = "cmatrix")
+  
+  }###dontrunend
 }

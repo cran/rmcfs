@@ -17,7 +17,10 @@ mcfs <- function(formula, data,
                         finalCVRepetitions = 3,
                         seed = NA,
                         threadsNumber = 2)
-{ 
+{
+  if(get.JavaVersion() < 1.6) 
+    stop("Java 6 or higher is needed for this package but is not available.")
+  
   if(!cutoffMethod[1] %in% c("permutations", "criticalAngle", "kmeans", "mean")){
     stop(paste0("Incorrect 'cutoffMethod' = ", cutoffMethod[1]))
   }
@@ -62,7 +65,7 @@ mcfs <- function(formula, data,
   if(is.numeric(seed)){
     params$mcfs.seed = seed
   }else{
-    params$mcfs.seed = ""
+    params$mcfs.seed = round(runif(1, 0, 2^24))
   }
 
   cat("Exporting params...\n")

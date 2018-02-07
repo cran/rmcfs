@@ -78,7 +78,8 @@ mcfs(formula, data,
 }
 
 \examples{
-  \dontrun{
+  \dontrun{###dontrunbegin
+
   ####################################
   ######### Artificial data ##########
   ####################################
@@ -156,8 +157,9 @@ mcfs(formula, data,
   # the annotations of the 62 samples with respect to the cancer types C, D, F.
   # The data are from the lymphoma/leukemia study of A. Alizadeh et al., Nature 403:503-511 (2000), 
   # http://llmpp.nih.gov/lymphoma/index.shtml
+  
   alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", 
-                        stringsAsFactors = F)
+                        stringsAsFactors = FALSE)
   showme(alizadeh)
   
   # Fix data types and data values - replace characters such as "," " " "/" etc. 
@@ -168,8 +170,8 @@ mcfs(formula, data,
   # Run MCFS-ID procedure on default parameters. 
   # For larger real data (thousands of features) default 'auto' settings are the best.
   # This example may take 10-20 minutes but this one is a real dataset with 4026 features.
-  # Set up more threads.
-  result <- mcfs(class~., alizadeh, threadsNumber = 4)
+  # Set up more threads according to your CPU cores number.
+  result <- mcfs(class~., alizadeh, featureFreq = 100, cutoffPermutations = 10, threadsNumber = 8)
 
   # Print basic information about mcfs result.
   print(result)
@@ -190,5 +192,6 @@ mcfs(formula, data,
   # build interdependencies graph.
   gid <- build.idgraph(result, size = 20)
   plot.idgraph(gid, label_dist = 0.3)
-  }
+  
+  }###dontrunend
 }

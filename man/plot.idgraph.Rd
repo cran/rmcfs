@@ -17,7 +17,8 @@
 }
 
 \examples{
-  \dontrun{
+  \dontrun{###dontrunbegin
+  
   # create input data
   adata <- artificial.data(rnd_features = 10)
   showme(adata)
@@ -31,5 +32,5 @@
   gid <- build.idgraph(result, size = 6, size_ID = 12, plot_all_nodes = TRUE)
   plot(gid, label_dist = 1)
   
-  }
+  }###dontrunend
 }

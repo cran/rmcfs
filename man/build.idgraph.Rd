@@ -26,7 +26,7 @@ The number of top features included and the number of ID-Graph edges can be cust
 \value{\emph{igraph/idgraph} S3 object that can be: plotted in R, exported to graphML (XML format) or saved as csv or rds files.}
 
 \examples{
-  \dontrun{
+  \dontrun{###dontrunbegin
 
   # create input data
   adata <- artificial.data(rnd_features = 10)
@@ -47,5 +47,5 @@ The number of top features included and the number of ID-Graph edges can be cust
   igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
             format = "graphml", prefixAttr = FALSE)
 
-  }
+  }###dontrunend
 }

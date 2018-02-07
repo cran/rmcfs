@@ -1,5 +1,11 @@
 # rmcfs - changes
 
+Version 1.2.9
+=============
+* Java version in description file fixed
+* minor fix of input parameter 'seed'
+* onLoad info changed 
+
 Version 1.2.8
 =============
 * vignette bibliography file removed
