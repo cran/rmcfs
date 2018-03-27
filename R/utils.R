@@ -336,7 +336,14 @@ get.JavaVersion <- function(){
   .jinit()
   jv <- .jcall("java/lang/System", "S", "getProperty", "java.runtime.version")
   if(substr(jv, 1L, 1L) == "1") {
+    #looks like its Oracle jdk 1.x
     jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
+  }else if(grepl("internal",jv,fixed = TRUE)){
+    #looks like its open jdk 9 e.g. "9-internal"
+    jvn <- as.numeric(paste0("1.", strsplit(jv, "[-]")[[1L]][1]))
+  }else{
+    warning(paste0("Can't recognize java version. Java: ", jv))
+    jvn <- 1.6
   }
   return(jvn)
 }

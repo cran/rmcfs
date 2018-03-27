@@ -152,6 +152,7 @@ mcfs(formula, data,
   ####################################
   ########## Alizadeh data ###########
   ####################################
+  
   # Load Alizadeh dataset.
   # A 4026 x 62 gene expression data matrix of log-ratio values. The last column contains 
   # the annotations of the 62 samples with respect to the cancer types C, D, F.

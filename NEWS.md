@@ -1,4 +1,7 @@
 # rmcfs - changes
+Version 1.2.10
+=============
+* minor fix for Open JDK 9
 
 Version 1.2.9
 =============
