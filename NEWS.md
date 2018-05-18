@@ -1,4 +1,10 @@
 # rmcfs - changes
+Version 1.2.11
+=============
+* function build.idgraph() has a new parameter outer_ID
+* parameter plot_all_nodes is now orphan_nodes in function build.idgraph()
+* fix and efficiency improvement in importing ID-graph from file
+
 Version 1.2.10
 =============
 * minor fix for Open JDK 9

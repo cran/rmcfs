@@ -59,7 +59,7 @@ test_that("man mcfs artificial", {
   
   # build interdependencies graph for top 6 features 
   # and top 12 interdependencies and plot all nodes
-  gid <- build.idgraph(result, size = 6, size_ID = 12, plot_all_nodes = TRUE)
+  gid <- build.idgraph(result, size = 6, size_ID = 12, orphan_nodes = TRUE)
   plot(gid, label_dist = 1)
   
   # Export graph to graphML (XML structure)

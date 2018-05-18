@@ -9,8 +9,9 @@ The number of top features included and the number of ID-Graph edges can be cust
 \usage{build.idgraph(mcfs_result, 
                       size = NA, 
                       size_ID = NA, 
-                      self_ID = FALSE, 
-                      plot_all_nodes = FALSE, 
+                      self_ID = FALSE,
+                      outer_ID = FALSE,
+                      orphan_nodes = FALSE, 
                       size_ID_mult = 3, 
                       size_ID_max = 100)}
 \arguments{
@@ -18,7 +19,8 @@ The number of top features included and the number of ID-Graph edges can be cust
   \item{size}{number of top features to select. If \code{size = NA}, then \code{size} is defined by \code{mcfs_result$cutoff_value} parameter.}
   \item{size_ID}{number of interdependencies (edges in ID-Graph) to be included. If \code{size_ID = NA}, then parameter \code{size_ID} is defined by multiplication \code{size_ID_mult}*\code{size}.}
   \item{self_ID}{if \code{self_ID = TRUE}, then include self-loops from ID-Graph.}
-  \item{plot_all_nodes}{if \code{plot_all_nodes = TRUE}, then include all nodes, even if they are not connected to any other node (isolated nodes).}
+  \item{outer_ID}{if \code{outer_ID = TRUE}, then include include all interactions between a feature from the top set features (defined by \code{size} parameter) with any other feature.}
+  \item{orphan_nodes}{if \code{plot_all_nodes = TRUE}, then include all nodes, even if they are not connected to any other node (isolated nodes).}
   \item{size_ID_mult}{If \code{size_ID_mult = 3} there will be 3 times more edges than features (nodes) presented on the ID-Graph. It works only if \code{size = NA} and \code{size_ID = NA}}
   \item{size_ID_max}{maximum number of interactions to be included from ID-Graph (the upper limit).}
 }
@@ -39,7 +41,7 @@ The number of top features included and the number of ID-Graph edges can be cust
 
   # build interdependencies graph for top 6 features 
   # and top 12 interdependencies and plot all nodes
-  gid <- build.idgraph(result, size = 6, size_ID = 12, plot_all_nodes = TRUE)
+  gid <- build.idgraph(result, size = 6, size_ID = 12, orphan_nodes = TRUE)
   plot(gid, label_dist = 1)
 
   # Export graph to graphML (XML structure)

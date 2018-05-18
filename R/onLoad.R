@@ -9,9 +9,9 @@ libdir <- character()
 
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage("
-  #######################
-  # rmcfs version 1.2.9 #
-  #######################
+  ########################
+  # rmcfs version 1.2.11 #
+  ########################
   If used please cite the following paper: 
   M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski
   Monte Carlo feature selection for supervised classification,

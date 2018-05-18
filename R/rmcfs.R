@@ -42,6 +42,7 @@ mcfs <- function(formula, data,
   }
   
   tmp_dir <- tempdir()
+
   config_file <- file.path(tmp_dir, "mcfs.run")
   input_file_name <- paste0(label, ".adx")
   params <- default.params
@@ -372,29 +373,26 @@ read.ID.list <- function(fileName) {
   lines <- readLines(f)
   close(f)
   
-  a <- strsplit(lines, "[,(]")
+  a <- lapply(strsplit(lines, "[,()]"), function(x){x[nchar(x)>0]})
   
   process_row <- function(row) {
     a <- row[1]
     b <- row[2:length(row)]
-    
     dim(b) <- c(2, length(b)/2)
     b <- t(b)
     return(cbind(a, b))
   }
   
-  m <- lapply(a, process_row)
   d <- do.call("rbind", lapply(a, process_row))
   if(is.null(d))
     return (NULL)
   if(is.na(d[1,2]))
     return (NULL)
-  weights <- sapply(d[,3],function(s) return(as.numeric(substr(s, 1, nchar(s)-1))))
-  d <- data.frame(edge_a=d[,1], edge_b=d[,2], weight=weights, stringsAsFactors = FALSE)
+
+  d <- data.frame(edge_a=d[,1], edge_b=d[,2], weight=as.numeric(d[,3]), stringsAsFactors = FALSE)
   d <- d[order(-d[,3]),]
-  
-  position <- 1:nrow(d)
-  d <- cbind(position,d)
+  d <- data.frame(position = 1:nrow(d), d)
+  rownames(d) <- NULL
   
   return(d)
 }
@@ -689,8 +687,9 @@ artificial.data <- function(rnd_features = 500, size = c(40, 20, 10), corruption
 ###############################
 #build.idgraph
 ###############################
-build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE, 
-                          plot_all_nodes = FALSE, size_ID_mult = 3, size_ID_max = 100) {
+build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, 
+                          self_ID = FALSE, outer_ID = FALSE, orphan_nodes = FALSE, 
+                          size_ID_mult = 3, size_ID_max = 100) {
 
   if(class(mcfs_result)!="mcfs")
     stop("Input object is not 'mcfs' class.")
@@ -705,16 +704,14 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE,
     warning(paste0("Parameter 'size' is NULL, NA or <= 0."))
   }
   
-  min_ID <- get.min.ID(mcfs_result, size, size_ID, size_ID_mult, size_ID_max)
-
   plot_minW <- 1
   plot_maxW <- 7  
   vertexMinSize <- 3
   vertexMaxSize <- 12
   
   #add weightNorm and color columns to ranking
-  ranking <- mcfs_result$RI  
-  ranking$attribute <- as.character(ranking$attribute)  
+  ranking <- mcfs_result$RI
+  ranking$attribute <- as.character(ranking$attribute)
   ranking$color <- scale.vector(ranking$RI_norm,0,1)
   ranking$color <- abs(ranking$color-1)
   
@@ -733,16 +730,29 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA, self_ID = FALSE,
   interdeps$weightNorm <- scale.vector(interdeps$weight,plot_minW,plot_maxW)
   interdeps$color <- scale.vector(interdeps$weight,0,1)
   interdeps$color <- abs(interdeps$color-1)
-  
-  #select interdeps to plot  
-  nodes_to_keep <- head(ranking, size)
-  interdeps <- interdeps[is.element(interdeps$edge_a, nodes_to_keep$attribute),]
-  interdeps <- interdeps[is.element(interdeps$edge_b, nodes_to_keep$attribute),]
+
+  #select interdeps to plot
+  top_nodes <- head(ranking, size)
+  #interdeps <- interdeps[is.element(interdeps$edge_a, top_nodes$attribute),]
+  #interdeps <- interdeps[is.element(interdeps$edge_b, top_nodes$attribute),]
+  if(outer_ID){
+    interdeps <- interdeps[is.element(interdeps$edge_a, top_nodes$attribute) |
+                             is.element(interdeps$edge_b, top_nodes$attribute),]
+  }else{
+    interdeps <- interdeps[is.element(interdeps$edge_a, top_nodes$attribute) & 
+                             is.element(interdeps$edge_b, top_nodes$attribute),]
+  }
+  if(is.na(size_ID)){
+    size_ID <- min(size * size_ID_mult, size_ID_max, nrow(interdeps))
+  }
+  #min_ID <- get.min.ID(mcfs_result, size, size_ID, size_ID_mult, size_ID_max)
+  min_ID <- sort(interdeps$weight, decreasing=T)[size_ID]
   interdeps <- interdeps[as.numeric(interdeps$weight) >= min_ID,]
+  nodes_to_keep <- ranking[ranking$attribute %in% unique(c(top_nodes$attribute, interdeps$edge_a, interdeps$edge_b)),]
   
   #select ranking to plot
   gNodes <- nodes_to_keep
-  if(plot_all_nodes==F){
+  if(orphan_nodes == FALSE){
     gNodes <- unique(c(interdeps$edge_a,interdeps$edge_b))
     gNodes <- nodes_to_keep[nodes_to_keep$attribute %in% gNodes,]
   }
