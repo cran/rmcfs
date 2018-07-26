@@ -1,22 +1,16 @@
-citHeader("To cite rmcfs in publications use:")
-citEntry(entry = "Article",
-  title        = "Monte Carlo feature selection for supervised classification",
-  author       = personList(as.person("M.Draminski"),
-                  					as.person("A.Rada-Iglesias"),
-                					  as.person("S.Enroth"),
-                					  as.person("C.Wadelius"),
-                					  as.person("J.Koronacki"),
-                					  as.person("J.Komorowski")),
-  journal      = "BIOINFORMATICS",
-  year         = "2008",
-  volume       = "24",
-  number       = "1",
-  pages        = "110--117",
-  url          = "https://academic.oup.com/bioinformatics/article-abstract/24/1/110/204931/Monte-Carlo-feature-selection-for-supervised",
+bibentry(bibtype = "Article",
+  title        = "{rmcfs}: An {R} Package for Monte Carlo Feature Selection and Interdependency Discovery",
+  author       = c(person(given = "Micha{\\l}",
+                          family = "Drami{\\'n}ski",
+                          email = "michal.draminski@ipipan.waw.pl"),
+                   person(given = "Jacek",
+                          family = "Koronacki")),
+  journal      = "Journal of Statistical Software",
+  year         = "2018",
+  volume       = "85",
+  number       = "12",
+  pages        = "1--28",
+  doi          = "10.18637/jss.v085.i12",
 
-  textVersion  =
-  paste("M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski (2008).",
-        "Monte Carlo feature selection for supervised classification.",
-        "BIOINFORMATICS, 24(1), 110--117.",
-        "https://academic.oup.com/bioinformatics/article-abstract/24/1/110/204931/Monte-Carlo-feature-selection-for-supervised")
+  header       = "To cite rmcfs in publications use:"
 )

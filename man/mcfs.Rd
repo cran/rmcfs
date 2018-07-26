@@ -5,11 +5,9 @@
 Performs Monte Carlo Feature Selection (MCFS-ID) on a given data set. The data set
 should define a classification problem with discrete/nominal class labels. This
 function returns features sorted by RI as well as cutoff value, ID-Graph edges that denote interdependencies (ID), evaluation of top features and other statistics.
-For a detailed description of the MCFS-ID algorithm see citation below. If you want to use dmLab or MCFS-ID in your publication, please cite the paper:
-
-M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski, 'Monte Carlo feature selection for supervised classification', BIOINFORMATICS 24(1): 110-117 (2008).
-
 }
+\references{M. Draminski, J. Koronacki (2018),"rmcfs: An R Package for Monte Carlo Feature Selection and Interdependency Discovery", \emph{Journal of Statistical Software, vol 85(12)}, 1-28, doi:10.18637/jss.v085.i12.
+URL: \url{http://www.jstatsoft.org/v85/i12/}}
 
 \usage{
 mcfs(formula, data,

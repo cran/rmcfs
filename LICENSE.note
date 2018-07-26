@@ -14,8 +14,8 @@
 # Algorithm 'SLIQ' developed by Mariusz Gromada
 # R Package developed by Michal Draminski & Julian Zubek
 #-------------------------------------------------------------------------------
-# If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
-# M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski
-# "Monte Carlo feature selection for supervised classification",
-# BIOINFORMATICS 24(1): 110-117 (2008)
+# To cite rmcfs/MCFS-ID in publications use
+# M. Draminski, J. Koronacki (2018), 
+# "rmcfs: An R Package for Monte Carlo Feature Selection and Interdependency Discovery",
+# Journal of Statistical Software, vol 85(12), 1-28, doi:10.18637/jss.v085.i12.
 #-------------------------------------------------------------------------------

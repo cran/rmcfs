@@ -1,4 +1,9 @@
 # rmcfs - changes
+
+Version 1.2.12
+=============
+* updated vignette and citation info to JSS article
+
 Version 1.2.11
 =============
 * function build.idgraph() has a new parameter outer_ID
@@ -7,7 +12,7 @@ Version 1.2.11
 
 Version 1.2.10
 =============
-* minor fix for Open JDK 9
+* fix for Open JDK 9
 
 Version 1.2.9
 =============
@@ -17,7 +22,7 @@ Version 1.2.9
 
 Version 1.2.8
 =============
-* vignette bibliography file removed
+* vignette - bibliography file removed
 
 Version 1.2.7
 =============
