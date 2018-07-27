@@ -1,5 +1,9 @@
 # rmcfs - changes
 
+Version 1.2.13
+=============
+* updated vignette
+
 Version 1.2.12
 =============
 * updated vignette and citation info to JSS article
