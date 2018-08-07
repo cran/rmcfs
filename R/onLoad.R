@@ -10,11 +10,12 @@ libdir <- character()
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage("
   ########################
-  # rmcfs version 1.2.11 #
+  ##   rmcfs   1.2.14   ##
   ########################
   If used please cite the following paper: 
-  M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski
-  Monte Carlo feature selection for supervised classification,
-  BIOINFORMATICS 24(1): 110-117 (2008)", domain = NULL, appendLF = TRUE)
+  M. Draminski, J. Koronacki (2018), 
+  rmcfs: An R Package for Monte Carlo Feature Selection and Interdependency Discovery,
+  Journal of Statistical Software, vol 85(12), 1-28, doi:10.18637/jss.v085.i12.", 
+                        domain = NULL, appendLF = TRUE)
 }
 

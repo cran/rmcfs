@@ -1,5 +1,9 @@
 # rmcfs - changes
 
+Version 1.2.14
+=============
+* updated onLoad info
+
 Version 1.2.13
 =============
 * updated vignette
