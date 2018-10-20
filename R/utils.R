@@ -332,18 +332,25 @@ get.projectionSize <- function(data_size, projectionSize = NA){
 ###############################
 #get.JavaVersion
 ###############################
-get.JavaVersion <- function(){
+get.JavaVersion <- function()
+{
   .jinit()
   jv <- .jcall("java/lang/System", "S", "getProperty", "java.runtime.version")
-  if(substr(jv, 1L, 1L) == "1") {
-    #looks like its Oracle jdk 1.x
-    jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
-  }else if(grepl("internal",jv,fixed = TRUE)){
-    #looks like its open jdk 9 e.g. "9-internal"
-    jvn <- as.numeric(paste0("1.", strsplit(jv, "[-]")[[1L]][1]))
+  if(startsWith(jv,'11+')){
+    jvn <- 11
+  }else if(substr(jv, 1L, 2L) == "1.") {
+    #looks like its Oracle JDK 1.x
+    #jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
+    jvn <- as.numeric(strsplit(jv, "[.]")[[1L]][2])
+  }else if(grepl("-internal", jv, fixed = TRUE)){
+    #looks like its Open JDK 9 e.g. "9-internal"
+    jvn <- as.numeric(strsplit(jv, "[-]")[[1L]][1])
+  }else if(as.numeric(strsplit(jv, "[.]")[[1L]][1]) >= 9){
+    #looks like its JAVA JDK 9 or above
+    jvn <- as.numeric(strsplit(jv, "[.]")[[1L]][1])
   }else{
     warning(paste0("Can't recognize java version. Java: ", jv))
-    jvn <- 1.6
+    jvn <- 8
   }
   return(jvn)
 }

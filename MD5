@@ -1,12 +1,12 @@
-267f786f65401e33f98baa83361fa33f *DESCRIPTION
+0939ca296cbdcbbf0597ac56e18ab510 *DESCRIPTION
 8a965c0b934deb16adc262ad83fe23cf *LICENSE.note
 a547d14593883ea894ee1105ccaec8fa *NAMESPACE
-5cff13ab09e758c799e000db26158310 *NEWS.md
-e1c3bebf2ec93ff4ea85372dbd9c1727 *R/onLoad.R
+9ae8a5d7fa54a4b80e84a6c3a8da50bf *NEWS.md
+5339d2d2dace89f1247054dd4c6ae897 *R/onLoad.R
 d95ef523790d273c0eca3043de6ffb1f *R/rmcfs.R
 a755d2725aa6916867b4917c87abe4ca *R/rmcfs.io.R
 99c75ad3087d84a3ddeab89d2a573793 *R/rmcfs.plot.R
-e28ebdd2c44c508178917fb270b6c9b8 *R/utils.R
+6e22aa4c370d1e7a73952bd3d6df0af1 *R/utils.R
 dfb8bc1d4ba50f5000ba446b34dacc9c *build/vignette.rds
 24a50dc8cf6d99be561f56c30915917c *inst/CITATION
 2e5f9984443b92d8ada57b4626477cd4 *inst/cfg/adx.cfg
@@ -24,7 +24,7 @@ e1c811278b6fc3b631a3d77c12bf44bb *inst/cfg/knn.cfg
 49362be073a4519d8c7dfb2c7d778656 *inst/cfg/rnd.cfg
 9e010f639e8944f4e3dc3bc40f5d76d0 *inst/cfg/sliq.cfg
 3a53ddc9030882d889e03295f1c4c82b *inst/cfg/svm.cfg
-0560fa2c511035865813c31646548bbd *inst/doc/v85i12.pdf
+c05b675748d858bb6a50650d1cd9bb64 *inst/doc/v85i12.pdf
 fe71007a9f88a29a03d1a485e42866f9 *inst/doc/v85i12.pdf.asis
 f6be558e44de25df08b9f515b2a7ffee *inst/java/colt-1.2.0.jar
 aaab22ffe2b7c366d2b8fe7dc3573976 *inst/java/dmLab.jar

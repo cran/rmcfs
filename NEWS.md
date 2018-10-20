@@ -1,5 +1,9 @@
 # rmcfs - changes
 
+Version 1.2.15
+=============
+* fixed an issue for Java 11
+
 Version 1.2.14
 =============
 * updated onLoad info
