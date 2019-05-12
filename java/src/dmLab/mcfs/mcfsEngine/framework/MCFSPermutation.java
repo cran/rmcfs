@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.mcfsEngine.framework;
 
@@ -27,13 +22,15 @@ import java.util.Random;
 
 import dmLab.array.FArray;
 import dmLab.utils.ArrayUtils;
+import dmLab.utils.GeneralUtils;
 import dmLab.utils.statFunctions.StatFunctions;
 
 
 public class MCFSPermutation extends MCFSFramework implements Runnable 
 {
-	public String permPrefix="_perm";
-
+	public final static String PERM_PREFIX = "perm_";  
+	
+	public String experimentNamePrefix = PERM_PREFIX;
 //	*************************************
     public MCFSPermutation(Random random) {
 		super(random);
@@ -47,19 +44,18 @@ public class MCFSPermutation extends MCFSFramework implements Runnable
 		mcfsParams.finalRuleset = false;
 		mcfsParams.cutoffMethod = "mean";
 		
-		experimentName = permPrefix+mcfsParams.getExperimentName();               
+		if(experimentName.equalsIgnoreCase(mcfsParams.getExperimentName()))
+			experimentName = experimentNamePrefix + mcfsParams.getExperimentName();
+
         FArray permArray = mcfsArrays.sourceArray; 
-        //System.out.println("*** MCFS-ID & Permutation of Decision Attribute ***");
-        System.out.println("Permutation of decision attribute...");
         float decColumn[] = permArray.getColumn(permArray.getDecAttrIdx());
         double[] x = ArrayUtils.float2double(decColumn);
         ArrayUtils arrayUtils = new ArrayUtils(random);
         arrayUtils.shuffle(decColumn, 3);
         double[] y = ArrayUtils.float2double(decColumn);
-        System.out.println("Pearson's correlation after permutation: "+ StatFunctions.pearson(x, y));
+        System.out.println("Pearson's correlation of shuffled decision: "+ GeneralUtils.formatFloat(StatFunctions.pearson(x, y),4));
         
-        if(runExperiment(permArray) == null)
-            return;
+        runExperiment(permArray);
 	}
 //	*************************************
     

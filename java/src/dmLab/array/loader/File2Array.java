@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.loader;
 
@@ -33,7 +28,7 @@ import dmLab.array.loader.fileLoader.FileLoaderADX;
 import dmLab.array.loader.fileLoader.FileLoaderArff;
 import dmLab.array.loader.fileLoader.FileLoaderCSV;
 import dmLab.array.loader.fileLoader.FileType;
-import dmLab.mcfs.MCFSParams;
+import dmLab.experiment.ExperimentParams;
 import dmLab.utils.FileUtils;
 import dmLab.utils.StringUtils;
 
@@ -53,13 +48,20 @@ public class File2Array extends Data2Array
 	//*******************************
 	public boolean load(Array array, String inputFileName)
 	{
+		ExperimentParams cfg = new ExperimentParams();
 		boolean retVal;
 		File[] extracted = null;
 
 		File file = new File(inputFileName);
+		
+		if(!file.exists()){
+			System.err.println("File: "+file.getAbsolutePath() +" does not exist!");
+			return false;
+		}
+
 		if(FileUtils.getFileExtension(file.getName()).equalsIgnoreCase("zip")){
 			String fileNamePrefix = FileUtils.dropFileExtension(file);        	
-			extracted = FileUtils.extract(file, new File(MCFSParams.TMP_PATH), fileNamePrefix);
+			extracted = FileUtils.extract(file, new File(cfg.tmpPATH), fileNamePrefix);
 			Arrays.sort(extracted);
 			//System.out.println(Arrays.toString(extracted));
 			if(extracted == null || extracted.length == 0){
@@ -77,7 +79,7 @@ public class File2Array extends Data2Array
 				System.err.println("Input Zip file: '"+file.toString()+"' does not contain any data file: '" + fileNamePrefix +"[.adx, .adh, .arff, .csv]'.");
 				return false;
 			}
-			file = new File(MCFSParams.TMP_PATH + tmpFile.toString());
+			file = new File(cfg.tmpPATH + tmpFile.toString());
 			
 		}
 
@@ -89,17 +91,21 @@ public class File2Array extends Data2Array
 			fileLoader.init();
 			retVal = fileLoader.loadFile(array, file);
 		}
-
+		if(retVal == false)
+			return retVal;
+		
+		array.fixAttributesNames(false);
+		
 		//clean extracted files from zip
 		if(extracted !=null){
 			for(int i=0; i<extracted.length; i++){
-				File tmpFile = new File(MCFSParams.TMP_PATH + extracted[i].toString());
+				File tmpFile = new File(cfg.tmpPATH + extracted[i].toString());
 				if(tmpFile.exists()){        	
 					tmpFile.delete();
 				}
 			}
 		}
-
+				
 		return retVal;
 	}
 	//*******************************

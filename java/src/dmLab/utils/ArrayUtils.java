@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.utils;
@@ -41,61 +36,47 @@ public class ArrayUtils
 		random = new Random(System.currentTimeMillis());
 		System.err.println("\n\n\n AUTO RND SEED \n\n\n");		
 	}	
-	//  *****************************************
+	//*****************************************
 	public ArrayUtils(Random random){
 		this.random = random;
 	}	
-	//  *****************************************
-	//  method randomly fills array
-	public int randomFill(int array[], int posValuesNumber, int posValue, int negValue)
-	{
-		int shoot;
-		int myFillSize=0;
-		if( posValuesNumber > (array.length)/2.0 )
-		{
-			Arrays.fill(array,posValue);
-			for(long i=0;i<array.length-posValuesNumber;i++)
-			{
-				do{
-					shoot=(int)(random.nextFloat()*array.length);
-				}while(array[shoot]==negValue);
-				array[shoot]=negValue;
-				myFillSize++;
-			}
-			myFillSize=array.length-myFillSize;
-		}
-		else
-		{   //If I have to pick less then a half of events
-			Arrays.fill(array,negValue);
-			for(long i=0;i<posValuesNumber;i++)
-			{
-				do{
-					shoot=(int)(random.nextFloat()*array.length);
-				}while(array[shoot]==posValue);
-				array[shoot]=posValue;
-				myFillSize++;
-			}
-		}
-		return myFillSize;
+	//*****************************************
+	public int[] randomSelect(int array[], int size){
+		return randomSelect(array, size, 1, 0);
 	}
-	//  *****************************************
+	//*****************************************
+	// used by ADX, train/test split and class balancing task
+	public int[] randomSelect(int[] array, int posValuesNumber, int posValue, int negValue)
+	{
+		int negValuesNumber = array.length-posValuesNumber;		
+		if(posValuesNumber < (array.length)/2.0){
+			Arrays.fill(array, negValue);
+			randomFill(array, posValuesNumber, posValue);
+		}else{  
+			//If I have to pick less then a half of events
+			Arrays.fill(array, posValue);
+			randomFill(array, negValuesNumber, negValue);
+		}
+		return array;
+	}
+	//*****************************************
 	//method fills array randomly with values from range [0,maxValue)
-	public void randomFill(int array[],int maxValue)
+	public void randomFill(int array[], int maxValue)
 	{      
-		for(int i=0;i<array.length;i++)
-			array[i]=(int)(random.nextFloat()*maxValue);
+		for(int i=0;i<array.length;i++){
+			array[i]=random.nextInt(maxValue);
+		}
 	}
-	//  *****************************************
-	//  method randomly fills array
-	public void randomFill(int array[], int size, int posValue)
+	//*****************************************
+	// method randomly fills array
+	public void randomFill(int array[], int size, int value)
 	{
 		int shoot;
-		for(long i=0;i<size;i++)
-		{
+		for(long i=0; i<size; i++){
 			do{
-				shoot=(int)(random.nextFloat()*array.length);
-			}while(array[shoot]==posValue);
-			array[shoot]=posValue;
+				shoot = random.nextInt(array.length);
+			}while(array[shoot] == value);
+			array[shoot] = value;
 		}
 	}
 	//***************************************************
@@ -303,6 +284,14 @@ public class ArrayUtils
 				return i;
 		return -1;
 	}
+	//  *********************************************
+	public static int indexOf(int[] array, int value)
+	{
+		for (int i=0;i<array.length;i++)
+			if(array[i]==value)
+				return i;
+		return -1;
+	}
 	//  ********************************************* 
 	public static int indexOf(float array[], float value, boolean binary)
 	{
@@ -375,26 +364,38 @@ public class ArrayUtils
 			}
 		return minIndex;
 	}
-	//  ********************************************* 
-	public static MinMax getMinMax(float[] array)
+	//***************************************************
+	public static MinMax getMinMax(float array[], boolean include_negative)
 	{
 		if(array.length==0)
 			return null;
-
-		MinMax minMax = new MinMax(array[0],array[0]);
-
-		for(int i=0;i<array.length;i++)
-		{
-			if(array[i]<minMax.minValue){
-				minMax.minValue=array[i];
-				minMax.minIndex=i;
-			}
-			if(array[i]>minMax.maxValue){
-				minMax.maxValue=array[i];
-				minMax.maxIndex=i;
+		
+		MinMax minMax = new MinMax();
+		
+		for(int i=0; i<array.length; i++) {
+			if(include_negative || array[i] >= 0) {
+				if((Float.isNaN(minMax.minValue) && !Float.isNaN(array[i])) || array[i] < minMax.minValue) {
+					minMax.minValue = array[i];
+					minMax.minIndex = i;
+				}				
+				if((Float.isNaN(minMax.maxValue) && !Float.isNaN(array[i])) || array[i] > minMax.maxValue) {
+					minMax.maxValue = array[i];
+					minMax.maxIndex = i;
+				}
 			}
 		}
 		return minMax;
+	}
+	//***************************************************
+	public static float[] scaleArray(float[] array, float min, float max, boolean include_negative) {
+		MinMax min_max = getMinMax(array, include_negative);
+		for(int i=0;i<array.length;i++) {
+			if(include_negative || array[i] >= 0) {
+				array[i] = (array[i]-min_max.minValue)/(min_max.maxValue-min_max.minValue);
+				array[i] = (array[i] * (max-min))+min;
+			}
+		}
+		return array;		
 	}
 	//***************************************************
 	public static boolean valueIn(int x, int[] array)
@@ -569,5 +570,4 @@ public class ArrayUtils
 		return booleanArray;		
 	}
 	//  *********************************************
-
 }

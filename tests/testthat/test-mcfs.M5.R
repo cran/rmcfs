@@ -16,7 +16,7 @@ test_that("MCFS artificial data M5", {
   adata <- artificial.data(rnd_features = 100, seed = 1)
   showme(adata)
   adata$class <- as.numeric(factor(adata$class))
-  
+
   # Parametrize and run MCFS-ID procedure
   result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 20,
                  buildID = TRUE, finalCV = TRUE, finalRuleset = FALSE, 

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.utils;
@@ -132,7 +127,7 @@ public class StringUtils {
 		char delims[] = new char[] {',',';'};
 		char quoteChar[] = new char[] {'\"','\''};		
 		String[] tokens = StringUtils.tokenize(stringArray, delims, quoteChar);
-		String[] output = StringUtils.removeItems(tokens,new String[] {"[","]"});
+		String[] output = StringUtils.removeItems(tokens,new String[] {"[","]",""});
 		int first = 0;
 		int last = output.length - 1;
 		output[first] = output[first].trim();
@@ -154,6 +149,14 @@ public class StringUtils {
 		return false;
 	}
 	//********************************
+	public static String trimQuotation(String s)
+	{
+		String result;
+		result = s.replaceAll("^\"+|\"+$", "");
+		result = result.replaceAll("^[\"']+|[\"']+$", "");		
+		return result;
+	}
+	//********************************
 	//removes chars from begining and end of string s
 	public static String trimChars(String s, char[] chars)
 	{
@@ -173,8 +176,7 @@ public class StringUtils {
 		StringBuffer tmp=new StringBuffer(s);
 		int start=tmp.indexOf(source);
 
-		while(start!=-1)
-		{
+		while(start!=-1){
 			tmp.replace(start, start+source.length(), destination);
 			start=tmp.indexOf(source,start+destination.length());
 		}
@@ -194,7 +196,7 @@ public class StringUtils {
 	//********************************
 	public static char[] toCharArray(String s, int size)
 	{
-		char[] charArray =new char[size];
+		char[] charArray = new char[size];
 		Arrays.fill(charArray,' ');
 		int stop=s.length();
 		if(stop>size) 
@@ -225,6 +227,34 @@ public class StringUtils {
 	        }
 	    }
 	    return false;
+	}
+	//********************************
+	public static boolean allin(String[] s1, String s2[], boolean ignoreCase, boolean trim){		
+		if(trim){
+			for(int i=0; i<s1.length; i++){
+				s1[i] = StringUtils.trimChars(s1[i], new char[]{'"','\''}).trim();
+				if(ignoreCase)
+					s1[i] = s1[i].toLowerCase();	
+			}
+			for(int j=0; j<s2.length; j++){
+				s2[j] = StringUtils.trimChars(s2[j], new char[]{'"','\''}).trim();
+				if(ignoreCase)
+					s2[j] = s2[j].toLowerCase();
+			}
+		}
+
+		for(int i=0; i<s1.length; i++){
+			boolean current = false;
+			for(int j=0; j<s2.length; j++){
+				if(s1[i].compareTo(s2[j])==0){
+					current = true;
+					break;
+				}
+			}
+			if(current == false)
+				return false;
+		}
+		return true;			
 	}
 	//********************************
 	public static boolean matchesPattern(String s, String pattern)
@@ -284,4 +314,31 @@ public class StringUtils {
 		return outputArray;
 	}
 	//*******************************
+	public static String charRepeat(char c, int repeat){
+		char[] tmp = new char[repeat];
+		Arrays.fill(tmp, c);		  
+		String tmpString = new String(tmp);
+		return tmpString;
+	}
+	//*******************************
+	public static Float myParseFloat(String value) throws NumberFormatException{
+		if(value.equals("?")) {
+			return Float.NaN;
+		}else {
+			return Float.parseFloat(value);
+		}		
+	}
+	//*******************************
+	public static String getRandomString(int length) {
+	    final String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	    StringBuffer randStr = new StringBuffer();
+	    for(int i=0; i<length; i++){
+	        int number = (int)Math.floor(chars.length() * Math.random());	        
+	        char ch = chars.charAt(number);
+	        randStr.append(ch);
+	    }
+	    return randStr.toString();		
+	}
+	// ***********************************    	
+
 }

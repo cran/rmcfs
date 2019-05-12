@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.cutoffMethods;
 
@@ -30,7 +25,7 @@ import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.measuresRI.Importance;
 import dmLab.utils.MathUtils;
 import dmLab.utils.dataframe.DataFrame;
-import dmLab.utils.dataframe.Column;
+import dmLab.utils.dataframe.ColumnMetaInfo;
 import dmLab.utils.ArrayUtils;
 
 public class Cutoff {
@@ -45,7 +40,7 @@ public class Cutoff {
 		int methodsNum = initCutoffMethods(mcfsParams);
 		cutoffTable = new DataFrame(methodsNum, 4);
     	cutoffTable.setColNames(new String[]{"method", "minRI", "size", "minID"});
-    	cutoffTable.setColTypes(new short[]{Column.TYPE_NOMINAL,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC});
+    	cutoffTable.setColTypes(new short[]{ColumnMetaInfo.TYPE_NOMINAL,ColumnMetaInfo.TYPE_NUMERIC,ColumnMetaInfo.TYPE_NUMERIC,ColumnMetaInfo.TYPE_NUMERIC});
 		
 		this.mcfsParams = mcfsParams;		
 	}
@@ -77,9 +72,9 @@ public class Cutoff {
 			minRI[i] = cutoffMethod[i].getCutoff(importance);
 			attrNumber[i] = getImportantAttrNumber(importance,minRI[i]);
 
-			cutoffTable.set(i, cutoffTable.getColIdx("method"), cutoffMethod[i].name);						
+			cutoffTable.set(i, cutoffTable.getColIdx("method"), cutoffMethod[i].name);
 			cutoffTable.set(i, cutoffTable.getColIdx("minRI"), minRI[i]);
-			cutoffTable.set(i, cutoffTable.getColIdx("size"), attrNumber[i]);			
+			cutoffTable.set(i, cutoffTable.getColIdx("size"), attrNumber[i]);
 		}
 		double mean_minRI = addMeanValue(attrRI);
 		return mean_minRI;
@@ -88,7 +83,7 @@ public class Cutoff {
 	public double addMeanValue(AttributesRI attrRI){
 		
 		Importance[] importance = attrRI.getImportances(attrRI.mainMeasureIdx);
-		Arrays.sort(importance);		
+		Arrays.sort(importance);
 		double[] attrNumber = ArrayUtils.Double2double(cutoffTable.getColumn(cutoffTable.getColIdx("size")));
 				
 		double mean_attrNumber = Math.round(MathUtils.mean(attrNumber));
@@ -105,8 +100,8 @@ public class Cutoff {
 	//****************************************
 	private double getImportantAttrNumber(Importance[] importance, double minRI){
 		for(int i=0;i<importance.length;i++){
-			if(importance[i].importance < minRI)
-				return i;
+			if(importance[i].importance <= minRI)
+				return i+1;
 		}
 		return Double.NaN;
 	}

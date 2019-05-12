@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,13 +15,10 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.mcfsEngine.arrays;
+
+import java.io.File;
 
 import dmLab.array.FArray;
 import dmLab.array.loader.File2Array;
@@ -39,23 +36,33 @@ public class MCFSArrays
     public MCFSArrays(FArray array)
     {
         sourceArray = array;
+        initArrays();
     }
 //************************************
     public boolean loadArrays(MCFSParams mcfsParams)
     {
         sourceArray = new FArray();
         File2Array file2Container = new File2Array();
-        
-        if (!file2Container.load(sourceArray, mcfsParams.inputFilesPATH + mcfsParams.inputFileName))
+
+        File file = new File(mcfsParams.inputFilesPATH + "//" + mcfsParams.inputFileName);
+        //System.out.println("MDR DEBUG: Loading file: " + file.getAbsolutePath());
+        if (!file2Container.load(sourceArray, file.getAbsolutePath()))
             return false;
         
         if (!sourceArray.checkDecisionValues())
             return false;
         
-        //System.out.println("### DEBUG ### InputArray\n" + sourceArray.toString());        
-        sourceArray.findDomains();
+        //System.out.println("### DEBUG ### InputArray\n" + sourceArray.toString());
+        initArrays();
         
         return true;
     }
-//  *************************************   
+//  *************************************
+    public void initArrays(){
+    	if(sourceArray != null){
+	        sourceArray.findDomains();
+	        sourceArray.fixAttributesNames(true);
+    	}    	
+    }
+//  *************************************    
 }

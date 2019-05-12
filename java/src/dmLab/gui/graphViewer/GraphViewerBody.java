@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.gui.graphViewer;
@@ -187,7 +182,6 @@ public class GraphViewerBody extends javax.swing.JFrame implements ActionListene
     		{
     			System.out.println("Connections are loaded.");
     			this.setTitle(GraphViewerBody.GUITitle+" - "+connectionsfile.getName());
-    			connections.findMinMaxID();
 
     			//load also importance file
     			File importanceFile = new File(experimentPrefix+"_"+MCFSParams.FILESUFIX_RI);
@@ -204,7 +198,7 @@ public class GraphViewerBody extends javax.swing.JFrame implements ActionListene
     			File topRankingFile = new File(experimentPrefix+MCFSParams.FILESUFIX_TOPRANKING);
     			System.out.println("Loading topRanking file: "+topRankingFile.getAbsolutePath());
     			int topRankingSize = connections.getNodesNumber();
-    			float minID = connections.getIDValue(DEFAULT_EDGES_NUMBER);
+    			float minID = connections.getIDWeight(DEFAULT_EDGES_NUMBER);
     			if(toolBar.isImportanceLoaded()){
     				if(topRanking.load(topRankingFile.getAbsolutePath())){	            	   
     					topRankingSize = topRanking.size();
@@ -244,7 +238,7 @@ public class GraphViewerBody extends javax.swing.JFrame implements ActionListene
                     filePath+=".csv";                    
                 
                 System.out.println("Saving: " + filePath);
-                if(connections.cut(toolBar.getConnectionWeight(),toolBar.getAttributesImportance(),toolBar.getTopSetSize()).save(filePath))
+                if(connections.filter(toolBar.getConnectionWeight(),toolBar.getAttributesImportance(),toolBar.getTopSetSize()).save(filePath))
                     isSaved=true;
             }
             else if(((ComplexFileFilter)fileDialog.getFileFilter()).accept("xml"))
@@ -261,7 +255,7 @@ public class GraphViewerBody extends javax.swing.JFrame implements ActionListene
                 if(FileUtils.getFileExtension(file.getName()).equalsIgnoreCase("csv"))
                 {
                     System.out.println("Saving: " + filePath);
-                    if(connections.cut(toolBar.getConnectionWeight(),toolBar.getAttributesImportance(),toolBar.getTopSetSize()).save(filePath))
+                    if(connections.filter(toolBar.getConnectionWeight(),toolBar.getAttributesImportance(),toolBar.getTopSetSize()).save(filePath))
                         isSaved=true;
                 }
                 else if(FileUtils.getFileExtension(file.getName()).equalsIgnoreCase("xml"))

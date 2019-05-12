@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.mcfsEngine.framework;
@@ -43,11 +38,10 @@ import dmLab.mcfs.attributesRI.measuresRI.RINormMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.SliqRIMeasure;
 import dmLab.mcfs.cutoffMethods.Cutoff;
 import dmLab.utils.ArrayUtils;
-import dmLab.utils.GeneralUtils;
 import dmLab.utils.MathUtils;
-import dmLab.utils.ProgressCounter;
+import dmLab.utils.ProgressBar;
 import dmLab.utils.cmatrix.ConfusionMatrix;
-import dmLab.utils.dataframe.Column;
+import dmLab.utils.dataframe.ColumnMetaInfo;
 import dmLab.utils.dataframe.DataFrame;
 import dmLab.utils.list.FloatList;
 import dmLab.utils.statFunctions.LinearRegression;
@@ -77,10 +71,8 @@ public class GlobalStats {
     private int projectionsCounter=0;
     private int calculatedDistances=0;    
     private float[] xArray;
-
-    private String prefix;
     
-    private ProgressCounter pc;
+	private ProgressBar bar;
     
     public String[] attrNames;    
     public static int WINDOW_SIZE=20;
@@ -93,7 +85,6 @@ public class GlobalStats {
     public boolean init(FArray inputArray, MCFSParams mcfsParams, String experimentName, String chartTitle)
     {
         myMCFSParams = mcfsParams;
-        prefix = mcfsParams.resFilesPATH + experimentName;
 
         calculatedDistances = 0;
         projectionsCounter = 0;
@@ -110,12 +101,19 @@ public class GlobalStats {
 
         initChartFrame(mcfsParams, chartTitle);        
         initLinearRegression();
-        splitsStats = new StatsList();
-        
-        pc = new ProgressCounter(0, mcfsParams.projectionsValue, new float[]{0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100});        
-        
+        splitsStats = new StatsList();        
+        		
         return true;
     }
+    //************************************
+    public void initTextProgressBar() {
+        bar = new ProgressBar(myMCFSParams.projectionsValue, true, true, true);
+    }
+    //************************************
+    public void finalizeTextProgressBar() {
+        if(bar!=null)
+        	bar.finish();
+    }    
     //************************************
     private boolean initChartFrame(MCFSParams mcfsParams, String chartTitle)
     {
@@ -174,7 +172,7 @@ public class GlobalStats {
             importances[i].addMeasure(new RINormMeasure(mcfsParams));
             
             //set main measure on RI_norm
-            importances[i].mainMeasureIdx = importances[i].getMeasureIndex(ImportanceMeasure.MEASURE_RINORM);
+            importances[i].mainMeasureIdx = importances[i].getMeasureIndex(ImportanceMeasure.MEASURE_RI);
 
             //set label on class name. General ranking have label 'all'
             if(i==0)
@@ -187,6 +185,12 @@ public class GlobalStats {
         return importances;
     }
 //  *************************************
+    public void finalizeImportances() {
+        for(int j=0; j<attrRI.length; j++)
+            if(attrRI[j]!=null)
+                attrRI[j].calcNormalizedMeasures(myMCFSParams.splits, true);
+    }
+//  *************************************
     public synchronized boolean updateSplitsStats(StatsList localSplitsStats){
     	return splitsStats.add(localSplitsStats);
     }
@@ -194,8 +198,7 @@ public class GlobalStats {
     public synchronized boolean update(int jobId, ConfusionMatrix localMatrix, AttributesRI localImportances[], AttributesID localAttrID)
     {
         if(projectionsCounter >= myMCFSParams.projectionsValue){
-        	if(myMCFSParams.verbose)
-        		System.out.println("[thread: "+jobId+"] Stop Criterion: projections = "+projectionsCounter);
+        	//System.out.println("[thread: "+jobId+"] Stop Criterion: projections = "+projectionsCounter);
             return false;
         }
         projectionsCounter = (calculatedDistances +1) * myMCFSParams.progressInterval;
@@ -205,16 +208,13 @@ public class GlobalStats {
         	confusionMatrix.add(localMatrix);
         
         if(attrID != null)
-        	attrID.addDependencies(localAttrID);
+        	attrID.addAttributesID(localAttrID);
         
-        //update and save importances for all classes in [0] and each separated class if initiated
+        //update importances for all classes in [0] and each separated class if initiated
         for(int j=0; j<attrRI.length; j++){
             if(attrRI[j]!=null){
                 attrRI[j].sumImportances(localImportances[j]);                
-                //calc normalized RI before saving
-                attrRI[j].calcNormMeasure(myMCFSParams.splits);
-                if(myMCFSParams.saveResutFiles)
-                	attrRI[j].save(prefix+"_"+attrRI[j].label+"_"+MCFSParams.FILESUFIX_RI);
+                attrRI[j].calcNormalizedMeasures(myMCFSParams.splits, false);
             }          
         }
         
@@ -248,6 +248,7 @@ public class GlobalStats {
                 }
             }
             
+            /*
             if(myMCFSParams.verbose){
             	System.out.println("*** PROJECTION: " + projectionsCounter
             					+ " [thread: " + jobId+"]"
@@ -255,17 +256,13 @@ public class GlobalStats {
             					+ " commonPart: " + GeneralUtils.formatFloat(commonPart,4)
             					+" mAvg: " + GeneralUtils.formatFloat(mAvg,4)
             					+" beta1: " + GeneralUtils.formatFloat(beta1,4));
-            }else{
-            	String p = pc.getPercentValue(projectionsCounter);
-            	if(p != null){
-            		System.out.print(p+"% ");
-            		if(p.equalsIgnoreCase("100"))
-            			System.out.print("\n");
-            	}
             }
+            */
+            if(bar!=null)
+            	bar.setVal(projectionsCounter);
         }
                         
-        oldRank=newRank;
+        oldRank = newRank;
         calculatedDistances++;
         
         return true;
@@ -274,7 +271,7 @@ public class GlobalStats {
     public DataFrame getDistances(){        
         DataFrame distancesDF = new DataFrame(distanceList.size(), 5);
         distancesDF.setColNames(new String[]{"projection","distance","commonPart","mAvg","beta1"});
-        distancesDF.setColTypes(new short[]{Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC,Column.TYPE_NUMERIC});        
+        distancesDF.setColTypes(new short[]{ColumnMetaInfo.TYPE_NUMERIC,ColumnMetaInfo.TYPE_NUMERIC,ColumnMetaInfo.TYPE_NUMERIC,ColumnMetaInfo.TYPE_NUMERIC,ColumnMetaInfo.TYPE_NUMERIC});        
         distancesDF.setColumn(0, projectionIdxList.toArray());
         distancesDF.setColumn(1, distanceList.toArray());
         distancesDF.setColumn(2, commonPartList.toArray());

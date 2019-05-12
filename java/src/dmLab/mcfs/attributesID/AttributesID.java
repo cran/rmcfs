@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.attributesID;
 
@@ -27,369 +22,344 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
-import dmLab.mcfs.attributesID.graph.GraphNode;
 import dmLab.mcfs.attributesID.graph.IDGraph;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.Ranking;
 import dmLab.utils.FileUtils;
 import dmLab.utils.MyDict;
 
-public class AttributesID
+public class AttributesID implements Iterable<IDEdge>
 {
-    protected HashMap<DependencyIdx, DependencyFactors> connections;
-    protected MyDict myDict;
-    
-    protected float maxID;
-    protected float minID;
+	protected HashMap<IDLink, IDProps> myIDMap;
+	protected MyDict myDict;
 
-    protected boolean directedGraph;
-    protected boolean selfID;
-    
-    public static String CONN_FILE_HEADER = "parent,child,weight";
-    
-    //*************************************    		
-    public AttributesID(MyDict myDict, boolean directed, boolean selfID){
-    	this.myDict = myDict;
-    	this.directedGraph = directed;
-    	this.selfID = selfID;
-        init();
-    }
-    //*************************************
-    public AttributesID(String[] attributes, boolean directed, boolean selfID)
-    {
-    	myDict = new MyDict(attributes);
-    	this.directedGraph = directed;
-    	this.selfID = selfID;
-        init();
-    }
-    //*************************************    
-    public AttributesID(boolean directed, boolean selfID)
-    {
-    	myDict = new MyDict();
-    	this.directedGraph = directed;
-    	this.selfID = selfID;    	    	
-        init();
-    }
-    //*************************************
-    public void init()
-    { 
-    	connections = new HashMap<DependencyIdx, DependencyFactors>();
-    	minID = maxID = Float.NaN;
-    }
-    //*************************************
-    public int size(){
-    	return connections.size();
-    }
-    //*************************************
-    public void setDirected(boolean directed)
-    {
-    	directedGraph = directed;
-    }
-    //*************************************
-    public boolean isDirected()
-    {
-    	return directedGraph;
-    }
-    //*************************************
-    public DependencyFactors getDependencyFactors(String parent, String child)
-    {
-    	int parentId = myDict.put(parent);
-    	int childId = myDict.put(child);    	
-    	DependencyIdx connID = new DependencyIdx(parentId, childId);
-    	return connections.get(connID);
-    }
-    //*************************************
-    public int addDependency(String parent, String child, float weight)
-    {
-    	if(selfID==false && parent.equalsIgnoreCase(child))
-    		return connections.size();
-    		
-    	put(parent,child,weight);    	
-    	if(!directedGraph){
-    		put(child,parent,weight);
-        }
-        return connections.size();
-    }
-    //  ********************************************
-    private int put(String parent, String child, float weight)
-    {
-    	int parentId = myDict.put(parent);
-    	int childId = myDict.put(child);
-    	
-    	DependencyIdx connID = new DependencyIdx(parentId, childId);    	
-    	DependencyFactors connFactors = connections.get(connID);
-    	if(connFactors==null){
-    		connFactors = new DependencyFactors(weight);
-    		connections.put(connID, connFactors);
-    	}else{
-    		connFactors.addWeight(weight);
-    	}
-    	return connections.size();
-    }
-    //  ********************************************
-    private int put(DependencyIdx dependencyIdx, DependencyFactors dependencyFactors){
-    	DependencyFactors myConnFactors = connections.get(dependencyIdx);    	
-    	if(myConnFactors==null){
-    		connections.put(dependencyIdx, dependencyFactors);
-    	}else{
-    		myConnFactors.add(dependencyFactors);
-    	}
-    	return connections.size();
-    }
-    //  ********************************************
-    public int addDependencies(AttributesID attrID)
-    {
-    	DependencyIdx[] connectionIds = new DependencyIdx[1];
-        connectionIds = attrID.connections.keySet().toArray(connectionIds);
-                	
-	    for(int i=0;i<connectionIds.length;i++){
-	    	DependencyIdx connId = connectionIds[i];
-	        if(connId!=null){    	
-	        	DependencyFactors connFactors = attrID.connections.get(connId);
-	        	put(connId,connFactors);
-	        }        
-	    }
-        return connections.size();
-    }
-    //*************************************
-    @Override
-    public String toString()
-    {
-        StringBuffer tmp=new StringBuffer();
-        tmp.append(CONN_FILE_HEADER).append('\n');
-        DependencyIdx[] connectionIds = new DependencyIdx[1];
-        connectionIds = connections.keySet().toArray(connectionIds);
-        for(int i=0;i<connectionIds.length;i++){
-        	DependencyIdx connId = connectionIds[i];
-        	if(connId!=null){
-        		DependencyFactors connFactors = connections.get(connId);
-        		tmp.append(connId.toString(myDict)).append(",").append(connFactors.toString()).append("\n");
-        	}
-        }
-        return tmp.toString();
-    }
-    //*************************************    
-    public String connString()
-    {
-    	String[] attributes = myDict.getKeys();
-    	
-        StringBuffer tmp=new StringBuffer();        
-        DependencyList connLists = getDependencyLists(); 
-        
-        for(int i=0;i<attributes.length;i++){
-        	int attrId = myDict.get(attributes[i]);
-        	Integer[] vals = connLists.getValues(attrId);
-        	if(vals!=null){
-        		tmp.append(attributes[i]);
-        		Dependency[] connArray = new Dependency[vals.length]; 
-        		for(int j=0;j<vals.length;j++){
-        			DependencyIdx connId = new DependencyIdx(attrId,vals[j]);
-        			DependencyFactors connFactors = connections.get(connId);
-        			connArray[j] = new Dependency(connId, connFactors);
-        		}    			
-        		Arrays.sort(connArray);
-        		for(int j=0;j<connArray.length;j++){
-    				tmp.append(',').append(myDict.get(connArray[j].connId.childId)).append("("+connArray[j].connFactors.toString()+")");
-        		}
-        		tmp.append('\n');
-        	}        	
-        }
-        
-        return tmp.toString();
-    }
-  //*************************************    
-    public DependencyList getDependencyLists(){
+	protected float maxID;
+	protected float minID;
 
-    	String[] attributes = myDict.getKeys();
+	protected boolean directedGraph;
+	protected boolean selfID;
 
-        DependencyIdx[] dependencyIndex = new DependencyIdx[1];        
-        dependencyIndex = connections.keySet().toArray(dependencyIndex);
-        int[] attrIds = new int[attributes.length];
-        
-        for(int i=0;i<attributes.length;i++){
-        	attrIds[i] = myDict.get(attributes[i]); 
-        }
-        
-    	DependencyList cll = new DependencyList(attrIds);
-        
-    	for(int i=0;i<dependencyIndex.length;i++){
-    		DependencyIdx connId = dependencyIndex[i];
-        	if(connId!=null){
-        		cll.put(connId.parentId, connId.childId);
-        	}
-    	}
+	public static String ID_FILE_HEADER = "parent,child,weight";
+	public static String ID_FILE_HEADER_OLD = "edge_a,edge_b,weight";
 
-    	return cll;
-    }
-    //*************************************
-    public boolean save(String fileName)
-    {
-        return FileUtils.saveString(fileName, connString());
-    }
-    //*************************************
-    public boolean load(String fileName)
-    {
-    	DependencyLoader loader = new DependencyLoader();
-    	return loader.load(fileName, this);               
-    }
-    //*************************************
-    public AttributesID cut(float minWeight, AttributesRI importance, int attrNumber)
-    {
-	    Ranking ranking=null;
-	    String[] selectedAttr=null;
-	    
-	    if(importance!=null)
-	        ranking = importance.getTopRankingSize(importance.mainMeasureIdx, attrNumber);
-	
-	    if(ranking!=null)
-	    	selectedAttr = ranking.getAttributesNames();        
-	    
-	    AttributesID retConnections = this.cut(selectedAttr, minWeight); 
-	    return retConnections;
-    }
-    //*************************************    
-    public AttributesID cut(String[] selectedAttr, float minWeight)
-    {
-        AttributesID retConnections = new AttributesID(myDict.clone(), directedGraph, selfID);        
-        HashSet<Integer> attributesSet=null;
-        if(selectedAttr != null){
-        	attributesSet = new HashSet<Integer>();
-        	for(int i=0; i<selectedAttr.length; i++){
-        		Integer currAttrId = myDict.get(selectedAttr[i]);
-        		if(currAttrId!=null)
-        			attributesSet.add(currAttrId);
-        	}
-        }
+	//*************************************    		
+	public AttributesID(MyDict myDict, boolean directed, boolean selfID){
+		this.myDict = myDict;
+		this.directedGraph = directed;
+		this.selfID = selfID;
+		init();
+	}
+	//*************************************
+	public AttributesID(String[] attributes, boolean directed, boolean selfID)
+	{
+		myDict = new MyDict(attributes);
+		this.directedGraph = directed;
+		this.selfID = selfID;
+		init();
+	}
+	//*************************************    
+	public AttributesID(boolean directed, boolean selfID)
+	{
+		myDict = new MyDict();
+		this.directedGraph = directed;
+		this.selfID = selfID;    	    	
+		init();
+	}
+	//*************************************
+	public void init()
+	{ 
+		myIDMap = new HashMap<IDLink, IDProps>();
+		minID = Float.MAX_VALUE;
+		maxID = Float.MIN_VALUE; 
+	}
+	//*************************************
+	public int size(){
+		return myIDMap.size();
+	}
+	//*************************************
+	public boolean isDirected(){
+		return directedGraph;
+	}
+	//*************************************
+	public int getNodesNumber(){
+		return myDict.size();  
+	}
+	//*************************************
+	public int getEdgesNumber(){
+		return myIDMap.size();
+	}
+	//*************************************
+	public MyDict getDict(){
+		return myDict;
+	}
+	//*************************************
+	public int addAttributesID(AttributesID attrID)
+	{
+		IDLink[] myIDLinks = new IDLink[1];
+		myIDLinks = attrID.myIDMap.keySet().toArray(myIDLinks);
 
-        DependencyIdx[] connectionIds = new DependencyIdx[1];
-        connectionIds = connections.keySet().toArray(connectionIds);
-        for(int i=0;i<connectionIds.length;i++){
-        	DependencyIdx connId = connectionIds[i];
-        	if(connId!=null){
-        		DependencyFactors connFactors = connections.get(connId);
-        		boolean put;        		
-        		if(connFactors.weight>=minWeight)
-        			put = true;
-        		else
-        			put = false;
-        		
-        		if(attributesSet==null){
-        			put &= true;
-        		}else{
-        			if(attributesSet.contains(connId.parentId) && attributesSet.contains(connId.childId))
-        				put &= true;
-        			else
-        				put &= false;
-        		}
-        		
-        		if(put)
-        			retConnections.put(connId, connFactors);
-        	}
-        }
-        retConnections.findMinMaxID();
-        
-        return retConnections;
-    }
-    //*************************************
-    public IDGraph toGraph(float minWeight, AttributesRI importance, int attrNumber)
-    {        
-        AttributesID cut = this.cut(minWeight, importance, attrNumber);        
-        IDGraph graph = cut.toGraph();        
-        graph.setNodesWeights(importance);
+		for(int i=0;i<myIDLinks.length;i++){
+			IDLink link = myIDLinks[i];
+			if(link!=null){    	
+				IDProps props = attrID.myIDMap.get(link);
+				putID(link, props);
+			}        
+		}
 
-        if(importance!=null){
-        	float[] minMax = importance.getMinMaxImportances(importance.mainMeasureIdx);
-            graph.setMinNodeWeight(minMax[0]);
-            graph.setMaxNodeWeight(minMax[1]);
-        }
-        else{
-            graph.setMinNodeWeight(GraphNode.DEFAULT_WEIGHT);
-            graph.setMaxNodeWeight(GraphNode.DEFAULT_WEIGHT);
-        }   
+		return myIDMap.size();
+	}
+	//*************************************
+	public int addID(String parent, String child, float weight)
+	{
+		if(selfID==false && parent.equalsIgnoreCase(child))
+			return myIDMap.size();
 
-        return graph;
-    }
+		putID(parent, child, weight);    	
+		if(!directedGraph){
+			putID(child, parent, weight);
+		}
 
-    //*************************************    
-    public IDGraph toGraph()
-    {
-    	IDGraph graph=new IDGraph();
-        DependencyIdx[] connectionIds = new DependencyIdx[1];
-        connectionIds = connections.keySet().toArray(connectionIds);
-        for(int i=0;i<connectionIds.length;i++){
-        	DependencyIdx connId = connectionIds[i];
-        	if(connId!=null){
-        		DependencyFactors connFactors = connections.get(connId);        		
-        		graph.addEdge(myDict.get(connId.parentId), myDict.get(connId.childId), connFactors.weight);
-        	}
-        }
-                        
-        graph.setMinEdgeWeight(minID);
-        graph.setMaxEdgeWeight(maxID);
+		return myIDMap.size();
+	}
+	//  ********************************************
+	private int putID(String parent, String child, float weight)
+	{
+		int parentId = myDict.put(parent);
+		int childId = myDict.put(child);
 
-        return graph;
-    }
-    //  *******************************************
-    public float getMaxID()
-    {
-        return maxID;
-    }
-    //  *******************************************    
-    public float getMinID()
-    {
-        return minID;
-    }
-    //  *******************************************
-    public void findMinMaxID()
-    {
-    	minID = Float.MAX_VALUE;
-    	maxID = Float.MIN_VALUE;    	
-        DependencyIdx[] connectionIds = new DependencyIdx[1];
-        connectionIds = connections.keySet().toArray(connectionIds);
-        for(int i=0;i<connectionIds.length;i++){
-        	DependencyIdx connId = connectionIds[i];
-        	if(connId!=null){
-        		DependencyFactors connFactors = connections.get(connId);
-        		
-        		float weight = connFactors.weight;
-        		if(weight>maxID)
-                    maxID=weight;
-                if(weight<minID)
-                    minID=weight;
-        	}
-        }        
-    }
-    //  *******************************************
-    public float getIDValue(int topSize)
-    {
-        ArrayList<Float> w = new ArrayList<Float>();
-        DependencyIdx[] connectionIds = new DependencyIdx[1];
-        connectionIds = connections.keySet().toArray(connectionIds);
-        for(int i=0;i<connectionIds.length;i++){
-        	DependencyIdx connId = connectionIds[i];
-        	if(connId!=null){
-        		DependencyFactors connFactors = connections.get(connId);        		
-        		 w.add(connFactors.weight);
-        	}
-        }
-        Float[] f = new Float[1];
-        f = w.toArray(f);
-        Arrays.sort(f);
-        if(f.length-topSize<0)
-        	return f[0];
-        
-        return f[f.length-topSize];
-    }
-    //*************************************
-    public int getNodesNumber()
-    {
-        return myDict.size();  
-    }
-    //*************************************
-    public int getEdgesNumber()
-    {
-        return connections.size();  
-    }
-    //*******************************************
+		IDLink link = new IDLink(parentId, childId);    	
+		return putID(link, new IDProps(weight));    	
+	}
+	//  ********************************************
+	private int putID(IDLink link, IDProps props){
+		IDProps myIDProps = myIDMap.get(link);
+
+		if(myIDProps == null){
+			myIDProps = props;
+			myIDMap.put(link, props);
+		}else{
+			myIDProps.add(props);
+		}
+
+		//obtain minID and maxID
+		if(myIDProps.weight > maxID)
+			maxID = myIDProps.weight;
+		if(myIDProps.weight < minID)
+			minID = myIDProps.weight;
+
+		return myIDMap.size();
+	}
+	//*************************************    
+	@Override
+	public String toString()
+	{        
+		StringBuffer tmp=new StringBuffer();
+		tmp.append(ID_FILE_HEADER).append('\n');
+		IDLink[] myIDLinksArray = new IDLink[1];
+		myIDLinksArray = myIDMap.keySet().toArray(myIDLinksArray);
+		for(int i=0;i<myIDLinksArray.length;i++){
+			IDLink link = myIDLinksArray[i];
+			if(link!=null){
+				IDProps props = myIDMap.get(link);
+				tmp.append(link.toString(myDict)).append(",").append(props.toString()).append("\n");
+			}
+		}
+		return tmp.toString();
+	}
+	//*************************************    
+	public String toConnString()
+	{
+		String[] attributes = myDict.getKeys();
+
+		StringBuffer tmp=new StringBuffer();        
+		IDList connLists = getIDList(); 
+
+		for(int i=0;i<attributes.length;i++){
+			int attrId = myDict.get(attributes[i]);
+			Integer[] vals = connLists.getValues(attrId);
+			if(vals!=null){
+				tmp.append(attributes[i]);
+				IDEntity[] myIDEntityArray = new IDEntity[vals.length]; 
+				for(int j=0;j<vals.length;j++){
+					IDLink link = new IDLink(attrId,vals[j]);
+					IDProps props = myIDMap.get(link);
+					myIDEntityArray[j] = new IDEntity(link, props);
+				}    			
+				Arrays.sort(myIDEntityArray);
+				for(int j=0;j<myIDEntityArray.length;j++){
+					tmp.append(',').append(myDict.get(myIDEntityArray[j].link.childId)).append("("+myIDEntityArray[j].props.toString()+")");
+				}
+				tmp.append('\n');
+			}        	
+		}
+
+		return tmp.toString();
+	}
+	//*************************************    
+	public IDList getIDList(){
+
+		String[] attributes = myDict.getKeys();
+
+		int[] attrIds = new int[attributes.length];        
+		for(int i=0;i<attributes.length;i++){
+			attrIds[i] = myDict.get(attributes[i]); 
+		}
+
+		IDList retIDList = new IDList(attrIds);
+		IDLink[] linkArray = new IDLink[1];        
+		linkArray = myIDMap.keySet().toArray(linkArray);
+
+		for(int i=0;i<linkArray.length;i++){
+			IDLink link = linkArray[i];
+			if(link!=null){
+				retIDList.put(link.parentId, link.childId);
+			}
+		}
+
+		return retIDList;
+	}
+	//*************************************
+	public boolean save(String fileName)
+	{
+		return FileUtils.saveString(fileName, toConnString());
+	}
+	//*************************************
+	public boolean load(String fileName)
+	{
+		IDLoader loader = new IDLoader();
+		return loader.load(fileName, this);               
+	}
+	//*************************************
+	public AttributesID filter(float minWeight, AttributesRI importance, int attrNumber)
+	{
+		Ranking ranking = null;
+		String[] attributes = null;
+
+		if(importance!=null)
+			ranking = importance.getTopRankingSize(importance.mainMeasureIdx, attrNumber);
+
+		if(ranking!=null)
+			attributes = ranking.getAttributesNames();        
+
+		AttributesID retAttrID = this.filter(attributes, minWeight); 
+		return retAttrID;
+	}
+	//*************************************    
+	public AttributesID filter(String[] attributes, float minWeight)
+	{
+		AttributesID retAttrID = new AttributesID(myDict.clone(), directedGraph, selfID);        
+		HashSet<Integer> attributesSet=null;
+		if(attributes != null){
+			attributesSet = new HashSet<Integer>();
+			for(int i=0; i<attributes.length; i++){
+				Integer currAttrId = myDict.get(attributes[i]);
+				if(currAttrId!=null)
+					attributesSet.add(currAttrId);
+			}
+		}
+
+		IDLink[] linksArray = new IDLink[1];
+		linksArray = myIDMap.keySet().toArray(linksArray);
+		for(int i=0;i<linksArray.length;i++){
+			IDLink link = linksArray[i];
+			if(link!=null){
+				IDProps props = myIDMap.get(link);
+				boolean put;        		
+				if(props.weight>=minWeight)
+					put = true;
+				else
+					put = false;
+
+				if(attributesSet==null){
+					put &= true;
+				}else{
+					if(attributesSet.contains(link.parentId) && attributesSet.contains(link.childId))
+						put &= true;
+					else
+						put &= false;
+				}        		
+				if(put)
+					retAttrID.putID(link, props);
+			}
+		}
+
+		return retAttrID;
+	}
+	//*************************************
+	public IDGraph toGraph(float minWeight, AttributesRI importance, int attrNumber)
+	{        
+		AttributesID currAttrID = filter(minWeight, importance, attrNumber);        
+		IDGraph graph = currAttrID.toGraph();
+		graph.setNodesWeights(importance);
+
+		return graph;
+	}
+	//*************************************    
+	public IDGraph toGraph()
+	{
+		float minID = Float.MAX_VALUE;
+		float maxID = Float.MIN_VALUE;    	
+
+		IDGraph graph = new IDGraph();
+		IDLink[] linksArray = new IDLink[1];
+		linksArray = myIDMap.keySet().toArray(linksArray);
+
+		for(int i=0;i<linksArray.length;i++){
+			IDLink link = linksArray[i];
+			if(link!=null){
+				IDProps props = myIDMap.get(link);
+				float weight = props.weight;
+				if(weight > maxID)
+					maxID = weight;
+				if(weight < minID)
+					minID = weight;
+
+				graph.addEdge(myDict.get(link.parentId), myDict.get(link.childId), weight);
+			}
+		}
+
+		graph.setMinEdgeWeight(minID);
+		graph.setMaxEdgeWeight(maxID);
+
+		return graph;
+	}
+	//*******************************************
+	public float getMaxID()
+	{
+		return maxID;
+	}
+	//*******************************************    
+	public float getMinID()
+	{
+		return minID;
+	}
+	//*******************************************
+	public float getIDWeight(int topSize)
+	{
+		ArrayList<Float> w = new ArrayList<Float>();
+		IDLink[] linksArray = new IDLink[1];
+		linksArray = myIDMap.keySet().toArray(linksArray);
+		for(int i=0;i<linksArray.length;i++){
+			IDLink link = linksArray[i];
+			if(link!=null){
+				w.add(myIDMap.get(link).weight);
+			}
+		}
+		Float[] f = new Float[1];
+		f = w.toArray(f);
+		Arrays.sort(f);
+		if(f.length-topSize<0)
+			return f[0];
+
+		return f[f.length-topSize];
+	}
+	//*************************************
+	@Override
+	public Iterator<IDEdge> iterator() {
+		IDEdgeIterator it = new IDEdgeIterator(myIDMap,myDict);								
+		return it;
+	}
+	//*************************************
 }

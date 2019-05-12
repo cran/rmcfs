@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.meta;
 
@@ -29,11 +24,13 @@ import dmLab.utils.MyDict;
 public class Dictionary implements Cloneable
 {
 	protected MyDict dict;
+	public boolean locked; 
 
 	//***********************************
 	public Dictionary()
 	{
 		dict = new MyDict();
+		locked = false;
 		initDict();
 	}
 	//********************************************
@@ -61,7 +58,10 @@ public class Dictionary implements Cloneable
 			return floatVal;
 		
 		Integer intVal = dict.get(value);
-		if(intVal == null)
+		if(intVal == null && locked){
+			System.err.println("Dictionary does not contain: '"+value+"'");
+			return(Float.NaN);
+		} else if(intVal == null)
 			intVal = dict.put(value);
 					
 		return intVal.floatValue();
@@ -77,7 +77,7 @@ public class Dictionary implements Cloneable
 	//**************************************
 	public String toString(float value)
 	{
-		String strValue=toStringSpecial(value);
+		String strValue = toStringSpecial(value);
 		if(strValue != null)
 			return strValue;		
 		return dict.get(Math.round(value));		

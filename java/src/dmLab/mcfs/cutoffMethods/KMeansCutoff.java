@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.cutoffMethods;
@@ -41,11 +36,9 @@ public class KMeansCutoff extends CutoffMethod {
 	}
 	//****************************************
 	public double getCutoffMinRI(double[] values) {
-		double minRI = 0;
-		
-		minRI = kmeans(values);
-		
-		System.out.println("Minimal (based on k-means clustering) RI = " + GeneralUtils.formatFloat(minRI,7));
+		double minRI = 0;		
+		minRI = kmeans(values);		
+		System.out.println("Cutoff RI (based on k-means clustering) = " + GeneralUtils.formatFloat(minRI,7));
 		
 		return minRI;
 	}

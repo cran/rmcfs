@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,17 +15,13 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.tree;
 
 import java.util.HashMap;
 
 import dmLab.mcfs.tree.parser.TreeParser;
+import dmLab.utils.condition.Ruleset;
 
 public class Tree 
 {
@@ -85,9 +81,39 @@ public class Tree
 		}else{
 			StringBuffer tmp = new StringBuffer();
 			final Object[] values = nodes.values().toArray();
-			for(int i=0;i<values.length;i++)
+			for(int i=0;i<values.length;i++){
 				tmp.append( ((TreeNode)values[i]).toString() );
+			}
 			return tmp.toString(); 
+		}
+	}
+	//****************************************
+	public String toStringRules(int objectsNumber, float weight)
+	{       
+		if(rootNode!=null){
+			return rootNode.toStringRule("IF ", objectsNumber, weight);
+		}else{
+			StringBuffer tmp = new StringBuffer();
+			final Object[] values = nodes.values().toArray();			
+			for(int i=0;i<values.length;i++){
+				tmp.append( ((TreeNode)values[i]).toStringRule("", objectsNumber, weight) );
+			}
+			return tmp.toString(); 
+		}
+	}
+	//****************************************
+	public Ruleset toRuleset(Ruleset ruleset, int objectsNumber, float weight)
+	{
+		if(rootNode!=null){
+			return rootNode.toRuleset(ruleset, null, objectsNumber, weight);
+		}else{
+			StringBuffer tmp = new StringBuffer();
+			final Object[] values = nodes.values().toArray();			
+			for(int i=0; i<values.length; i++){
+				tmp.append( ((TreeNode)values[i]).toRuleset(ruleset, null, objectsNumber, weight) );
+			}
+			System.out.println("Takie cos: \n" + tmp.toString());			
+			return null;
 		}
 	}
 	//****************************************

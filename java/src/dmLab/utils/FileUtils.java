@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.utils;
@@ -71,9 +66,14 @@ public class FileUtils {
 	}
 	//********************************
 	public static boolean saveString(String fileName, String data){
+		File fileDir = (new File(fileName)).getParentFile();
+		if(!fileDir.exists()) {
+			fileDir.mkdir();
+		}
+		
 		FileWriter file;
 		try{
-			file= new FileWriter(fileName,false);
+			file = new FileWriter(fileName,false);
 		}       
 		catch(IOException ex){
 			System.err.println("Error opening file: "+fileName);
@@ -123,11 +123,25 @@ public class FileUtils {
 		return stringBuilder.toString();
 	}
 	//********************************
-	public static void deleteFile(String fileName) {
+	public static boolean deleteFile(String fileName) {
 
 		File file = new File(fileName);
-		if(file.exists())
+		if(file.exists()) {
 			file.delete();
+			return true;
+		}else {
+			return false;
+		}		
+	}
+	//*********************************
+	public static int deleteFiles(ArrayList<String> files)
+	{
+		int cnt = 0;
+		for(int i=0;i<files.size();i++){
+			if(FileUtils.deleteFile(files.get(i)))
+				cnt ++;
+		}
+		return cnt;
 	}
 	//********************************
 	public static void addFileToZip(String fileName, ZipOutputStream zos) throws IOException {
@@ -189,6 +203,8 @@ public class FileUtils {
 				dir = dirpart(name);
 				if(dir != null)
 					mkdirs(outdir, dir);
+				else
+					mkdirs(outdir, "");
 
 				if(fileNamePrefix.length() > 0 && name.toLowerCase().startsWith(fileNamePrefix.toLowerCase())){	
 					extractFile(zin, outdir, name);
@@ -239,6 +255,29 @@ public class FileUtils {
 		}
 		return true;
 	}
+	//	************************************************
+	public static String getTmpDir(String prefix, int length) {
+		File tmpPath = new File(System.getProperty("java.io.tmpdir") + File.separator);
+		File tmpDir = new File(tmpPath.getAbsolutePath() + File.separator + prefix + "_" + StringUtils.getRandomString(length));		
+		while(tmpDir.exists()) {
+			tmpDir = new File(tmpPath.getAbsolutePath() + StringUtils.getRandomString(length));
+		}
+		
+		return tmpDir.getAbsolutePath() + File.separator;
+	}
+	//	************************************************
+	public static boolean deleteDir(File dir) {
+	    if (dir.isDirectory()) {
+	      String[] children = dir.list();
+	      for (int i = 0; i < children.length; i++) {
+	        boolean success = deleteDir(new File(dir, children[i]));
+	        if (!success) {
+	          return false;
+	        }
+	      }
+	    }
+	    return dir.delete();
+	  }
 	//	************************************************
 
 }

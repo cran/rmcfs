@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,49 +15,60 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.attributesID;
 
-public class DependencyFactors implements Comparable<DependencyFactors>
+import java.awt.Dimension;
+import dmLab.utils.MyDict;
+
+public class IDLink
 {
-	public float weight;
+	public int parentId;
+	public int childId;
+	protected int hash;
 
 	//************************
-	public DependencyFactors(float weight){
-		this.weight = weight;
+	public IDLink(int parent, int child){		
+		parentId = parent;
+		childId = child;
+		Dimension key = new Dimension(parent, child);
+		hash = key.hashCode();
 	}
 	//************************
-	public float addWeight(float weight){
-		this.weight += weight;
-		return this.weight;
+	public String getParent(MyDict myDict){
+		return myDict.get(parentId);
 	}
 	//************************
-	public boolean add(DependencyFactors connFactors){
-		addWeight(connFactors.weight);
-		return true;
+	public String getChild(MyDict myDict){
+		return myDict.get(childId);		
 	}	
 	//************************
-	public String toString(){
+	public String toString(MyDict myDict){
 		StringBuffer tmp=new StringBuffer();
-		tmp.append("").append(weight).append("");
+		if(myDict==null)
+			tmp.append(parentId).append(",").append(childId);
+		else
+			tmp.append(myDict.get(parentId)).append(",").append(myDict.get(childId));
 		return tmp.toString();
 	}
 	//************************
-    public int compareTo(DependencyFactors conn) 
-    {
-    	float result = conn.weight - weight;        
-        if(result > 0.0)
-            return 1;
-        else if(result < 0.0)                    
-            return -1;
-        else
-            return 0;
-    }
-    //**************************************
-
+	public String toString(){		
+		return toString(null);
+	}
+	//************************
+	@Override
+	public int hashCode() {
+		return hash;
+	}
+	//************************
+	@Override
+	public boolean equals(Object obj) {
+		if(obj==null)
+			return false;
+		else{
+			IDLink c=(IDLink) obj;
+			return parentId == c.parentId && childId == c.childId;
+		}
+	}
+	//************************
 }

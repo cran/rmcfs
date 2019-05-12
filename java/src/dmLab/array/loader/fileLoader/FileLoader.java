@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
@@ -67,7 +62,7 @@ public abstract class FileLoader
 	{
 		String fileExt = FileUtils.getFileExtension(file.getName());		
 		if(FileType.toType(fileExt) != fileType){
-			System.err.println("Input file is not " + FileType.toTypeStr(fileType) + " type. File: "+file.toString());
+			System.err.println("Input file is not " + FileType.toTypeStr(fileType) + " type. File: "+file.getAbsolutePath());
 			return false;			
 		}
 
@@ -93,7 +88,7 @@ public abstract class FileLoader
 			System.err.println("Error reading file. File: "+file.toString());
 			return false;
 		}else{
-			System.out.println("Data loaded.");
+			System.out.println("Done");
 		}
 
 		//System.out.println("DEBUG: \n" + myArray.toString());
@@ -103,13 +98,13 @@ public abstract class FileLoader
 	//	*** method returns false if attributes number or events number is 0
 	protected boolean checkData()
 	{
-		System.out.println("attributes: "+attributesNumber+" events: "+eventsNumber);
+		System.out.print(eventsNumber + " objects and "+attributesNumber + " attributes to load... ");
 		if(attributesNumber==0){
 			System.err.println("Input data does not contain attributes.");
 			return false;
 		}
 		else if(eventsNumber==0){
-			System.err.println("Input data does not contain events.");
+			System.err.println("Input data does not contain any objects.");
 			return false;
 		}
 		return true;

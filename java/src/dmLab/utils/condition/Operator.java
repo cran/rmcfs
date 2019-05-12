@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.utils.condition;
@@ -50,6 +45,13 @@ public class Operator implements Cloneable
 	protected Operator(short operator)
 	{
 		op=operator;
+	}
+	//**************************************
+	protected boolean is(short operator){
+		if(op == operator)
+			return true;
+		else
+			return false;			
 	}
 	//**************************************
 	@Override
@@ -88,17 +90,29 @@ public class Operator implements Cloneable
 	//**************************************
 	public boolean compare(float left, float right)
 	{
-		if(op==EQUAL && left==right)
+		// == NaN NaN
+		if(op==EQUAL && Float.isNaN(left) && Float.isNaN(right))
 			return true;
-		else if(op==GREATER && left>right)//'>'
+		// != > < NaN NaN
+		else if(Float.isNaN(left) && Float.isNaN(right))
+			return false;
+		// == 3 NaN
+		else if(op==EQUAL && (Float.isNaN(left) || Float.isNaN(right)))
+			return false;
+		//  != > < 3 NaN
+		else if(Float.isNaN(left) || Float.isNaN(right))
 			return true;
-		else if(op==LESS && left<right)//'<'
+		else if(op==EQUAL && left == right)
 			return true;
-		else if(op==GEQ && left>=right)//'>='
+		else if(op==GREATER && left > right)//'>'
 			return true;
-		else if(op==LEQ && left<=right)//'<='
+		else if(op==LESS && left < right)//'<'
 			return true;
-		else if(op==NOTEQUAL && left!=right)//!=
+		else if(op==GEQ && left >= right)//'>='
+			return true;
+		else if(op==LEQ && left <= right)//'<='
+			return true;
+		else if(op==NOTEQUAL && left != right)//!=
 			return true;
 		else
 			return false;		

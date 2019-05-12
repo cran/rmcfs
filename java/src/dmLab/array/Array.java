@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,29 +15,32 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array;
 
+import java.util.HashSet;
+
+import dmLab.array.functions.ExtFunctions;
 import dmLab.array.meta.Attribute;
+import dmLab.array.meta.AttributesMetaInfo;
+import dmLab.mcfs.MCFSParams;
 
 
 public abstract class Array implements Cloneable
 {
-	public static String SPACE_CHAR="_";
+	public static String SPACE_CHAR = "_";
 
 	public Attribute[] attributes;
+	
 	protected int decAttrIdx;
-
-	public boolean debug=false;
+	protected AttributesMetaInfo attributesDict;
+	
+	public boolean debug = false;
 	//********************************
 	public Array()
 	{
 		attributes = null;
+		attributesDict = null;
 		decAttrIdx = -1;
 	}
 	//********************************
@@ -45,11 +48,12 @@ public abstract class Array implements Cloneable
 	//********************************
 	protected void initAttributes(int cols, int rows)
 	{
+		attributesDict = null;
 		decAttrIdx = -1;
 		attributes = new Attribute[cols];
 		for (int i = 0; i < attributes.length; i++){
 			attributes[i] = new Attribute();
-		}
+		}		
 	}
 	//	********************************************
 	public abstract Array clone();
@@ -92,17 +96,28 @@ public abstract class Array implements Cloneable
 	}
 	//	********************************************
 	//	**** return index of column by given name, returns -1 if column is not present
-	//TODO add HashMap here?
 	public int getColIndex(String colName)
 	{
 		int index = -1;
+		//TODO add HashMap here?
+		/*
+		if(attributesDict != null)
+			index = attributesDict.getIndex(colName);
+		else{
+			for (int i = 0; i < attributes.length; i++){
+				if (attributes[i].name.equalsIgnoreCase(colName)){
+					index = i;
+					break;
+				}
+			}
+		}*/
 		for (int i = 0; i < attributes.length; i++){
 			if (attributes[i].name.equalsIgnoreCase(colName)){
 				index = i;
 				break;
 			}
 		}
-		return index;
+		return index;		
 	}
 	//********************************
 	protected void bindAttributes(Attribute[] srcAttributes){
@@ -148,6 +163,30 @@ public abstract class Array implements Cloneable
 			return false;
 	}
 	//********************************
-	
-
+	public AttributesMetaInfo buildAttributesMetaInfo(boolean refresh){
+		if(refresh || attributesDict == null){
+			attributesDict = new AttributesMetaInfo(this);
+		}
+		return attributesDict;		
+	}
+	//********************************
+	public void fixAttributesNames(boolean fixContrastNames){
+		HashSet<String> attrSet = new HashSet<String>();				
+		for(int i=0; i<attributes.length; i++){
+			//replace existing contrast names
+			if(ExtFunctions.isContrastAttribute(attributes[i].name)){
+				attributes[i].name = MCFSParams.FIX_ATTR_PREFIX + attributes[i].name;
+			}
+			//check if attr is already there
+			int idx = 1;
+			String currAttrName = attributes[i].name;
+			while(attrSet.contains(currAttrName)){
+				currAttrName = attributes[i].name + "." + idx;
+				idx++;
+			}
+			attributes[i].name = currAttrName;
+			attrSet.add(attributes[i].name);
+		}
+	}
+	//********************************
 }

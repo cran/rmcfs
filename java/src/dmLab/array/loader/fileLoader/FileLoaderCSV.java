@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
 import java.io.BufferedReader;
@@ -27,7 +22,7 @@ import java.io.File;
 
 import dmLab.array.Array;
 import dmLab.array.meta.Attribute;
-import dmLab.array.meta.AttributeDef;
+import dmLab.array.meta.AttributeRole;
 import dmLab.utils.FileUtils;
 import dmLab.utils.StringUtils;
 
@@ -39,7 +34,7 @@ public class FileLoaderCSV extends FileLoader
 	public boolean consequentSeparatorsTreatAsOne; 
 	public String defaultAttributeName;
 	
-	protected AttributeDef[] attrDefArray;
+	protected AttributeRole[] attrDefArray;
 	private boolean allDecision = false;
 
 	//	************************************************
@@ -142,14 +137,15 @@ public class FileLoaderCSV extends FileLoader
 		if(attrDefArray!=null){
 			int attrIndex = 0;
 			for(int i=0;i<attrDefArray.length;i++){
-				AttributeDef attr = attrDefArray[i];
-				if(attr.role == AttributeDef.ROLE_IGNORE){
+				AttributeRole attr = attrDefArray[i];
+				if(attr.role == AttributeRole.ROLE_IGNORE){
 					ignoredAttributeMask[i] = true;					
 				}else{
 					ignoredAttributeMask[i] = false;
 					myArray.attributes[attrIndex].name = attr.name;
-					myArray.attributes[attrIndex].type = attr.type;			
-					if(attr.role == AttributeDef.ROLE_DECISION){
+					myArray.attributes[attrIndex].type = attr.type;
+					myArray.attributes[attrIndex].weight = attr.weight;					
+					if(attr.role == AttributeRole.ROLE_DECISION){
 						myArray.setDecAttrIdx(attrIndex);
 						if(attr.decValues.length>0){
 							myArray.setDecValues(attr.decValues);
@@ -201,12 +197,12 @@ public class FileLoaderCSV extends FileLoader
 	protected boolean readHeaderLine(String[] tokens) {
 
 		if(attrDefArray == null)
-			attrDefArray = new AttributeDef[attributesNumber];
+			attrDefArray = new AttributeRole[attributesNumber];
 		
 		if(tokens == null){
 				for(int i=0;i<attributesNumber;i++){
 					if(attrDefArray[i] == null){
-						attrDefArray[i] = new AttributeDef();
+						attrDefArray[i] = new AttributeRole();
 						attrDefArray[i].name = defaultAttributeName+i;
 						attrDefArray[i].type = Attribute.NOMINAL;
 					}
@@ -216,12 +212,17 @@ public class FileLoaderCSV extends FileLoader
 				String name = tokens[i];
 				if(name.equalsIgnoreCase(""))
 					name = defaultAttributeName+i;
+				if(name.startsWith("\"") || name.startsWith("\'")) {
+					name = StringUtils.trimQuotation(name);
+				}					
 				if(attrDefArray[i] == null){
-					attrDefArray[i] = new AttributeDef();
+					attrDefArray[i] = new AttributeRole();
 					attrDefArray[i].name = name.trim().replaceAll(" ", Array.SPACE_CHAR);
 					attrDefArray[i].type = Attribute.NOMINAL;
 				}else if(!attrDefArray[i].name.equalsIgnoreCase(name)){
-					System.err.println("Name of attribute in data ("+name+") does not equal to header attribute name ("+attrDefArray[i].name+").");
+					System.out.println(name);
+					System.out.println(attrDefArray[i].name);
+					System.err.println("Name of attribute in data ("+name+") does not correspond to header attribute name ("+attrDefArray[i].name+").");
 					return false;
 				}
 			}
@@ -242,4 +243,3 @@ public class FileLoaderCSV extends FileLoader
 	//	************************************************
 
 }
-

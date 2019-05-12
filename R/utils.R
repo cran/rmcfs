@@ -1,7 +1,36 @@
 ###############################
+#get.JavaVersion
+###############################
+#library(rJava)
+#get.JavaVersion()
+get.JavaVersion <- function()
+{
+  .jinit()
+  jv <- .jcall("java/lang/System", "S", "getProperty", "java.runtime.version")
+  if(startsWith(jv,'11+')){
+    jvn <- 11
+  }else if(substr(jv, 1L, 2L) == "1.") {
+    #looks like its Oracle JDK 1.x
+    #jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
+    jvn <- as.numeric(strsplit(jv, "[.]")[[1L]][2])
+  }else if(grepl("-internal", jv, fixed = TRUE)){
+    #looks like its Open JDK 9 e.g. "9-internal"
+    jvn <- as.numeric(strsplit(jv, "[-]")[[1L]][1])
+  }else if(as.numeric(strsplit(jv, "[.]")[[1L]][1]) >= 9){
+    #looks like its JAVA JDK 9 or above
+    jvn <- as.numeric(strsplit(jv, "[.]")[[1L]][1])
+  }else{
+    warning(paste0("Can't recognize java version. Java: ", jv))
+    jvn <- 8
+  }
+  return(jvn)
+}
+
+###############################
 #showme
 ###############################
-showme <- function(x, size = 10, show = c("tiles", "head", "tail", "none")){
+showme <- function(x, size = 10, show = c("tiles", "head", "tail", "none"))
+{
   size <- min(c(size, nrow(x), ncol(x)))
   show <- show[1]
   if(show == "tiles"){
@@ -23,7 +52,8 @@ showme <- function(x, size = 10, show = c("tiles", "head", "tail", "none")){
 ###############################
 #my.seq
 ###############################
-my.seq <- function(from, to, by, add.last.to = F){
+my.seq <- function(from, to, by, add.last.to = F)
+{
   if(to <= by){
     s <- c(to)
   }else{
@@ -61,14 +91,10 @@ df.to.matrix <- function(x, chunk_size=50000, verbose = F)
     chunk <- 1
     x.matrix.list <- list()
     for(end in m.steps){
-      if(verbose)
-        cat(paste0("Chunk ",chunk," of ",length(m.steps),"\n"))
       x.matrix.list[[chunk]] <- as.matrix(x[,begin:end])
       begin <- end + 1
       chunk <- chunk +1
     }
-    if(verbose)
-      cat(paste0("Binding chunks...\n"))
     x.matrix <- do.call("cbind", x.matrix.list)
   }
   return (x.matrix)
@@ -77,28 +103,45 @@ df.to.matrix <- function(x, chunk_size=50000, verbose = F)
 ###############################
 #string.empty.as.na
 ###############################
-string.empty.as.na <- function(x) ifelse(x=="", NA, x)
+string.empty.as.na <- function(x) {ifelse(x=="", NA, x)}
 
 ###############################
 #string.replace
 ###############################
-string.replace <- function(x, sourceChars = c(" "), destinationChar = "_"){  
-  for(i in 1:length(sourceChars))
-    x <- gsub(paste0("\\", sourceChars[i]), destinationChar, x)  
-  return(x)
+string.replace <- function(x, sourceChars = c(" "), destinationChar = "_")
+{
+  myregex <- paste0("[\\", paste0(sourceChars, collapse = '\\'), "]")
+  ret <- stringi::stri_replace_all(x, destinationChar, regex = myregex)
+  return(ret)
 }
 
 ###############################
+#string.detect
+###############################
+string.detect <- function(x, sourceChars = c(" "))
+{
+  myregex <- paste0("[\\", paste0(sourceChars, collapse = '\\'), "]")
+  ret <- stringi::stri_detect(x, regex = myregex)
+  return(ret)
+}
+###############################
 #string.trim
 ###############################
-string.trim <- function(str) gsub("^\\s+|\\s+$", "", str)
+#library(microbenchmark)
+#microbenchmark("my" = string.trim(str), "stringi" = stri_trim_both(str))
+#string.trim <- function(str) gsub("^\\s+|\\s+$", "", str)
+string.trim <- function(str){
+  stringi::stri_trim_both(str)
+}
 
 ###############################
 #string.starts.with
 ###############################
-string.starts.with <- function(str, pattern, trim = FALSE, ignore.case = FALSE){
-  pattern <- c(pattern)
-  str <- c(str)
+# s <- c("x","abc", "xyz", "uxw","jhfjdghj","9hjfjy88hdhs","hfst6","ayi","x ijuhyg","abvghy")
+# p <- c("ab", "xy")
+# string.starts.with(s,p , FALSE, FALSE)
+string.starts.with <- function(str, pattern, trim = FALSE, ignore.case = FALSE)
+{
   if(trim)
     str <- string.trim(str)
   if(ignore.case){
@@ -107,7 +150,7 @@ string.starts.with <- function(str, pattern, trim = FALSE, ignore.case = FALSE){
   }
   ret <- rep(F, length(str))
   for(i in 1:length(pattern)){
-    ret <- ret | substring(str, 1, nchar(pattern[i])) == pattern[i]
+    ret <- ret | stringi::stri_startswith_fixed(str, pattern[i])
   }
   return(ret)
 }
@@ -115,7 +158,8 @@ string.starts.with <- function(str, pattern, trim = FALSE, ignore.case = FALSE){
 ###############################
 #string.combine
 ###############################
-string.combine <- function(..., prefix = "", sep = "") {
+string.combine <- function(..., prefix = "", sep = "") 
+{
   paste0(prefix, levels(interaction(..., sep = sep)))
 }
 
@@ -130,17 +174,12 @@ const.features <- function(x){
 }
 
 ###############################
-#normalize data - all columns (0,1)
-###############################
-normalize <- function(data) { 
-  apply(data, 2, function(x) {xmin <- min(x, na.rm = T); (x-xmin)/(max(x, na.rm = T)-xmin)})
-}
-
-###############################
 #scale.vector
 ###############################
-#scaleX(c(-0.4,0,1,10),-10,5)
-scale.vector<-function(x, min, max){
+#scale.vector(c(-0.4,0,1,10),-10,5)
+#scale.vector(c(-0.4,0,1,10))
+scale.vector<-function(x, min = 0, max = 1)
+{
   minTmp <- min(x)
   maxTmp <- max(x)
   xTmp <- (x-minTmp)/(maxTmp-minTmp)
@@ -149,9 +188,20 @@ scale.vector<-function(x, min, max){
 }
 
 ###############################
+#normalize data - all columns (0,1)
+###############################
+normalize <- function(data, min = 0, max = 1)
+{
+  if(!is.data.frame(data))
+    stop("Only data frames are handled")
+  apply(data, 2, scale.vector, min = min, max = max)
+}
+
+###############################
 #get.files.names
 ###############################
-get.files.names <- function(path, filter="*", ext=c('.csv','.rds'), fullNames=F, recursive=T){
+get.files.names <- function(path, filter="*", ext=c('.csv','.rds'), fullNames=F, recursive=T)
+{
   files <- NULL
   if(!File.exists(path)){
     stop(paste0("Directory: '",path,"' does not exist!"))
@@ -173,51 +223,61 @@ get.files.names <- function(path, filter="*", ext=c('.csv','.rds'), fullNames=F,
 ###############################
 #File.exists
 ###############################
-File.exists <- function(x) { 
-  if (.Platform$OS == "windows" && grepl("[/\\]$", x)) {
+File.exists <- function(x) 
+{ 
+  if(.Platform$OS == "windows" && grepl("[/\\]$", x)) {
     file.exists(dirname(x)) 
   } else file.exists(x) 
 }
 
 ###############################
-#file.extension
+#file.ext
 ###############################
 # path <- "//Users\\mdr.am.ins.ki\\Dropbox/DOCUM.ENTS//Money//ghfdjkhkj.hkfjdhk.EXD"
-# file.extension(path)
-# drop.file.extension(path)
-#library(tools)
-#file_ext(path)
-#basename(path)
-file.extension <- function(x){
-  file <- tail(unlist(strsplit(x, '[/\\]')),1)
-  file <- tail(unlist(strsplit(file, '[.]')),1)
-  file_ext <- tolower(file)
-  return (file_ext)
+# file.ext(path)
+file.ext <- function(x)
+{
+  ext <- unlist(strsplit(basename(x), '[.]'))
+  if(length(ext) > 1)
+    ext <- tolower(tail(ext, 1))
+  else
+    ext <- ''
+  return (ext)
 }
-
 ###############################
-#drop.file.extension
+#drop.file.ext
 ###############################
-drop.file.extension <- function(x){
-  file <- sub(paste0('\\.', file.extension(x)), '', x)
+# drop.file.ext("c:\\pathtofile//path/file.txt")
+# drop.file.ext("c:\\pathtofile//path/file.TXT")
+# drop.file.ext("//Users\\mdr.am.ins.ki\\Dropbox/DOCUM.ENTS//Money//ghfdjkhkj.hkfjdhk.EXD")
+# drop.file.ext("//Users\\mdr.am.ins.ki\\Dropbox/DOCUM.ENTS//Money//ghfdjkhkj.hkfjdhk")
+# drop.file.ext("file.txt")
+drop.file.ext <- function(x){
+  dir <- dirname(x)
+  file <- unlist(strsplit(basename(x), '[.]'))
+  if(length(file) > 1)
+    file <- paste0(file[-length(file)], collapse = '.')
+  if(dir != ".")
+    file <- file.path(dir, file)
   return(file)
 }
-
 ###############################
 #open.plot.file
 ###############################
-open.plot.file <- function(filename, width = 800, height = 600, res = 72){
-  ext <- file.extension(filename)
+open.plot.file <- function(filename, width = 10, height = 6, res = 72)
+{
+  dev.flush()
+  ext <- file.ext(filename)
   if (ext == "png") {
-    png(filename, width=width, height=height, res = 72)
+    png(filename, width=width, height = height, units = 'in', res = 72)
   } else if (ext == "pdf") {
     # pdf size is set by default
-    pdf(filename, width=width/100, height=height/100)
+    pdf(filename, width = width, height = height)
   } else if (ext == "svg") {
     # pdf size is set by default
-    svg(filename, width=width/100, height=height/100)
-  } else{
-    png(paste0(filename,".png"), width=width, height=height, res = 72)
+    svg(filename, width = width, height = height)
+  } else{ # pdf by default
+    pdf(filename, width = width, height = height)
   }
   return(T)
 }
@@ -225,132 +285,56 @@ open.plot.file <- function(filename, width = 800, height = 600, res = 72){
 ###############################
 #delete.files
 ###############################
+#files <- get.files.names("~/TEMP2/", filter="*", ext=c('.jpg','.rds'), fullNames=T, recursive=T)
+#delete.files(files)
 delete.files <- function(files){
+  ret <- 0
   if(length(files)>0){
-    for(i in 1:length(files)){
-      if(File.exists(files[i])){
-        #cat(paste0("remove ", files[i]))
-        file.remove(files[i])
-      }
-    }
+    files <- files[sapply(files, File.exists)]
+    if(length(files)>0)
+      ret <- sum(sapply(files, file.remove))
   }
+  return(ret)
 }
 
 ###############################
-#build.cmatrix
+#mystop
 ###############################
-# x1 <- round(runif(100, 0.0, 3.0))
-# x2 <- round(runif(100, 0.0, 3.0))
-# build.cmatrix(x1,x2)
-build.cmatrix <- function(real, predicted, levels = NULL){
-  real <- as.character(real)
-  predicted <- as.character(predicted)
-  if(is.null(levels)){
-    levels <- as.character(unique(c(real, predicted)))
-  }
-  if(length(levels)<2){
-    warning(paste0("Cannot build confusion matrix, levels = ", levels))
-    return(NULL)
-  }
-  cmatrix <- table(factor(real, levels), factor(predicted, levels))
-  cmatrix <- as.data.frame.matrix(cmatrix)
-  cmatrix <- as.matrix(cmatrix)
-  colnMat <-  colnames(cmatrix)
-  rownMat <- rownames(cmatrix)
-  cmatrix <- cmatrix[,match(rownMat,colnMat)]
-  colnames(cmatrix) <- rownMat
-  rownames(cmatrix) <- rownMat
-  cmatrix[is.na(cmatrix)] <- 0
-  
-  class(cmatrix) <- append("cmatrix", class(cmatrix))
-  return(cmatrix)
+mystop <- function(error_message){
+  cat(paste0("Error: ", error_message,"\n"))
+  return(FALSE)
 }
 
 ###############################
-#print.cmatrix
+#save.csv
 ###############################
-print.cmatrix <- function(cmatrix){
-  if(!any(class(cmatrix) %in% "cmatrix"))
-    stop("Input object is not 'cmatrix' class.")
-  
-  dg <- diag(cmatrix)
-  TPR <- 100 * dg / rowSums(cmatrix)
-  TPR <- round(TPR, digits=1)
-  acc <- round(100 * calc.acc(cmatrix), digits = 1)
-  wacc <- round(100 * calc.wacc(cmatrix), digits = 1)
-  conf_matrix <- cmatrix / sum(cmatrix) * 100
-  conf_matrix <- round(cmatrix, digits=1)
-  writeLines("Confusion Matrix:\n")
-  class(conf_matrix) <- "matrix"
-  print(conf_matrix)
-  writeLines("")
-  writeLines("TPR:\n")
-  print(as.data.frame(TPR))
-  writeLines("")  
-  writeLines(paste("Accuracy:",acc,"%"))
-  writeLines(paste("wAccuracy:",wacc,"%"))
+save.csv <- function(x, file, row.names = FALSE, col.names = TRUE, na.char = 'NA', ...){
+  data.table::fwrite(data.table::as.data.table(x), file = file, 
+                     row.names = row.names, col.names = col.names, 
+                     na = na.char, ...)
 }
 
 ###############################
-#calc.acc
+#load.csv
 ###############################
-calc.acc <- function(cmatrix){
-  if(!any(class(cmatrix) %in% "cmatrix"))
-    stop("Input object is not 'cmatrix' class.")
-  
-  dg <- diag(cmatrix)
-  acc <- sum(dg) / sum(cmatrix)
-  return(acc)
+load.csv <-  function(file, na.char = c('?', 'NA', 'NaN'), ...){
+  df <- as.data.frame(data.table::fread(input = file, na.strings = na.char, ...))
+  return(df)
 }
 
 ###############################
-#calc.wacc
+#clean.dir
 ###############################
-#calc.wacc(cmatrix)
-calc.wacc <- function(cmatrix){
-  if(!any(class(cmatrix) %in% "cmatrix"))
-    stop("Input object is not 'cmatrix' class.")
-  
-  dg <- diag(cmatrix)
-  TPR <- dg / rowSums(cmatrix)
-  wacc <- mean(TPR)
-  return(wacc)
+clean.dir <- function(path){
+  do.call(file.remove, list(list.files(path, full.names = TRUE)))
 }
 
 ###############################
-#get.projectionSize
+#fix.path
 ###############################
-get.projectionSize <- function(data_size, projectionSize = NA){
-  if(tolower(trimws(projectionSize)) == 'auto' || is.na(projectionSize)){
-    projection_size <- max(floor(sqrt(data_size)), 1)
-  }else{
-    projection_size <- projectionSize
-  }
-  return(projection_size)
+fix.path <- function(x){
+  x <- stringi::stri_replace_all(x, "/", fixed = "\\\\")
+  x <- stringi::stri_replace_all(x, "/", fixed = "\\")
+  return(x)
 }
 
-###############################
-#get.JavaVersion
-###############################
-get.JavaVersion <- function()
-{
-  .jinit()
-  jv <- .jcall("java/lang/System", "S", "getProperty", "java.runtime.version")
-  if(startsWith(jv,'11+')){
-    jvn <- 11
-  }else if(substr(jv, 1L, 2L) == "1.") {
-    #looks like its Oracle JDK 1.x
-    #jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
-    jvn <- as.numeric(strsplit(jv, "[.]")[[1L]][2])
-  }else if(grepl("-internal", jv, fixed = TRUE)){
-    #looks like its Open JDK 9 e.g. "9-internal"
-    jvn <- as.numeric(strsplit(jv, "[-]")[[1L]][1])
-  }else if(as.numeric(strsplit(jv, "[.]")[[1L]][1]) >= 9){
-    #looks like its JAVA JDK 9 or above
-    jvn <- as.numeric(strsplit(jv, "[.]")[[1L]][1])
-  }else{
-    warning(paste0("Can't recognize java version. Java: ", jv))
-    jvn <- 8
-  }
-  return(jvn)
-}

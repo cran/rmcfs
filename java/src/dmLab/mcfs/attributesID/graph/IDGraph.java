@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,26 +15,21 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.attributesID.graph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.Dictionary;
-import dmLab.utils.list.ObjectList;
 
 public class IDGraph
 {
-	protected Dictionary nodesNames=new Dictionary();  
+	protected Dictionary nodesNames = new Dictionary();  
     
     protected HashMap<Integer,GraphNode> nodes;
-    protected ObjectList edges;
+    protected ArrayList<GraphEdge>edges;
     
     protected GraphEdge edgesArray[];
     
@@ -47,15 +42,15 @@ public class IDGraph
     //******************************
     public IDGraph()
     {
-        nodesNames=new Dictionary();
-        nodes=new HashMap<Integer,GraphNode>();
-        edges=new ObjectList(50000);
+        nodesNames = new Dictionary();
+        nodes = new HashMap<Integer,GraphNode>();
+        edges = new ArrayList<GraphEdge>(50000);
         
-        maxNodeWeight=0; 
-        minNodeWeight=0;
+        maxNodeWeight = GraphNode.DEFAULT_WEIGHT; 
+        minNodeWeight = GraphNode.DEFAULT_WEIGHT;
         
-        maxEdgeWeight=0; 
-        minEdgeWeight=0;
+        maxEdgeWeight = 0; 
+        minEdgeWeight = 0;
     }
     //******************************
     public GraphNode[] getNodes()
@@ -74,24 +69,22 @@ public class IDGraph
     }
     //******************************
     public GraphEdge[] getEdges()
-    {
-        edgesArray=new GraphEdge[edges.size()];
-        for(int i=0;i<edgesArray.length;i++)
-            edgesArray[i]=(GraphEdge)edges.get(i);
-            
+    {        
+    	edgesArray = new GraphEdge[edges.size()];    	
+    	edgesArray = edges.toArray(edgesArray);    	            
         return edgesArray;         
     }
     //******************************
-    public void addEdge(String node1,String node2,float edgeWeight)    
+    public void addEdge(String node1, String node2, float edgeWeight)    
     {
-        int nodeIndex1=nodesNames.addItem(node1);
-        int nodeIndex2=nodesNames.addItem(node2);
+        int nodeIndex1 = nodesNames.addItem(node1);
+        int nodeIndex2 = nodesNames.addItem(node2);
         if(nodes.get(nodeIndex1)==null)
             nodes.put(nodeIndex1, new GraphNode(node1,-1f));
         if(nodes.get(nodeIndex2)==null)
             nodes.put(nodeIndex2, new GraphNode(node2,-1f));
         
-        GraphEdge edge=new GraphEdge(nodeIndex1,nodeIndex2,edgeWeight);
+        GraphEdge edge=new GraphEdge(nodeIndex1, nodeIndex2, edgeWeight);
         if(!edgeExists(edge))
             edges.add(edge);        
     }
@@ -109,20 +102,34 @@ public class IDGraph
     //******************************
     public void setNodesWeights(AttributesRI importance)
     {
-        if(importance==null)
+        if(importance==null){
+            setMinNodeWeight(GraphNode.DEFAULT_WEIGHT);
+            setMaxNodeWeight(GraphNode.DEFAULT_WEIGHT);
             return;
+        }
         
-        Object array[]=nodes.values().toArray();
-        for(int i=0;i<array.length;i++)
+    	float minRI = Float.MAX_VALUE;
+    	float maxRI = Float.MIN_VALUE;    	
+    	
+    	GraphNode[] nodesArray = new GraphNode[1]; 
+    	nodesArray = nodes.values().toArray(nodesArray);
+        for(int i=0;i<nodesArray.length;i++)
         {            
-            GraphNode node = ((GraphNode)array[i]);
+            GraphNode node = nodesArray[i];
             //if node does not exist in importance the result of getImportance is NaN
             float weight = importance.getImportance(node.name, importance.mainMeasureIdx);
             if(Float.isNaN(weight))
                 System.err.println("Attribute "+node.name+" does not exists in AttributesImportance");
             else
-                node.weight = importance.getImportance(node.name, importance.mainMeasureIdx);
-        }        
+                node.weight = weight;
+            
+    		if(weight > maxRI)
+    			maxRI = weight;
+            if(weight < minRI)
+                minRI = weight; 
+        }
+        setMinNodeWeight(minRI);
+        setMaxNodeWeight(maxRI);
     }
     //******************************
     public int getNodesNumber()

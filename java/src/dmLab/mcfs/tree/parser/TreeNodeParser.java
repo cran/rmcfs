@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.tree.parser;
@@ -35,16 +30,17 @@ public class TreeNodeParser
     {
     }
     //****************************************
-    public void parse(TreeNode node,String line)
+    public void parse(TreeNode node, String line)
     {
-        parseLevel(node,line);
-        parseCondition(node,line);        
-        parseDecision(node,line);
-        parseNodeIndicators(node,line);
+        parseLevel(node, line);
+        parseCondition(node, line);        
+        parseDecision(node, line);
+        parseNodeIndicators(node, line);
+        parseClassProb(node, line);
         node.nodeIndicators.attributeName = node.condition.attributeName;
     }
     //****************************************
-    public String parseDecision(TreeNode node,String line)
+    public String parseDecision(TreeNode node, String line)
     {                
         //clear decision 
         node.setDecision(null);
@@ -61,8 +57,7 @@ public class TreeNodeParser
         if(stopIndex==-1)
             return null;
         
-        if(stopIndex>startIndex)
-        {
+        if(stopIndex>startIndex){
             String decision=line.substring(startIndex,--stopIndex).trim();
             node.setDecision(decision);
             return decision;
@@ -70,8 +65,8 @@ public class TreeNodeParser
         else
             return null;
     }    
-    //****************************************
-    public int parseLevel(TreeNode node,String line)
+    //****************************************    
+    public int parseLevel(TreeNode node, String line)
     {
         char lineArray[]=line.toCharArray();
         int level=0;
@@ -86,11 +81,8 @@ public class TreeNodeParser
         return level;
     }
     //****************************************
-    public Condition parseCondition(TreeNode node,String line)
-    {
-        //MDR DEBUG
-        //System.out.println("PARSE CONDITION: "+line);
-        
+    public Condition parseCondition(TreeNode node, String line)
+    {        
         int startIndex,stopIndex;
         startIndex=line.lastIndexOf("|");
         if(startIndex==-1)
@@ -102,8 +94,7 @@ public class TreeNodeParser
         if(stopIndex==-1)
             stopIndex=line.indexOf("#");
         
-        if(stopIndex>startIndex)
-        {
+        if(stopIndex>startIndex){
             node.condition.parse(line.substring(startIndex,stopIndex).trim());
             return node.condition;
         }
@@ -111,6 +102,32 @@ public class TreeNodeParser
             return null;
     }        
     //****************************************
+    public float parseClassProb(TreeNode node, String line)
+    {
+        float classProb = 0;
+    	int startIndex, stopIndex;
+        String tmpLine = line; 
+        startIndex = tmpLine.indexOf("(");
+        stopIndex  = tmpLine.lastIndexOf(")");
+        if(startIndex==-1)
+            return Float.NaN;
+        tmpLine = line.substring(startIndex+1, stopIndex);
+        String[] classSize = StringUtils.tokenizeString(tmpLine, new char[]{'/','%'}, true);
+        float maxVal = 0;
+        float sumVal = 0;
+        for(int i=0; i<classSize.length; i++){
+        	float currValue = Float.parseFloat(classSize[i]);
+        	if(currValue > maxVal)
+        		maxVal = currValue;
+        	sumVal += currValue;
+        }
+        classProb = maxVal / sumVal; 
+        node.nodeIndicators.classProb = classProb;
+        node.nodeIndicators.cov = sumVal;
+        
+        return classProb;
+    }
+    //****************************************    
     public J48NodeIndicators parseNodeIndicators(TreeNode node, String line)
     {
         int startIndex, stopIndex;
@@ -136,6 +153,7 @@ public class TreeNodeParser
             else if (i==3)
                 node.nodeIndicators.attrEventsNumber=tmpDbl;
         }
+                
         return node.nodeIndicators;
     }
     //****************************************

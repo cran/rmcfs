@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,15 +15,11 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs;
 
 import java.util.Properties;
+import java.util.Random;
 
 import dmLab.array.FArray;
 import dmLab.classifier.Classifier;
@@ -36,10 +32,13 @@ public class MCFSParams extends ExperimentParams
 {
 	// STATIC VARIABLES //
 	public static String FILESUFIX_RI = "RI.csv";
+	public static String FILESUFIX_RI_PHASE_1 = "RI_phase_1.csv";
+	public static String FILESUFIX_RI_PHASE_2 = "RI_phase_2.csv";
 	public static String FILESUFIX_ID = "ID.csv";
 	public static String FILESUFIX_TOPRANKING = "topRanking.csv";
 	public static String FILESUFIX_DISTANCE = "distances.csv";
 	public static String FILESUFIX_MATRIX = "cmatrix.csv";
+	public static String FILESUFIX_MATRIX_TOP = "cmatrix_top.csv";
 	public static String FILESUFIX_CUTOFF = "cutoff.csv";
 	public static String FILESUFIX_CV_RESULT = "cv_accuracy.csv";
 	public static String FILESUFIX_PERMUTATIONS = "permutations.csv";
@@ -48,18 +47,18 @@ public class MCFSParams extends ExperimentParams
 	public static String FILESUFIX_DATA = "data";
 
 	public static String DISCRETIZER_CFG_FILE = "discretizer.cfg";
-	public static String CONTRAST_ATTR_NAME = "contrast_attr_";	
+	public static String CONTRAST_ATTR_NAME = "mcfs_contrast_attr_";
+	public static String FIX_ATTR_PREFIX = "x_";
 
 	public static String[] CUTOFF_METHODS = new String[]{"mean", "criticalAngle", "kmeans", "contrast", "permutations"};
 
 	public static int PROJECTION_SIZE_MIN = 1;
 	public static int CONTRAST_ATTR_MIN = 1;
 	
-	public static int MODE_AUTO = 0; 
+	// OTHER VARIABLES //		
+	public String filesufix_RI = FILESUFIX_RI;
 	
-	public static String TMP_PATH = "./tmp/";
-	
-	public long seed;
+	public int seed;
 	public int progressTopMinSize;
 	public boolean progressShow;
 	public int progressInterval;
@@ -73,7 +72,7 @@ public class MCFSParams extends ExperimentParams
 	public boolean finalCV;
 	public int finalCVSetSize;
 	public int finalCVRepetitions;
-	public int foldsCV;
+	public int finalCVfolds;
 	
 	public String cutoffMethod;
 	public int cutoffPermutations;
@@ -94,8 +93,9 @@ public class MCFSParams extends ExperimentParams
 	public float contrastSize;    
 	public float contrastCutoff;
 	public boolean zipResult;
-    public boolean saveResutFiles;
-
+    public boolean saveResultFiles;
+    public float minTopRankingSize;
+    
 	//specific configuration of classifiers
 	//mode memory or file
 	public int wekaClassifierMode;
@@ -104,7 +104,7 @@ public class MCFSParams extends ExperimentParams
 	public int maxConnectionDepth;
 	//ADX params
 	public int qMethod;
-	public boolean useComplexQuality;  
+	public boolean useComplexQuality;
 	//sliq params
 	public boolean useDiversityMeasure;
 	
@@ -122,7 +122,8 @@ public class MCFSParams extends ExperimentParams
 	public boolean setDefault()
 	{
 		super.setDefault();
-		
+		filesufix_RI = FILESUFIX_RI;
+
 		label = "MCFS";
 		inputFilesPATH = DEFAULT_DATA_PATH;
 		resFilesPATH = DEFAULT_RES_PATH;
@@ -131,9 +132,9 @@ public class MCFSParams extends ExperimentParams
 		testFileName = null;
 		outputFileName = null;
 		
-		seed = System.currentTimeMillis();
+		seed = (new Random(System.currentTimeMillis())).nextInt();
 		progressTopMinSize = 30;
-		progressInterval = 20;
+		progressInterval = 10;
 		progressShow = true;
 		threadsNumber = 4;
 		model = Classifier.AUTO;
@@ -145,18 +146,20 @@ public class MCFSParams extends ExperimentParams
 		finalCV = true;
 		finalCVSetSize = 1000;
 		finalCVRepetitions = 3;		
-		foldsCV = 10;
+		finalCVfolds = 10;
 		
 		cutoffMethod = "mean";
 		cutoffPermutations = 20;
-		featureFreq = 100;
+		featureFreq = 150;
 		balance = MCFSAutoParams.AUTO;
 
 		projections = MCFSAutoParams.AUTO;
 		projectionsValue = -1;
+		
 		projectionSize = MCFSAutoParams.AUTO;
-		projectionSizeMax = 500;
 		projectionSizeValue = -1;
+		projectionSizeMax = 1000;
+		
 		splits = 5;
 		splitRatio = 0.66f;
 		splitSetSize = 1000;
@@ -167,9 +170,10 @@ public class MCFSParams extends ExperimentParams
 		cutoffAngle = 0.01f;
 		contrastSize = 0.1f;    
 		contrastCutoff = 0.05f;
+		minTopRankingSize = 0.0f;
 		
 		zipResult = true;
-		saveResutFiles = true;
+		saveResultFiles = true;
 		
 		//specific configuration of classifiers
 		maxConnectionDepth = 5;
@@ -203,6 +207,7 @@ public class MCFSParams extends ExperimentParams
 		tmp.append("mcfs.finalCV = "+ finalCV).append('\n');        
 		tmp.append("mcfs.finalCVSetSize = "+ finalCVSetSize).append('\n');
 		tmp.append("mcfs.finalCVRepetitions = "+ finalCVRepetitions).append('\n');
+		tmp.append("mcfs.finalCVFolds = "+ finalCVfolds).append('\n');
 		tmp.append('\n');
 		tmp.append("mcfs.cutoffMethod = "+ cutoffMethod).append('\n');
 		tmp.append("mcfs.cutoffPermutations = "+ cutoffPermutations).append('\n');		
@@ -222,13 +227,18 @@ public class MCFSParams extends ExperimentParams
 		tmp.append("mcfs.cutoffAngle = "+ cutoffAngle).append('\n');
 		tmp.append("mcfs.contrastSize = "+ contrastSize).append('\n');
 		tmp.append("mcfs.contrastCutoff = "+ contrastCutoff).append('\n');
-		tmp.append("mcfs.zipResult = "+ zipResult).append('\n');		
+		tmp.append('\n');				
+		tmp.append("mcfs.saveResultFiles = "+ saveResultFiles).append('\n');
+		tmp.append("mcfs.zipResult = "+ zipResult).append('\n');
 		tmp.append('\n');		
 		tmp.append("j48.useGainRatio = "+ useGainRatio).append('\n');
 		tmp.append("j48.maxConnectionDepth = "+ maxConnectionDepth).append('\n');
 		tmp.append("adx.useComplexQuality = "+ useComplexQuality).append('\n');
 		tmp.append("adx.qMethod = "+ qMethod).append('\n');
 		tmp.append("sliq.useDiversityMeasure = "+ useDiversityMeasure).append('\n');
+		tmp.append('\n');
+		tmp.append("#mcfs.projectionsValue = "+ projectionsValue).append('\n');
+		tmp.append("#mcfs.projectionSizeValue = "+ projectionSizeValue).append('\n');		
 		tmp.append('\n');
 		return tmp.toString();
 	}
@@ -242,14 +252,14 @@ public class MCFSParams extends ExperimentParams
 		outputFileName = null;
 
 		String seedProp = properties.getProperty("mcfs.seed", "");
-		if(seedProp.trim().length()==0)
-			seed = System.currentTimeMillis();
-		else
-			seed = Long.valueOf(seedProp).intValue();
-				
+		if(seedProp.trim().length()==0){
+			seed = (new Random(System.currentTimeMillis())).nextInt();
+		}else{
+			seed = Integer.valueOf(seedProp).intValue();
+		}
 		progressShow = Boolean.valueOf(properties.getProperty("mcfs.progressShow", "true")).booleanValue();
-		progressInterval = Integer.valueOf(properties.getProperty("mcfs.progressInterval", "10")).intValue();
-		threadsNumber = Integer.valueOf(properties.getProperty("mcfs.threadsNumber", "8")).intValue();        
+		progressInterval = Integer.valueOf(properties.getProperty("mcfs.progressInterval", "10")).intValue();		 
+		threadsNumber = Integer.valueOf(properties.getProperty("mcfs.threadsNumber", "4")).intValue();        
 		model = Classifier.label2int(properties.getProperty("mcfs.model", "auto"));
 		mode = Integer.valueOf(properties.getProperty("mcfs.mode", "1")).intValue();        
 		target = properties.getProperty("target", "");
@@ -259,10 +269,11 @@ public class MCFSParams extends ExperimentParams
 		finalCV = Boolean.valueOf(properties.getProperty("mcfs.finalCV", "true")).booleanValue();
 		finalCVSetSize = Integer.valueOf(properties.getProperty("mcfs.finalCVSetSize", "1000")).intValue();
 		finalCVRepetitions = Integer.valueOf(properties.getProperty("mcfs.finalCVRepetitions", "3")).intValue();
-
+		finalCVfolds = Integer.valueOf(properties.getProperty("mcfs.finalCVfolds", "10")).intValue();
+		
 		cutoffMethod = properties.getProperty("mcfs.cutoffMethod", "mean");
 		cutoffPermutations = Integer.valueOf(properties.getProperty("mcfs.cutoffPermutations", "20")).intValue();
-		featureFreq = Integer.valueOf(properties.getProperty("mcfs.featureFreq", "100")).intValue();		
+		featureFreq = Integer.valueOf(properties.getProperty("mcfs.featureFreq", "150")).intValue();		
 		balance = MCFSAutoParams.valueToFloat("mcfs.balance", properties.getProperty("mcfs.balance", "auto")); 
 
 		projections = (int)MCFSAutoParams.valueToFloat("mcfs.projections", properties.getProperty("mcfs.projections", "auto"));        		
@@ -282,7 +293,7 @@ public class MCFSParams extends ExperimentParams
 		
 		useGainRatio = Boolean.valueOf(properties.getProperty("j48.useGainRatio", "true")).booleanValue();        
 		maxConnectionDepth = Integer.valueOf(properties.getProperty("j48.maxConnectionDepth", "3")).intValue();
-		qMethod = Integer.valueOf(properties.getProperty("adx.qMethod", "2")).intValue();;
+		qMethod = Integer.valueOf(properties.getProperty("adx.qMethod", "2")).intValue();
 		useComplexQuality = Boolean.valueOf(properties.getProperty("adx.useComplexQuality", "true")).booleanValue();
 		useDiversityMeasure = Boolean.valueOf(properties.getProperty("sliq.useDiversityMeasure", "true")).booleanValue();
 
@@ -329,17 +340,34 @@ public class MCFSParams extends ExperimentParams
 
 		// if array is not null
 		if(array!=null){
+			if(verbose) {
+				System.out.println("MCFSParams.check() before: target = " + target +
+						"; projectionSize = " + projectionSize +
+						"; projections = " + projections +
+						"; featureFreq = " + featureFreq +						
+						"; projectionSizeValue = " + projectionSizeValue +
+						"; projectionsValue = " + projectionsValue +
+						"; array.colsNumber() = " + array.colsNumber() +
+						"; array.rowsNumber() = " + array.rowsNumber());
+			}
+
 			target = array.attributes[array.getDecAttrIdx()].name;
 			projectionSizeValue = MCFSAutoParams.setProjectionSize(projectionSize, PROJECTION_SIZE_MIN, projectionSizeMax, array);
 			projectionsValue = MCFSAutoParams.setProjections(projections, projectionSizeValue, featureFreq, array);
 			if(model == Classifier.AUTO){
 				if(array.isTargetNominal()){
 					model = Classifier.J48;
-					System.out.println("Nominal target detected - using J48 model.");
+					System.out.println("Nominal target detected - using J48 model");
 				}else{
 					model = Classifier.M5;
-					System.out.println("Numeric target detected - using M5 model.");
+					System.out.println("Numeric target detected - using M5 model");
 				}
+			}
+			if(verbose) {
+				System.out.println("MCFSParams.check() after: target = " + target +
+						"; projectionSizeValue = " + projectionSizeValue +
+						"; projectionsValue = " + projectionsValue +
+						"; model = " + Classifier.int2label(model));
 			}
 		}
 		return true;    	    	
@@ -355,6 +383,7 @@ public class MCFSParams extends ExperimentParams
 	public void set(MCFSParams p)
 	{
 		super.set(p);
+		filesufix_RI = p.filesufix_RI;
 		
 		seed = p.seed;
 		progressShow = p.progressShow;
@@ -369,7 +398,7 @@ public class MCFSParams extends ExperimentParams
 		finalCV = p.finalCV;
 		finalCVSetSize = p.finalCVSetSize;
 		finalCVRepetitions = p.finalCVRepetitions;
-		foldsCV = p.foldsCV;
+		finalCVfolds = p.finalCVfolds;
 		
 		cutoffMethod = p.cutoffMethod;
 		cutoffPermutations=p.cutoffPermutations;
@@ -392,8 +421,9 @@ public class MCFSParams extends ExperimentParams
 		cutoffAngle = p.cutoffAngle;
 		contrastSize = p.contrastSize;    
 		contrastCutoff = p.contrastCutoff;
+
+	    saveResultFiles = p.saveResultFiles;
 		zipResult = p.zipResult;
-	    saveResutFiles = p.saveResutFiles;
 
 		wekaClassifierMode = p.wekaClassifierMode;
 		useGainRatio = p.useGainRatio;
@@ -405,32 +435,17 @@ public class MCFSParams extends ExperimentParams
 		return;
 	}    
 	//  ****************************************************
-	public String getExperimentName()
-	{
-		//return "_s"+projections+"_t"+splits;    	
-		return inputFileName.substring(0, inputFileName.lastIndexOf('.'));
-	}
-	//  ****************************************************
-	public static String getExperimentName(String fileName)
-	{
-		int experimentPrefixIndex = fileName.lastIndexOf("__");
-		if(experimentPrefixIndex==-1)
-			experimentPrefixIndex = fileName.lastIndexOf("_");
-		String experimentPrefix = "";
-		if(experimentPrefixIndex!=-1){
-			experimentPrefix = fileName.substring(0, experimentPrefixIndex+1);         	
-		}
-		return experimentPrefix;
-	}
-	//  ****************************************************
 	public static String[] getAllResultFileName(String experimentName){
 		
 		String[] retStringArray = new String[] {
 				experimentName + "__" + FILESUFIX_RI,
+				experimentName + "__" + FILESUFIX_RI_PHASE_1,
+				experimentName + "__" + FILESUFIX_RI_PHASE_2,
 				experimentName + "_" + FILESUFIX_ID,
 				experimentName + "_" + FILESUFIX_TOPRANKING,
 				experimentName + "_" + FILESUFIX_DISTANCE,
 				experimentName + "_" + FILESUFIX_MATRIX,
+				experimentName + "_" + FILESUFIX_MATRIX_TOP,				
 				experimentName + "_" + FILESUFIX_CUTOFF,
 				experimentName + "_" + FILESUFIX_CV_RESULT,
 				experimentName + "_" + FILESUFIX_PERMUTATIONS,

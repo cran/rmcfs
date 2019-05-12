@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,28 +15,27 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.utils.helpers;
 
 public class MinMax {
-	public float minValue=Float.MIN_VALUE;
-	public float maxValue=Float.MIN_VALUE;
+	public float minValue;
+	public float maxValue;
 
-	public float minIndex=-1;
-	public float maxIndex=-1;
+	public float minIndex;
+	public float maxIndex;
 	//************************
 	public MinMax(){
-		
+		minValue = Float.NaN;
+		maxValue = Float.NaN;
+		minIndex = -1;
+		maxIndex = -1;
 	}
 	//************************
-	public MinMax(float min, float max){
-		minValue = min;
-		maxValue = max;
+	public String toString() {
+		String s = " "+ minValue + " " + maxValue;
+		return s;		
 	}
 	//************************
+
 }

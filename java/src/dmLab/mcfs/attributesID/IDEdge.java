@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,28 +15,18 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
-package dmLab.utils.dataframe;
+package dmLab.mcfs.attributesID;
 
-public class Column implements Cloneable{
-	public static final short TYPE_NOMINAL=0;
-	public static final short TYPE_NUMERIC=1;
+public class IDEdge {
 	
-	public String name;
-	public short type;
-	//******************************
-	public Column(String name, short type){
-		this.name = name;
-		this.type = type;
+	public String parent;
+	public String child;
+	public float weight;
+	
+	public IDEdge(String parent, String child){
+		this.parent = parent;
+		this.child = child;
 	}
-	//******************************
-	public Column clone(){
-		return new Column(name,type);		
-	}
-	//******************************
+
 }

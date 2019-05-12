@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,19 +15,15 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab;
 
+import dmLab.utils.StringUtils;
 
 public class DMLabInfo
 {
-	public static String VERSION = "2.2.1";
-	public static String DATE = "2016.10.27";
+	public static String VERSION = "2.3.0";
+	public static String DATE = "2019.05.10";
 
 	public DMLabInfo()
 	{
@@ -36,23 +32,17 @@ public class DMLabInfo
 	@Override
     public String toString()
 	{
-		StringBuffer tmp=new StringBuffer();
-		tmp.append("*****************************************").append('\n');
-		tmp.append("********          dmLab           *******").append('\n');
-		tmp.append("***     ver. "+VERSION+"     "+DATE+"     ***").append('\n');
-		tmp.append("*****************************************").append('\n');
-		tmp.append("Created by Michal Draminski [mdramins@ipipan.waw.pl]").append('\n');
+		StringBuffer tmp = new StringBuffer();
+		String dmlabVerLable = "#####        dmLab " + VERSION + " [" + DATE + "]        #####";
+		String separatorLine = StringUtils.charRepeat('#', dmlabVerLable.length());
+		
+		tmp.append(separatorLine).append('\n');
+		tmp.append(dmlabVerLable).append('\n');
+		tmp.append(separatorLine).append('\n');
+		tmp.append("Created by Michal Draminski [michal.draminski@ipipan.waw.pl]").append('\n');
 		tmp.append("http://www.ipipan.eu/staff/m.draminski/").append('\n');
 		tmp.append("Polish Academy of Sciences - Institute of Computer Science").append('\n');
-		tmp.append("**************************************************************************").append('\n');
-        tmp.append("'MCFS-ID' and 'ADX' are developed by Michal Draminski").append('\n');
-        tmp.append("'rmcfs' developed by Michal Draminski & Julian Zubek").append('\n');
-        tmp.append("'SLIQ' developed by Mariusz Gromada").append('\n');
-		tmp.append("**************************************************************************").append('\n');
-        tmp.append("If you want to use dmLab or 'MCFS-ID' in your work, please cite the paper:").append('\n');
-        tmp.append("M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski").append('\n');
-        tmp.append("'Monte Carlo feature selection for supervised classification', BIOINFORMATICS 24(1): 110-117 (2008)").append('\n');
-		tmp.append("**************************************************************************").append('\n');
+		tmp.append(separatorLine).append('\n');		
 		return tmp.toString();
 	}
 //************************************************

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.classifier.sliq;
@@ -244,7 +239,7 @@ public class SliqClassifier extends Classifier
 			// NUMERIC Attribute
 			if (attributesLists[attrIndex].getAttrType() == Const.NUMERIC_ATTR)
 			{
-                          //  System.out.println("DEBUG: " + attrIndex + " name: " + trainArray.attributes[attrIndex].name + " type: " + trainArray.attributes[attrIndex].type);
+				//  System.out.println("DEBUG: " + attrIndex + " name: " + trainArray.attributes[attrIndex].name + " type: " + trainArray.attributes[attrIndex].type);
 				leafsTmpsInit();
 
 				for (eventIndex = 0; eventIndex<eventsAttrNumber; eventIndex++)

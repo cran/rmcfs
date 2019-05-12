@@ -8,10 +8,12 @@
 \usage{
   \method{plot}{idgraph}(x, 
           label_dist = 0.5, 
+          color = 'darkred',
           cex = 1, \dots)}
 \arguments{
   \item{x}{\emph{idgraph/igraph} S3 object representing feature interdependencies. This object is produced by \code{\link{build.idgraph}} function.}
   \item{label_dist}{space between the node's label and the corresponding node in the plot.}
+  \item{color}{it defines color of the graph nodes.}
   \item{cex}{size of fonts.}
   \item{...}{additional plotting parameters.}
 }
@@ -26,7 +28,7 @@
   # Parametrize and run MCFS-ID procedure
   result <- mcfs(class~., adata, cutoffPermutations = 0, featureFreq = 50,
                   finalCV = FALSE, finalRuleset = FALSE, threadsNumber = 2)
-
+  
   # build interdependencies graph for top 6 features 
   # and top 12 interdependencies and plot all nodes
   gid <- build.idgraph(result, size = 6, size_ID = 12, orphan_nodes = TRUE)

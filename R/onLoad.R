@@ -10,7 +10,7 @@ libdir <- character()
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage("
   ########################
-  ##   rmcfs   1.2.15   ##
+  # rmcfs version 1.3.0  #
   ########################
   If used please cite the following paper: 
   M. Draminski, J. Koronacki (2018), 

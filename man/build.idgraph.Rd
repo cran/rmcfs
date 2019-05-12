@@ -5,7 +5,6 @@
 Constructs the ID-Graph (igraph/idgraph object) from \code{mcfs_result} object returned by \code{\link{mcfs}} function.
 The number of top features included and the number of ID-Graph edges can be customized.
 }
-
 \usage{build.idgraph(mcfs_result, 
                       size = NA, 
                       size_ID = NA, 

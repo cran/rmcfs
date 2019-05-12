@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,23 +15,21 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.attributesID;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+
 import dmLab.utils.StringUtils;
 
-public class DependencyLoader 
+public class IDLoader 
 {
 	//***************************
-	public DependencyLoader()
+	public IDLoader()
 	{
 	}
 	//***************************
@@ -48,7 +46,8 @@ public class DependencyLoader
 		}
 		String line="";
 		int lineCount=0;
-		boolean readNew=false;
+		HashMap<String, Integer> headerMap = new HashMap<String, Integer>(); 
+		boolean useReadIDEdge = false;
 		do{
 			try{
 				line=file.readLine();
@@ -57,8 +56,7 @@ public class DependencyLoader
 				else if(line.trim().length()==0)
 					continue;
 				lineCount++;
-			}
-			catch (Exception e) {
+			}catch (Exception e) {
 				System.err.println("Error reading input file. Line: " + lineCount);
 				try{
 					file.close();
@@ -66,19 +64,33 @@ public class DependencyLoader
 					System.err.println("Error closing input file. File: "+fileName);
 					e1.printStackTrace();
 				}                
-			}            
-			if(lineCount==1 && line.startsWith(AttributesID.CONN_FILE_HEADER))
-				readNew=true;
-
-			if(readNew){
-				if(lineCount>1)
-					readLineNew(line,attrID);
-			}else{
-				readLineOld(line,attrID);
 			}
-
+			
+			if(lineCount==1){
+				//compare file header with reference one
+				//file header must contain the following fields "parent, child, weight" OR "edge_a, edge_b, weight"
+				String[] refHeader = AttributesID.ID_FILE_HEADER.toLowerCase().split(",");
+				String[] refHeaderOld = AttributesID.ID_FILE_HEADER_OLD.toLowerCase().split(",");
+				String[] headerArray = line.toLowerCase().split(",");				
+				
+				useReadIDEdge = StringUtils.allin(refHeaderOld, headerArray, true, true);
+				useReadIDEdge = useReadIDEdge || StringUtils.allin(refHeader, headerArray, true, true);
+				if(useReadIDEdge){
+					for(int i=0; i<headerArray.length; i++)
+						headerMap.put(StringUtils.trimChars(headerArray[i], new char[]{'"','\''}).toLowerCase(), i);
+				}else{
+					readIDList(line, attrID);
+				}
+			}else{			
+				if(useReadIDEdge){
+					readIDEdge(line, attrID, headerMap);
+				}else{
+					readIDList(line, attrID);
+				}
+			}
+			
 		}while(line!=null); //end while
-		attrID.findMinMaxID();
+		
 		try {
 			file.close();
 		} catch (IOException e) {
@@ -87,7 +99,7 @@ public class DependencyLoader
 		return true;
 	}
 	//***************************
-	private boolean readLineOld(String line, AttributesID attrID){
+	private boolean readIDList(String line, AttributesID attrID){
 		String[] list=StringUtils.tokenizeString(line,new char[]{','}, false);
 		final int size=list.length;
 
@@ -96,7 +108,7 @@ public class DependencyLoader
 			String[] parsedConnection = StringUtils.tokenizeString(list[i],new char[]{'(',')',';'}, false);
 			try{
 				float weight=Float.parseFloat(parsedConnection[1]); 
-				attrID.addDependency(list[0], parsedConnection[0], weight);
+				attrID.addID(list[0], parsedConnection[0], weight);
 			}catch (NumberFormatException e) {
 				System.err.println("Error parsing line: "+line);
 			}
@@ -105,12 +117,27 @@ public class DependencyLoader
 		return true;
 	}
 	//***************************
-	private boolean readLineNew(String line, AttributesID attrID){
+	private boolean readIDEdge(String line, AttributesID attrID, HashMap<String, Integer> headerMap){
+		String[] header;
+		String[] refHeader = AttributesID.ID_FILE_HEADER.toLowerCase().split(",");
+		String[] refHeaderOld = AttributesID.ID_FILE_HEADER_OLD.toLowerCase().split(",");
+		
+		header = refHeader;		
+		if(!headerMap.containsKey(header[0].toLowerCase()))
+			header = refHeaderOld; 
+		if(!headerMap.containsKey(header[0].toLowerCase())){
+			System.err.println("ID file does not contain correct header: "+ Arrays.toString(refHeader) + " OR " + Arrays.toString(refHeaderOld));			
+			return false;
+		}
+		int parentIdx = headerMap.get(header[0]);
+		int childIdx = headerMap.get(header[1]);
+		int weightIdx = headerMap.get(header[2]);
 
-		String[] list=StringUtils.tokenizeString(line,new char[]{','}, false);
+		String[] values = StringUtils.tokenizeString(line, new char[]{','}, false);
 		try{
-			float weight=Float.parseFloat(list[2]); 
-			attrID.addDependency(list[0], list[1], weight);
+			float weight = Float.parseFloat(values[weightIdx]); 
+			attrID.addID(StringUtils.trimChars(values[parentIdx], new char[]{'"','\''}),
+					StringUtils.trimChars(values[childIdx], new char[]{'"','\''}), weight);
 		}catch (NumberFormatException e) {
 			System.err.println("Error parsing line: "+line);
 		}

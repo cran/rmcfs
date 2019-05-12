@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.attributesRI.measuresRI;
 
@@ -32,8 +27,8 @@ public abstract class ImportanceMeasure
     public static String MEASURE_PROJECTIONS = "projections";
     public static String MEASURE_CLASSIFIERS = "classifiers";
     public static String MEASURE_NODES = "nodes";
+    public static String MEASURE_RI_ROUGH = "RI_rough";
     public static String MEASURE_RI = "RI";
-    public static String MEASURE_RINORM = "RI_norm";
     
     public String name;
     public MCFSParams cfg;

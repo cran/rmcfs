@@ -1,5 +1,36 @@
 # rmcfs - changes
 
+Version 1.3.0
+=============
+* two-stage feature selection implemented
+* function mcfs() has new parameter mode - if mode = 2 mcfs runs 2 stage filtering that is much faster and gives more detailed ID-Graphs
+* two-stage feature selection - rankings from both phases are saved () and combined together to create the final one
+* in function mcfs there is a new cutoff method cutoffMethod - if cutoffMethod = "contrast" then cutoff value is determined based on contrast attributes
+* mcfs now supports weighting of input attributes - new parameter 'attrWeights' in mcfs()
+* read/write to/from adx/adh now supports data.frame attributes: 'attr_weights' and 'target'
+* in result$RI data.frame column 'RI_norm' is replaced by 'RI'
+* all RI data.frames contains normalized values of the following columns: 'RI', 'classifiers' and 'nodes'
+* plots 'ri', 'id', 'heatmap', 'cmatrix', 'features' support color parameter
+* plot.idgraph supports color parameter
+* plots: 'features' and 'cv' are created in ggplot2 by default
+* new function export.plots()
+* in functions 'import.result()' and 'export.result()' - path can now define full path to the zip result file and label can be set to NA
+* function export.result() saves the ranking in original order (as it is in input data)
+* updated vignette file to be consistent with JSS article
+* function build.idgraph() works much faster now
+* fix.data() works much faster now
+* data export/import are improved
+* some default parameters changed to speed up calculations: featureFreq, splitSetSize, threadsNumber
+* removed 'progressInterval' parameter
+* removed 'finalCVRepetitions' parameter
+* various minor fixes in plots for some extreme situations
+* minor fix in internal function drop.file.extension()
+* minor fix in recognition of JAVA version (version 9/10)
+* minor fixes in plots for numeric decision MCFS result
+* minor fix in adx/adh export for big data
+* rmcfs is working on JAVA 7 and above
+* dmLab.jar version 2.3.0
+
 Version 1.2.15
 =============
 * fixed an issue for Java 11
@@ -18,8 +49,8 @@ Version 1.2.12
 
 Version 1.2.11
 =============
-* function build.idgraph() has a new parameter outer_ID
-* parameter plot_all_nodes is now orphan_nodes in function build.idgraph()
+* function build.idgraph() has a new parameter 'outer_ID'
+* in function build.idgraph() parameter 'plot_all_nodes' is now 'orphan_nodes'
 * fix and efficiency improvement in importing ID-graph from file
 
 Version 1.2.10

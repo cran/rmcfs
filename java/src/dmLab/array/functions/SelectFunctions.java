@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,16 +15,10 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.functions;
 
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,11 +27,15 @@ import java.util.Random;
 import dmLab.array.Array;
 import dmLab.array.FArray;
 import dmLab.array.meta.Attribute;
+import dmLab.array.meta.AttributesMetaInfo;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.mcfs.attributesRI.Ranking;
 import dmLab.utils.ArrayUtils;
+import dmLab.utils.StringUtils;
 import dmLab.utils.condition.Condition;
 import dmLab.utils.list.IntegerList;
+import dmLab.utils.roulette.RouletteInput;
+import dmLab.utils.roulette.RouletteSelection;
 
 public class SelectFunctions
 {	
@@ -94,7 +92,7 @@ public class SelectFunctions
 		else{
 			//there is need to randomly select events that meet the condition
 			int mask[]=new int[idList.size()];
-			arrayUtils.randomFill(mask, selectionSize, 1, 0);
+			arrayUtils.randomSelect(mask, selectionSize, 1, 0);
 			for(int i=0;i<mask.length;i++)
 				if(mask[i]==1)					
 					splitMask[idList.get(i)]=1;
@@ -124,7 +122,7 @@ public class SelectFunctions
 	}	
 	//********************************************
 	// ROWS SELECTION
-	//********************************************
+	//********************************************	
 	public static Array selectRows(Array srcArray, String rowCondition)
 	{
 		Condition condition=new Condition();
@@ -153,7 +151,7 @@ public class SelectFunctions
 		return srcArray.clone(colMask, rowMask);
 	}
 	//********************************************
-	private static boolean[] getRowMask(Array array, Condition condition)
+	public static boolean[] getRowMask(Array array, Condition condition)
 	{
 		final int conditionAttrIndex = array.getColIndex(condition.attributeName);
 
@@ -162,12 +160,12 @@ public class SelectFunctions
 			return null;
 		}
 
-		float conditionValue = Float.NaN; 
+		float conditionValue = Float.NaN;
 		if(array.attributes[conditionAttrIndex].type == Attribute.NUMERIC){
 			try{
-				conditionValue = Float.parseFloat(condition.value);       
+				conditionValue = StringUtils.myParseFloat(condition.value);       
 			}catch(NumberFormatException e){
-				System.err.println("Incorrect Condition Value. Value: "+condition.value + " is not numeric.");
+				System.err.println("Incorrect Condition Value. Value: " + condition.value + " is not numeric.");
 				return null;
 			}
 		}
@@ -181,12 +179,27 @@ public class SelectFunctions
 				if(condition.operator.compare(value, condition.value))
 					rowMask[i] = true;
 			}else if(array.attributes[conditionAttrIndex].type == Attribute.NUMERIC){
-				if(condition.operator.compare(Float.parseFloat(value), conditionValue))
+				if(condition.operator.compare(StringUtils.myParseFloat(value), conditionValue))
 					rowMask[i] = true;
 			}
 		}
 		return rowMask;
 	}
+	// ********************************************
+	public static Array removeNaNRows(Array srcArray, String column){	
+		boolean[] rowMask = SelectFunctions.getRowMask(srcArray, new Condition(column + " != ?"));
+		int nanCount = ArrayUtils.count(rowMask, false);
+		if(nanCount > 0){
+			System.out.print("Warning! Target column contains '?' values...");
+			boolean colMask[] = new boolean[srcArray.colsNumber()];
+			Arrays.fill(colMask, true);
+			srcArray = srcArray.clone(colMask, rowMask);
+			srcArray.findDomains();
+			srcArray.setAllDecValues();
+			System.out.println(" "+nanCount + " rows are removed.");
+		}
+		return srcArray;
+	}	
 	// ********************************************
 	//this function reduces the size of the inputArray to size defined by size
 	public Array selectRowsRandom(Array srcArray, float dstRows)
@@ -212,7 +225,7 @@ public class SelectFunctions
 	{
 		int splitMask[] = new int [srcArray.rowsNumber()];
 		int dstRows =  (int)(srcArray.rowsNumber() * splitRatio);
-		arrayUtils.randomFill(splitMask, dstRows, 1, 0);
+		arrayUtils.randomSelect(splitMask, dstRows, 1, 0);
 		return splitMask;
 	}	
 	//	********************************************
@@ -270,29 +283,66 @@ public class SelectFunctions
 	// COLUMNS SELECTION
 	//********************************************
 	//**** function randomly selects attributes
-	public int[] getColumnsMask(Array srcArray, int dstColumns)
+	@Deprecated
+	public int[] getColumnsMask_old(Array srcArray, int dstColumns)
 	{		
 		final int decisionIndex = srcArray.getDecAttrIdx();
 		final int srcColumns = srcArray.colsNumber();
-		int colMask[] = new int [srcColumns];
-
-		if(dstColumns > (srcColumns)/2.0){
-			Arrays.fill(colMask,1);
-			colMask[decisionIndex] = 0;
-			arrayUtils.randomFill(colMask, srcColumns-dstColumns-1, 0);
-			colMask[decisionIndex] = 1;
-		}else{
-			Arrays.fill(colMask,0);
-			colMask[decisionIndex] = 1;
-			arrayUtils.randomFill(colMask, dstColumns, 1);
-		}
+		int[] colMask = new int [srcColumns];
+		colMask = arrayUtils.randomSelect(colMask, dstColumns);			
+		colMask[decisionIndex] = 1; 
+				
 		return colMask;
 	}
-	//	********************************************
-	public Array selectColumns(Array srcArray, int dstColumns)
-	{
-		int[] colMask = getColumnsMask(srcArray, dstColumns);
-		return selectColumns(srcArray, colMask);
+	//********************************************
+	public int[] getColumnsMask(Array srcArray, int dstColumns)
+	{	
+		int[] colMask = null;		
+		AttributesMetaInfo attrMetaInfo = srcArray.buildAttributesMetaInfo(false);
+		//System.out.println(attrMetaInfo.toString());
+	
+		if(dstColumns >= srcArray.colsNumber()){
+			colMask = new int[srcArray.colsNumber()];
+			Arrays.fill(colMask, 1);
+		}else{
+			RouletteInput rouletteInput = attrMetaInfo.getRouletteInput();
+			RouletteSelection rouletteSelection = new RouletteSelection(arrayUtils.random);
+			rouletteSelection.run(rouletteInput, dstColumns);
+			//int[] selected = rouletteSelection.run(rouletteInput, dstColumns);
+			//System.out.println(rouletteInput.toString());
+			//System.out.println("selected: " + Arrays.toString(selected));
+			colMask = rouletteSelection.select(attrMetaInfo, rouletteInput);
+			//add decision attribute
+			colMask[srcArray.getDecAttrIdx()] = 1;
+		}		
+		return colMask;
+	}
+	//********************************************
+	public static int[] getColumnsMask(Array srcArray, AttributesRI importances, int dstColumns)
+	{		
+		final int srcColumns = srcArray.colsNumber();
+		int[] colMask = new int [srcColumns];
+
+		if(dstColumns >= srcColumns){
+			Arrays.fill(colMask, 1);
+		}else{
+			AttributesMetaInfo attrMetaInfo = srcArray.buildAttributesMetaInfo(false);
+			Ranking topRanking = importances.getTopRankingSize(importances.mainMeasureIdx, importances.getAttributesNumber());
+			String[] attributes = topRanking.getAttributesNames();
+			Arrays.fill(colMask, 0);
+			int i = 0;
+			int currAttr = dstColumns;
+			while(i<attributes.length && currAttr>0){
+				if(!ExtFunctions.isContrastAttribute(attributes[i])){
+					colMask[attrMetaInfo.getIndex(attributes[i])] = 1;
+					currAttr--;
+				}
+				i++;
+			}
+			colMask[srcArray.getDecAttrIdx()] = 1;
+		}
+		
+		return colMask;
 	}
 	//********************************************
 	//function selects attributes; colMask=1 - select; colMask=0 - ignore
@@ -319,25 +369,6 @@ public class SelectFunctions
 		}
 		array = array.clone(colMask, rowMask);
 		return array;
-	}
-	//********************************************
-	public static Array selectColumns(Array srcArray, AttributesRI importances, int dstColumns)
-	{		
-		if(dstColumns>=srcArray.colsNumber())
-			return srcArray;
-
-		Array dstArray = srcArray;
-		ArrayList<String> finalAttributes = new ArrayList<String>();
-		Ranking topRanking = importances.getTopRankingSize(importances.mainMeasureIdx, dstColumns);        	
-		if(topRanking != null) {
-			finalAttributes.addAll(Arrays.asList(topRanking.getAttributesNames()));
-			//add decision attribute
-			finalAttributes.add(srcArray.attributes[srcArray.getDecAttrIdx()].name);
-			String[] attributes = new String[1];
-			attributes = finalAttributes.toArray(attributes);
-			dstArray = SelectFunctions.selectColumns(srcArray, attributes);
-		}
-		return dstArray;
 	}
 	//********************************************
 	public static Array removeColumn(Array array, int column)

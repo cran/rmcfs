@@ -22,11 +22,11 @@ read.adh <- function(file = ""){
 ###############################
 read.zip <- function(file, fileFormat){
   if(File.exists(file)){
-    if(file.extension(file) == 'zip'){
+    if(file.ext(file) == 'zip'){
       tmp_dir <- tempdir()
       utils::unzip(file, exdir = tmp_dir)
-      file_path <- file.path(tmp_dir, paste0(drop.file.extension(basename(file)), ".", fileFormat))
-    }else if(file.extension(file) == fileFormat){
+      file_path <- file.path(tmp_dir, paste0(drop.file.ext(basename(file)), ".", fileFormat))
+    }else if(file.ext(file) == fileFormat){
       file_path <- file
     }else{
       stop(paste0("Incorrect file format. File: ", file))
@@ -53,7 +53,9 @@ read.zip <- function(file, fileFormat){
 # summary(d)
 import.adx <- function(file = "")
 {
-  dat <- readLines(file)
+  conn <- file(file, "r", blocking = FALSE)
+  dat <- readLines(file, warn = F)
+  close(conn)
   dat <- unlist(lapply(dat,strsplit,"\\{"))
   dat <- unlist(lapply(dat,strsplit,"\\}"))
   #dat <- strsplit(dat,"\\{")
@@ -77,7 +79,7 @@ import.adx <- function(file = "")
   attr <- dat[(attr_idx+1):(event_idx-1)]
   events <- dat[(event_idx+1):length(dat)]
   dat <- NULL
-  
+
   attr <- import.attributes(attr)
   if(length(events)<1)
     stop(paste0("Events are not defined. Number of events = 0"))
@@ -87,7 +89,7 @@ import.adx <- function(file = "")
   events <- events[events!=""]
   events <- gsub('\t', ' ', events)
   events <- do.call(rbind, strsplit(events,','))
-  events[events=="?"] <- NA
+  events[events == "?"] <- NA
   events <- as.data.frame(events, stringsAsFactors = F)
   
   if(ncol(events) != nrow(attr)){
@@ -105,23 +107,30 @@ import.adx <- function(file = "")
   }
   
   #move decision to the end if it is defined
-  if(any(attr$decision_cols)){
-    events <- cbind(events[!attr$decision_cols], events[attr$decision_cols])
-  }
+  # if(any(attr$decision_cols)){
+  #   events <- cbind(events[!attr$decision_cols], events[attr$decision_cols])
+  # }
+  
   events <- events[, !attr$ignore_cols]
+  attr(events, 'attr_weights') <- attr$attr_weights
+  attr(events, 'target') <- names(events)[attr$decision_cols]
+
   return(events)
 }
 
 ###############################
 #import.adh
 ###############################
-import.adh <- function(file = ""){
+import.adh <- function(file = "")
+{
+  conn <- file(file, "r", blocking = FALSE)
   dat <- readLines(file, warn = F)
+  close(conn)
   attr <- import.attributes(dat)
   
   csvFileName <- paste0(sub('\\.adh', '', file),".csv")
   if(File.exists(csvFileName)){
-    events <- utils::read.csv(csvFileName, header = T, sep=',', na.strings = c("NA", "NaN", "?") , stringsAsFactors = F)
+    events <- load.csv(csvFileName, na.char = c('?', 'NA', 'NaN'))
   }else{
     stop(paste0("File does not exist. File: ", csvFileName))
   }
@@ -134,18 +143,19 @@ import.adh <- function(file = ""){
   if(any(attr$nominal_cols)){
     events[attr$nominal_cols] <- apply(events[,attr$nominal_cols, drop = F], 2, function(x) as.character(x))
   }
-  #move decision to the end if it is defined
-  if(any(attr$decision_cols)){
-    events <- cbind(events[!attr$decision_cols], events[attr$decision_cols])
-  }
+  
   events <- events[, !attr$ignore_cols]
-  return(events) 
+  attr(events, 'attr_weights') <- attr$attr_weights
+  attr(events, 'target') <- names(events)[attr$decision_cols]
+  
+  return(events)
 }
 
 ###############################
 #import.attributes
 ###############################
-import.attributes <- function(attr){
+import.attributes <- function(attr)
+{
   if(length(attr)<1)
     stop(paste0("Attributes are not defined. Number of attributes = 0"))
 
@@ -159,7 +169,7 @@ import.attributes <- function(attr){
   decision_cols <- grepl(' decision', attr)
   ignore_cols <- grepl(' ignore', attr)
   
-  if(sum(decision_cols)>1)
+  if(sum(decision_cols) > 1)
     stop(paste0("Multiple decision attributes detected. One is expected."))
   
   attr_names <- gsub(' nominal','',attr)
@@ -169,17 +179,24 @@ import.attributes <- function(attr){
   attr_names[decision_cols] <- string.trim(unlist(strsplit(attr_names[decision_cols],'\\('))[1])
   attr_names <- gsub('"','',attr_names)
   attr_names <- gsub("'",'',attr_names)
-  attr_names <- string.trim(attr_names)
-  
+
+  attr_names_tmp <- strsplit(attr_names,'\\s+')
+  attr_names_tmp <- lapply(attr_names_tmp, function(x){if(length(x)<2) return(c(x,NA)) else return(x)})
+  attr_names <- unlist(lapply(attr_names_tmp, function(x){string.trim(x[[1]])}))
+  weights <- unlist(lapply(attr_names_tmp, function(x){string.trim(x[[2]])}))
+  weights <- as.numeric(gsub("\\]",'',gsub('\\[','',weights)))
+  weights[is.na(weights)] <- 1
+
   if(sum(nominal_cols & numeric_cols)>0)
     stop(paste0("Multiple type attributes detected. One type is expected. Attributes: ",
                 paste0(attr_names[nominal_cols & numeric_cols],collapse = ', ')))
 
   if(sum(nominal_cols | numeric_cols) < length(attr))
     stop(paste0("Missing type attributes detected. One type is expected. Attributes: ",
-                paste0(attr_names[!(nominal_cols | numeric_cols)],collapse = ', ')))
+                paste0(attr_names[!(nominal_cols | numeric_cols)], collapse = ', ')))
   
-  ret.df <- data.frame(attr_names, nominal_cols, numeric_cols, ignore_cols, decision_cols)
+  ret.df <- data.frame(attr_names, nominal_cols, numeric_cols, ignore_cols, decision_cols, attr_weights = weights, 
+                       stringsAsFactors = F)
   return(ret.df)
 }
 
@@ -191,10 +208,16 @@ import.attributes <- function(attr){
 # d[5,1] <- Inf
 # d[5,3] <- NA
 # write.adx(d, file="~/ali_test.adx", chunk_size=2000)
-write.adx <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALSE){
-  if(file != "")
-    if(file.extension(file) != "adx")
-      stop(paste0("Incorrect file name. File: ",file, ". Expected: '.adx'"))
+write.adx <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALSE)
+{
+  if(file != ""){
+    if(file.ext(file) == "zip"){
+      file <- paste0(drop.file.ext(file),".adx")
+      zip <- TRUE
+    }else if(file.ext(file) != "adx"){
+      stop(paste0("Incorrect file name. File: ", file, ". Expected: '.adx'"))
+    }
+  }
   write.zip(x, file, target, chunk_size, zip, "adx")
 }
 
@@ -208,10 +231,16 @@ write.adx <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALS
 # d[5,3] <- NA
 # d[7,4] <- NA
 # write.adh(d, file="~/ali_test.adh")
-write.adh <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALSE){
-  if(file != "")
-    if(file.extension(file) != "adh")
+write.adh <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALSE)
+{
+  if(file != ""){
+    if(file.ext(file) == "zip"){
+      file <- paste0(drop.file.ext(file),".adh")
+      zip <- TRUE
+    }else if(file.ext(file) != "adh"){
       stop(paste0("Incorrect file name File: ",file, ". Expected: '.adh'"))
+    }
+  }
   write.zip(x, file, target, chunk_size, zip, "adh")
 }
 
@@ -226,10 +255,15 @@ write.adh <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALS
 # d[5,3] <- NA
 # d[7,4] <- NA
 # write.arff(x, file="~/ali_test.arff", chunk_size=2000)
-write.arff <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALSE){
-  if(file != "")
-    if(file.extension(file) != "arff")
+write.arff <- function(x, file = "", target = NA, chunk_size = 100000, zip = FALSE)
+{
+  if(file != ""){
+    if(file.ext(file) == "zip"){
+      file <- paste0(drop.file.ext(file),".arff")
+      zip <- TRUE
+    }else if(file.ext(file) != "arff")
       stop(paste0("Incorrect file format. File: ",file, ". Expected: '.arff'"))
+  }
   write.zip(x, file, target, chunk_size, zip, "arff")
 }  
 
@@ -276,14 +310,103 @@ write.zip <- function(x, file, target, chunk_size, zip, fileFormat)
 }
 
 ###############################
-#export.adx
+#retrieve.attributes
 ###############################
-export.adx <- function(x, file = "", target = NA, chunk_size = 100000)
+retrieve.attributes <- function(x, target = NA)
+{
+  numericCols <- sapply(x[1,], is.numeric)
+  
+  if(is.na(target) & !is.null(attr(x, 'target')))
+    target <- attr(x, 'target')
+  if(is.character(target))
+    target <- match(target, names(x))
+  if(is.na(target) || target < 1 || target > ncol(x)){
+    target <- ncol(x)
+    warning(paste("Target attribute is not correctly defined - setting the last column as target attribute: ", names(x)[target]))
+  }
+  
+  if( ('attr_weights' %in% names(attributes(x))) & (ncol(x) != length(attr(x, "attr_weights"))) )
+    stop(paste0("Size (ncol=", ncol(x), ") of input data.frame does not match to length of weights vector(",
+                length(attr(x, "attr_weights")),")"))
+    
+  attrHeader <- matrix(nrow = ncol(x), ncol = 4, byrow = FALSE)
+  attrHeader[,1] <- paste0('"',names(x),'"')
+  attrHeader[numericCols, 2] <- "numeric"
+  attrHeader[!numericCols, 2] <- "nominal"
+  if('attr_weights' %in% names(attributes(x))){
+    attrHeader[, 3] <- paste0('[',attr(x, "attr_weights"),']')
+  }else{
+    attrHeader[, 3] <- rep('[1]', nrow(attrHeader))
+  }
+  attrHeader[target, 4] <- "decision"
+  attrHeader[is.na(attrHeader[,4]),4] <- ""
+  colnames(attrHeader) <- c('attribute', 'type', 'weight', 'role')
+  return(attrHeader)
+}
+
+###############################
+#export.adh
+###############################
+export.adh <- function(x, file = '', target = NA, chunk_size = 100000)
 {
   if(file == ""){
     file <- stdout()
+    adhFileName <- ''
+    csvFileName <- ''
   }else if(is.character(file)) {
-    file <- file(file, "wb")
+    if(tolower(file.ext(file)) != "adh")
+      stop("Incorrect file extension *.adh expected.")
+    adhFileName <- file
+    csvFileName <- paste0(sub('\\.adh', '', adhFileName),".csv")
+    file <- file(adhFileName, open = "wb")
+  }
+  
+  if(!inherits(file, "connection"))
+    stop("Argument 'file' must be a character string or connection.")
+  
+  if (!is.data.frame(x))
+    x <- data.frame(x)
+  
+  verbose <- F
+  if(as.numeric(ncol(x)) * nrow(x) > chunk_size)
+    verbose <- T
+  
+  if(verbose)
+    cat(paste0("Retrieving attributes meta info...\n"))
+  attrHeader <- retrieve.attributes(x, target)
+  attrHeader[,1] <- paste0(" ", attrHeader[,1])
+  l <- apply(attrHeader, 1, paste, collapse = " ")
+  
+  ##### write attributes #####
+  if(verbose)
+    cat(paste0("Saving header...\n"))
+  writeLines(l, file)
+  closeAllConnections()
+  
+  ##### write events #####
+  if(verbose)
+    cat(paste0("Saving data...\n"))
+  save.csv(x, csvFileName, na.char = 'NA')
+  
+  if(verbose){
+    cat("Data has been saved.\n")
+  }
+  return(TRUE)
+}
+
+###############################
+#export.adx
+###############################
+export.adx <- function(x, file = '', target = NA, chunk_size = 100000)
+{
+  if(file == ''){
+    file <- stdout()
+  }else if(is.character(file)) {
+    if(tolower(file.ext(file)) != "adx")
+      stop("Incorrect file extension *.adx expected.")
+    
+    fileName <- file
+    file <- file(file, open = "wb")
     on.exit(close(file))
   }
   
@@ -293,119 +416,34 @@ export.adx <- function(x, file = "", target = NA, chunk_size = 100000)
   if (!is.data.frame(x))
     x <- data.frame(x)
   
-  if(is.character(target)) 
-    target <- match(target, names(x))
-  if(is.na(target) || target < 1 || target > ncol(x)) 
-    target <- ncol(x)
-  
-  # for speed create local variables
-  # call these functions only once
-  names.x <- names(x)
-  cols.x <- ncol(x)
-  rows.x <- nrow(x)
-  
   verbose <- F
-  if(cols.x * rows.x > chunk_size)
+  if(as.numeric(ncol(x)) * nrow(x) > chunk_size)
     verbose <- T
-  
+
   if(verbose)
-    cat(paste0("Determining numeric columns...\n"))
-  numeric.cols <- sapply(x[1,], is.numeric)
-  
-  if(verbose)
-    cat(paste0("Saving attributes meta info...\n"))
+    cat(paste0("Retrieving attributes meta info...\n"))
+  attrHeader <- retrieve.attributes(x, target)
+  attrHeader[,1] <- paste0(" ", attrHeader[,1])
+  l <- apply(attrHeader, 1, paste, collapse = " ")
   
   ##### write attributes #####
+  if(verbose)
+    cat(paste0("Saving header...\n"))
   writeLines("attributes", file)
   writeLines("{", file)
-  attrHeader <- matrix(nrow = length(names.x), ncol = 3, byrow = FALSE)
-  attrHeader[,1] <- paste0(" '",names.x,"'")
-  attrHeader[numeric.cols, 2] <- " numeric"
-  attrHeader[!numeric.cols, 2] <- " nominal"
-  attrHeader[target,3] <- " decision"
-  attrHeader[is.na(attrHeader[,3]),3] <- ""
-  l <- apply(attrHeader, 1, paste, collapse="")
-  cat(l, file=file, sep="\n")
+  writeLines(l, file)
   writeLines("}", file)
-  writeLines("", file)
-  
+
   ###### write events ######
   writeLines("events", file)
   writeLines("{", file)
   export.events(x, file, header = FALSE, na.char = '?', chunk_size, verbose)
   writeLines("}", file)
-  
+
   if(verbose){
-    cat("Data has been saved.\n")
+    cat("\nData has been saved.\n")
   }
-}
-
-###############################
-#export.adh
-###############################
-export.adh <- function(x, file = "", target = NA, chunk_size = 100000)
-{
-  adhFileName <- file
-  csvFileName <- paste0(sub('\\.adh', '', adhFileName),".csv")
-  
-  if(file == ""){
-    file <- stdout()
-  }else if(is.character(file)) {
-    file <- file(adhFileName, "wb")
-    #on.exit(close(file))
-  }
-  
-  if(!inherits(file, "connection"))
-    stop("Argument 'file' must be a character string or connection.")
-  
-  if (!is.data.frame(x))
-    x <- data.frame(x)
-  
-  if(is.character(target)) 
-    target <- match(target, names(x))
-  if(is.na(target) || target < 1 || target > ncol(x)) 
-    target <- ncol(x)
-  
-  # for speed create local variables
-  # call these functions only once
-  names.x <- names(x)
-  cols.x <- ncol(x)
-  rows.x <- nrow(x)
-  
-  verbose <- F
-  if(cols.x * rows.x > chunk_size)
-    verbose <- T
-  
-  if(verbose)
-    cat(paste0("Determining numeric columns...\n"))
-  numeric.cols <- sapply(x[1,], is.numeric)
-  
-  if(verbose)
-    cat(paste0("Saving header file...\n"))
-  ##### write attributes #####
-  attrHeader <- matrix(nrow = length(names.x), ncol = 3, byrow = FALSE)
-  attrHeader[,1] <- paste0(" '",names.x,"'")
-  attrHeader[numeric.cols, 2] <- " numeric"
-  attrHeader[!numeric.cols, 2] <- " nominal"
-  attrHeader[target,3] <- " decision"
-  attrHeader[is.na(attrHeader[,3]),3] <- ""
-  l <- apply(attrHeader, 1, paste, collapse="")
-  cat(l, file=file, sep="\n")
-  writeLines("", file)
-  
-  if(adhFileName != ""){
-    close(file)
-    
-    if(verbose)
-      cat(paste0("Saving data file...\n"))
-    
-    ##### write events #####
-    export.events(x, file = csvFileName, header = TRUE, na.char = 'NA', chunk_size, verbose)
-
-    if(verbose){
-      cat("Data has been saved.\n")
-    }
-  }
+  return(TRUE)
 }
 
 ###############################
@@ -433,36 +471,30 @@ export.arff <- function(x, file = "", target = NA, chunk_size = 100000)
     target <- ncol(x)
   
   if(target!=ncol(x)){
-    #move decision column to the end
+    #move decision column to the end to meet ARFF specification
     decisionName <- names(x)[target]
     x <- cbind(x[,-target], x[,target])
     target <- ncol(x)
     names(x)[target] <- decisionName
   }  
-  
-  # for speed create local variables
-  # call these functions only once
-  names.x <- names(x)
-  cols.x <- ncol(x)
-  rows.x <- nrow(x)
-  
+
   verbose <- F
-  if(cols.x * rows.x > chunk_size)
+  if(as.numeric(ncol(x)) * nrow(x) > chunk_size)
     verbose <- T
   
   if(verbose)
-    cat(paste0("Determining numeric columns...\n"))
+    cat(paste0("Retrieving attributes meta info...\n"))
   numeric.cols <- sapply(x[1,], is.numeric)
   
-  if(verbose)
-    cat(paste0("Saving attributes meta info...\n"))
   ## Write Attributes
+  if(verbose)
+    cat(paste0("Saving header...\n"))
   writeLines(paste0("@relation ",'"',names(x)[target],'"'), file)  
   writeLines("", file)
   
-  attrHeader <- matrix(nrow = length(names.x), ncol = 3, byrow = FALSE)
+  attrHeader <- matrix(nrow = length(colnames(x)), ncol = 3, byrow = FALSE)
   attrHeader[,1] <- "@attribute"
-  attrHeader[,2] <- paste0(" '",names.x,"'")
+  attrHeader[,2] <- paste0(" '", names(x), "'")
   attrHeader[numeric.cols, 3] <- " real"
   if(any(!numeric.cols)){
     attrHeader[!numeric.cols, 3] <- sapply(x[,!numeric.cols, drop=F], function(x) paste0(" {", paste(unique(x), collapse=","),"}"))
@@ -472,8 +504,6 @@ export.arff <- function(x, file = "", target = NA, chunk_size = 100000)
   cat(l, file=file, sep="\n")
   
   # convert input data to matrix
-  if(verbose)
-    cat("Conversion of input data to character matrix...\n") 
   x <- df.to.matrix(x, chunk_size, verbose)
   
   ## Write Events
@@ -484,15 +514,17 @@ export.arff <- function(x, file = "", target = NA, chunk_size = 100000)
   writeLines("", file)
   
   if(verbose){
-    cat("Data has been saved.\n")
+    cat("\nData has been saved.\n")
   }
+  return(TRUE)
 }
 
 ###############################
 #export.events
 ###############################
-export.events <- function(x, file = '', header = FALSE, na.char = '?', chunk_size = 100000, verbose = FALSE){
-  if(file == ""){
+export.events <- function(x, file = '', header = FALSE, na.char = '?', chunk_size = 100000, verbose = FALSE)
+{
+  if(file == ''){
     file <- stdout()
   }else if(is.character(file)) {
     file <- file(file, "wb")
@@ -505,13 +537,12 @@ export.events <- function(x, file = '', header = FALSE, na.char = '?', chunk_siz
   if (!is.data.frame(x))
     x <- data.frame(x)
   
-  names.x <- names(x)  
-  cols.x <- ncol(x)
-  rows.x <- nrow(x)
+  cols.x <- as.numeric(ncol(x))
+  rows.x <- as.numeric(nrow(x))
   
   # convert input data to matrix
   if(verbose)
-    cat("Conversion of input data to character matrix...\n") 
+    cat("Conversion of input data...\n") 
   x <- df.to.matrix(x, chunk_size, verbose)
   
   col.steps <- my.seq(chunk_size, cols.x, chunk_size, T)
@@ -519,36 +550,43 @@ export.events <- function(x, file = '', header = FALSE, na.char = '?', chunk_siz
   row.steps <- my.seq(rstep, rows.x, rstep, T)
   chunks <- length(col.steps) * length(row.steps)
 
+  if(verbose)
+    cat(paste0("Saving data...\n"))
   #write header
   if(header)
-    cat(paste0(names.x, collapse=','), file=file, sep="\n")
+    cat(paste0(colnames(x), collapse=','), file=file, sep="\n")
   
   #write events
   chunk <- 1
   row.begin <- 1
+  if(chunks > 1)
+    pb <- utils::txtProgressBar(min = 1, max = chunks, style = 3)
   for(i in row.steps) {
     col.begin <- 1
     for(j in col.steps) {
-      if(verbose)
-        cat(paste0("Saving events chunk: ", chunk, " of ", chunks,"\n"))
       # m must be matrix type
       m <- x[row.begin:i, col.begin:j, drop=FALSE]
       m <- fix.matrix(m, na.char = na.char)
       l <- apply(m, 1, paste, collapse=",")
+      
       if(j > col.steps[1])
-        cat(',', file=file, sep="")
-      if(length(l)>1 | j==cols.x){
-        cat(l, file=file, sep="\n")
+        cat(',', file = file, sep="")
+      
+      if(length(l)>1 | j == cols.x){
+        cat(l, file = file, sep="\n")
       }else{
-        cat(l, file=file, sep="")
+        cat(l, file = file, sep="")
       }
       rm(m, l)
       col.begin <- j + 1
       chunk <- chunk + 1
     }
     row.begin <- i + 1
+
+    #set the Progress Bar
+    if(chunk >1 & verbose)
+      utils::setTxtProgressBar(pb, chunk)
   }
   
   return(TRUE)
 }
-

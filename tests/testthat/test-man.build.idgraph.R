@@ -4,6 +4,7 @@ context("man.build.idgraph")
 test_that("man build.idgraph", {
   options(java.parameters = "-Xmx4g")
   require(testthat)
+  require(rJava)
   require(rmcfs)
   
   # create input data

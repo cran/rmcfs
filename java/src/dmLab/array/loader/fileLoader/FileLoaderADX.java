@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,20 +15,14 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.loader.fileLoader;
 import java.io.BufferedReader;
 import java.io.File;
 
 import dmLab.array.meta.Attribute;
-import dmLab.array.meta.AttributeDef;
+import dmLab.array.meta.AttributeRole;
 import dmLab.utils.FileUtils;
-import dmLab.utils.MyString;
 import dmLab.utils.StringUtils;
 
 
@@ -273,10 +267,10 @@ public class FileLoaderADX extends FileLoader
 	//	*** this method reads info about one attribute
 	private boolean loadAttribute(String inputLine, int attrPointer)
 	{
-		AttributeDef attr = parseAttribute(inputLine);
+		AttributeRole attr = parseAttribute(inputLine);
 		if(attr != null){
 			myArray.attributes[attrPointer] = (Attribute)attr;
-			if(attr.role == AttributeDef.ROLE_DECISION){
+			if(attr.role == AttributeRole.ROLE_DECISION){
 				myArray.setDecAttrIdx(attrPointer);
 				if(attr.decValues != null && attr.decValues.length>0){
 					myArray.setDecValues(attr.decValues);
@@ -290,56 +284,81 @@ public class FileLoaderADX extends FileLoader
 		return true;
 	}
 	//	************************************************
-	public static AttributeDef parseAttribute(String inputString)
+	public static AttributeRole parseAttribute(String inputString)
 	{
-		AttributeDef attr = new AttributeDef(); 
+		AttributeRole attr = new AttributeRole(); 
 		String decisionValues[] = null;
-		String[] list = StringUtils.tokenize(inputString, new char[]{' ','\t'}, new char[] {'\"','\''});        
-
-		//concatenate if there is "decision	(all)" not "decision(all)"
-		if(list.length == 4){
-			if(list[2].equalsIgnoreCase("decision")){
-				list[2] = list[2] + list[3];
-			}else{
-				System.err.println("Incorrect definition of the attribute (should be: 'name type role'). There is: " + inputString);
+		inputString = inputString.trim();
+		
+		int decisionIndex = inputString.toLowerCase().lastIndexOf("decision");
+		String decision = "";
+		
+		//if decision attribute
+		if(decisionIndex > 0){
+			decision = inputString.substring(decisionIndex);			
+			attr.role = AttributeRole.ROLE_DECISION;						
+			decisionValues = parseDecValues(decision, ',');
+			if(decisionValues == null){
+				System.err.println("Incorrect definition of decision attribute (expected: 'decision(all)'): " + decision);
 				return null;				
-			}				
+			}else{
+				attr.decValues = decisionValues;
+			}
+		}else{
+			decisionIndex = inputString.length();
 		}
 		
-		for(int i=0;i<list.length;i++){
-			String label = list[i];
+		//tokenize attribute definition
+		String[] list = StringUtils.tokenize(inputString.substring(0, decisionIndex), new char[]{' ','\t'}, new char[] {'\"'});        
+		if(list.length < 2){
+			System.err.println("Incorrect definition of the attribute (expected: 'name type [weight] role').");
+			return null;			
+		}
+		
+		for(int i=0; i<list.length; i++){
+			String token = list[i];
 			if(i==0){
-				//attribute name
-				MyString s = new MyString(label);
-				s.remove('\'');
-				s.remove('\"');
-				attr.name = s.toString();
+				if(token.startsWith("\"") || token.startsWith("\'")) {
+					token = StringUtils.trimQuotation(token);
+				}
+				attr.name = token;
 			}else if(i==1){
 				//attribute type
-				if(Attribute.type2Int(label) != -1){
-					attr.type = Attribute.type2Int(label);
+				if(Attribute.type2Int(token) != -1){
+					attr.type = Attribute.type2Int(token);
 				}else{
-					System.err.println("Incorrect type of attribute: "+list[0]+" type: "+label);
+					System.err.println("Incorrect type of attribute: "+list[0]+" type: "+token);
 					return null;
 				}
-			}else if(i==2){
-				if(label.equalsIgnoreCase("ignore")){
-					attr.role = AttributeDef.ROLE_IGNORE;
-				}else if(label.toLowerCase().startsWith("decision")){
-						attr.role = AttributeDef.ROLE_DECISION;						
-						decisionValues = parseDecValues(label, ',');
-						if(decisionValues == null)
-							return null;
-						//else if(decisionValues.length > 0)
-						else
-							attr.decValues = decisionValues;						
+			}else if(i>=2){
+				//attribute weight or role
+				if(token.equalsIgnoreCase("ignore")){
+					if(attr.role != AttributeRole.ROLE_INPUT){
+						System.err.println("Role of attribute is already defined: "+list[0]+" role: "+token);
+						return null;						
+					}						
+					attr.role = AttributeRole.ROLE_IGNORE;
+				}else if(token.startsWith("[") && token.endsWith("]")){
+					int weight = 1;
+					try{
+						Float f = Float.parseFloat(token.substring(1, token.length()-1));
+						weight = f.intValue();
+					}catch(Exception e){
+						System.err.println("Incorrect weight of attribute: "+list[0]+" weight: "+token);
+						return null;						
+					}
+					if(weight<=0 || weight > Short.MAX_VALUE){
+						System.err.println("Incorrect weight of attribute: "+list[0]+" weight: "+token);
+						return null;						
+					}						
+					attr.weight = (short)weight;					
 				}else{
-					System.err.println("Incorrect role of attribute: "+list[0]+" role: "+label);
+					System.err.println("Incorrect role of attribute: "+list[0]+" role: "+token);
 					return null;
 				}					
 			}
 		}
-		
+				
 		if(attr.type==Attribute.UNKNOWN){
 			System.err.println("Type is not defined for attribute: "+list[0]);
 			return null;
@@ -393,4 +412,3 @@ public class FileLoaderADX extends FileLoader
 	}
 	//	************************************************
 }
-

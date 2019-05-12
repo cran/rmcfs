@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.attributesRI;
 
@@ -27,32 +22,36 @@ package dmLab.mcfs.attributesRI;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import dmLab.array.Array;
 import dmLab.array.FArray;
 import dmLab.classifier.attributeIndicators.AttributeIndicators;
-import dmLab.mcfs.attributesRI.measuresRI.NodesMeasure;
 import dmLab.mcfs.attributesRI.measuresRI.Importance;
 import dmLab.mcfs.attributesRI.measuresRI.ImportanceMeasure;
+import dmLab.mcfs.attributesRI.measuresRI.NodesMeasure;
 import dmLab.utils.ArrayUtils;
 import dmLab.utils.FileUtils;
 import dmLab.utils.StringUtils;
+import dmLab.utils.dataframe.ColumnMetaInfo;
+import dmLab.utils.dataframe.DataFrame;
 import dmLab.utils.list.StringList;
 
 public class AttributesRI 
 {
     public String label;
     public int mainMeasureIdx;
-    
+        
     protected ArrayList<ImportanceMeasure>measures;
     protected HashMap<String, Integer> measureName; 
     protected float importances[][] = null;
     protected Dictionary attrMap;
+    
+    public static String ATTRIBUTE_LABEL = "attribute";
 
 //  ****************************************
     public AttributesRI()
@@ -160,16 +159,25 @@ public class AttributesRI
         return measureIndex;  
     }
 //**********************************************
-    public void calcNormMeasure(int splits)
+    public void calcNormalizedMeasures(int splits, boolean all)
     {        
         int measureProjectionsIdx = getMeasureIndex(ImportanceMeasure.MEASURE_PROJECTIONS);
-        int measureRIIdx = getMeasureIndex(ImportanceMeasure.MEASURE_RI);
-        int measureRINormIdx = getMeasureIndex(ImportanceMeasure.MEASURE_RINORM);
+        int measureRIIdx = getMeasureIndex(ImportanceMeasure.MEASURE_RI_ROUGH);
+        int measureRINormIdx = getMeasureIndex(ImportanceMeasure.MEASURE_RI);
+
+        int measureClassifiersIdx = getMeasureIndex(ImportanceMeasure.MEASURE_CLASSIFIERS);
+        int measureNodesIdx = getMeasureIndex(ImportanceMeasure.MEASURE_NODES);
         
-        final int size=getAttributesNumber();
+        final int size = getAttributesNumber();
         for (int i=0;i<size;i++){                                    
             if(importances[i][measureProjectionsIdx]!=0)                    
-                importances[i][measureRINormIdx]=importances[i][measureRIIdx]/(importances[i][measureProjectionsIdx] * (float)splits);
+                importances[i][measureRINormIdx] = importances[i][measureRIIdx]/(importances[i][measureProjectionsIdx] * (float)splits);
+            if(all) {
+	            if(importances[i][measureClassifiersIdx]!=0)
+	                importances[i][measureClassifiersIdx] = importances[i][measureClassifiersIdx]/(importances[i][measureProjectionsIdx] * (float)splits);
+	            if(importances[i][measureNodesIdx]!=0)
+	                importances[i][measureNodesIdx] = importances[i][measureNodesIdx]/(importances[i][measureProjectionsIdx] * (float)splits);
+            }
         }        
     }
 //**********************************************    
@@ -198,11 +206,20 @@ public class AttributesRI
         return sum;
     }
 //  ********************************************
+    public String[] getMeasuresNamesBasic()
+    {
+    	String[]  names = new String[]{ImportanceMeasure.MEASURE_PROJECTIONS,
+            	ImportanceMeasure.MEASURE_CLASSIFIERS,
+            	ImportanceMeasure.MEASURE_NODES,
+            	ImportanceMeasure.MEASURE_RI};
+    	return(names);
+    }
+//  ********************************************
     public String[] getMeasuresNames()
     {
         final int size = measures.size();
     	String array[]=new String[size];
-        for (int i =0;i<array.length;i++)
+        for (int i=0;i<array.length;i++)
             array[i]=measures.get(i).name;
 
         return array;
@@ -252,17 +269,27 @@ public class AttributesRI
     	return new float[]{minImportanceValue, maxImportanceValue};
     }
 //  ********************************************
+    public Ranking getTopRanking(float minRI)
+    {           
+    	return getTopRanking(mainMeasureIdx, minRI);
+    }
+//  ********************************************
     public Ranking getTopRanking(int measureIndex, float minRI)
     {           
         int size=0;
         for(int i=0;i<importances.length;i++)
-            if(importances[i][measureIndex]>minRI)
+            if(importances[i][measureIndex] > minRI)
                 size++;
         
         if(size!=0)
             return getTopRankingSize(measureIndex,size);
         else
             return null;
+    }
+//  ********************************************
+    public Ranking getTopRankingSize(int size)
+    {
+    	return getTopRankingSize(mainMeasureIdx, size);
     }
 //  ********************************************
     public Ranking getTopRankingSize(int measureIndex, int size)
@@ -289,7 +316,7 @@ public class AttributesRI
 //  ********************************************
     public boolean[] getColMask(Array container, int measureIndex, int filterSize, boolean inverseFiltering)
     {
-        Ranking ranking=getTopRankingSize(measureIndex, filterSize);
+        Ranking ranking = getTopRankingSize(measureIndex, filterSize);
         final int columns = container.colsNumber();
         boolean[] colMask = new boolean[columns];
         //set true if inverseFiltering==true
@@ -308,65 +335,104 @@ public class AttributesRI
         System.out.println("Filtered Attributes: \n"+ranking.toString());
         return colMask;        
     }
-//  ********************************************
+//  ********************************************    
     @Override
     public String toString()
     {
-        StringBuffer tmp=new StringBuffer();   
+    	return toString(getMeasuresNamesBasic());
+    }
+//  ********************************************
+    public DataFrame toDataFrame(String[] measuresNames) {
+    	final int size = getAttributesNumber();
+    	//create container
+		DataFrame df = new DataFrame(size, measuresNames.length + 1);
+		df.separator=",";
+		ArrayList<String> names = new ArrayList<String>(measuresNames.length + 1);		
+		names.add(AttributesRI.ATTRIBUTE_LABEL);
+		names.addAll(Arrays.asList(measuresNames));
+		String[] t = new String[1];		
+		df.setColNames(names.toArray(t));			
+		for(int i=0; i<df.cols(); i++ ){
+			if(i==0)
+				df.setColType(i, ColumnMetaInfo.TYPE_NOMINAL);
+			else
+				df.setColType(i, ColumnMetaInfo.TYPE_NUMERIC);
+		}
+
+		//create the measure mask
+        boolean[] measuresMask = new boolean[measures.size()];
+    	Arrays.fill(measuresMask, false);
+        for(int i=0;i<measuresMask.length;i++){
+        	if(names.contains(measures.get(i).name)){
+	            measuresMask[i] = true;
+        	}
+        }
+        
+		//fill the container
+        for(int i=0;i<size;i++){
+        	int k=0;
+    		df.set(i, k++, getAttrName(i));        	
+            for(int j=0;j<measuresMask.length;j++){
+            	if(measuresMask[j]){
+            		df.set(i, k++, importances[i][j]);
+            	}
+            }
+        }
+        return(df);
+    }
+//  ********************************************
+    public String toString(String[] measuresNames)
+    {
+        StringBuffer tmp = new StringBuffer();   
         StringBuffer line;
-        final int size=attrMap.size();
+        
+        final int size = attrMap.size();
+        boolean[] measuresMask = new boolean[measures.size()];
+    	Arrays.fill(measuresMask, false);
+        HashSet<String> measuresNamesSet = null;
+        
+        if(measuresNames != null){
+        	measuresNamesSet = new HashSet<String>(Arrays.asList(measuresNames));
+        }else{
+        	measuresNamesSet = new HashSet<String>(Arrays.asList(getMeasuresNames()));        	
+        }
 
         //add header
-        line=new StringBuffer();
-        int iSize=measures.size();
-        line.append("attribute,");
-        for(int i=0;i<iSize;i++)
-        {
-            line.append(measures.get(i).name);
-            if(i<iSize-1) line.append(',');
+        line = new StringBuffer();
+        line.append(ATTRIBUTE_LABEL);
+        for(int i=0;i<measuresMask.length;i++){
+        	if(measuresNamesSet.contains(measures.get(i).name)){
+	            line.append(',').append(measures.get(i).name);
+	            measuresMask[i] = true;
+        	}
         }
         tmp.append(line).append('\n');
+        
         //add results
-        for(int i=0;i<size;i++)
-        {
-            line=new StringBuffer();
-            line.append(attrMap.getItem(i)).append(',');
-            for(int j=0;j<iSize;j++)
-            {
-                line.append(importances[i][j]);
-                if(j<iSize-1) line.append(',');	
+        for(int i=0;i<size;i++){
+            line = new StringBuffer();
+            line.append(attrMap.getItem(i));
+            for(int j=0;j<measuresMask.length;j++){
+            	if(measuresMask[j]){
+            		line.append(',').append(importances[i][j]);
+            	}
             }
             tmp.append(line).append('\n');
         }
         return tmp.toString();
     }
-    //**************************************
-    public void save(String outFileName)
-    {
-        String fileName;
-        String extension="csv";
+    //******************************************
+    public int getAttrIndex(String attrName) {    	
+    	return attrMap.getItem(attrName);
+    }
+    //******************************************
 
-        String ext=FileUtils.getFileExtension(outFileName);
-        if(ext.equalsIgnoreCase(extension))
-            fileName=outFileName;
-        else
-            fileName=outFileName+"."+extension;
-
-        FileWriter file;
-        try{
-            file= new FileWriter(fileName,false);
-        }		
-        catch(IOException ex){
-            System.err.println("Error opening file. File: "+fileName);
-            return;
-        }				
-        try {
-            file.write(toString());
-            file.close();
-        } catch (IOException e) {
-            System.err.println("Error writing file. File: "+fileName);
-            e.printStackTrace();
-        }      
+    public String getAttrName(int attrIndex) {
+    	return attrMap.getItem(attrIndex);
+    }
+    //******************************************
+    public float[] getAttrImportances(int attrIndex) {
+    	return importances[attrIndex];
     }
     //******************************************
 	public boolean load(String inFileName)
@@ -395,6 +461,7 @@ public class AttributesRI
         String line=null;
         int lineCount=-1;//the first line is a header
         StringList lines=new StringList();
+        int attributeIdx = -1;
 
         do{
             try{
@@ -404,40 +471,40 @@ public class AttributesRI
                 else if(line.trim().length()==0)
                     continue;
                 lineCount++;
-            }
-            catch (Exception e) {
+            }catch (Exception e) {
                 System.out.println("Error reading input file.");
 				e.printStackTrace();
             }
-            if(lineCount==0)
-            {
-                String[] list=StringUtils.tokenizeString(line,new char[]{','}, false);
-                for(int i=1;i<list.length;i++)//skip 'attribute' label
-                {                    
+            if(lineCount==0){
+                String[] headerArray = StringUtils.tokenizeString(line,new char[]{','}, false);
+				for(int i=0; i<headerArray.length; i++){
+					headerArray[i] = StringUtils.trimChars(headerArray[i], new char[]{'"','\''});
+					if(headerArray[i].equalsIgnoreCase(ATTRIBUTE_LABEL))
+						attributeIdx = i;
+				}
+                
+                for(int i=attributeIdx+1; i<headerArray.length; i++){//skip 'attribute' label and jump to RI values
                     NodesMeasure measure=new NodesMeasure(null);
-                    measure.name=list[i];
+                    measure.name=headerArray[i];
                     measures.add(measure);
                 }
-            }
-            else
+            }else{
                 lines.add(line);
-
+            }
+            
         }while(line!=null); //end while
         
         //set mainMeasure on the last one
         mainMeasureIdx=measures.size()-1;
-        final int size = lines.size();
-        
-        importances=new float [size][measures.size()];
-        
-        for(int i=0;i<size;i++)
-        {		
-            String[] list=StringUtils.tokenizeString(lines.get(i),new char[]{','}, false);
-            String attrName=list[0];
-            int attributeIndex=attrMap.addItem(attrName);
-            final int listSize=list.length;
-            for(int j=1;j<listSize;j++)//skip 'attributeName' label
-                importances[attributeIndex][j-1]=Float.parseFloat(list[j]);
+        final int size = lines.size();        
+        importances = new float [size][measures.size()];
+        for(int i=0;i<size; i++){
+            String[] attrRIvalues=StringUtils.tokenizeString(lines.get(i),new char[]{','}, false);
+            String attrName = StringUtils.trimChars(attrRIvalues[attributeIdx], new char[]{'"','\''});            
+            int attributeId = attrMap.addItem(attrName);
+            for(int j=attributeIdx+1;j<attrRIvalues.length;j++){//skip 'attribute' label and jump to RI values
+            	importances[attributeId][j-(attributeIdx+1)] = Float.parseFloat(attrRIvalues[j]);                
+            }
         }
         
         getMinMaxImportances(mainMeasureIdx);

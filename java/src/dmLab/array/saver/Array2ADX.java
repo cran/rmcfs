@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.array.saver;
@@ -62,6 +57,7 @@ public class Array2ADX extends Array2String
 		for(int i=0;i<attributesNumber;i++){
 			buffer.append(' ').append(getCleanAttrName(array.attributes[i].name));
 			buffer.append('\t').append(type2String(array.attributes[i].type));
+			buffer.append('\t').append("["+array.attributes[i].weight+"]");
 			if(i==decisionIndex){
                 buffer.append('\t').append("decision");                
                 buffer.append(decValues2String(array.getDecValuesStr()));
@@ -98,4 +94,3 @@ public class Array2ADX extends Array2String
     //************************************
     
 }
-

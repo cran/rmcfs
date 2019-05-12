@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -14,11 +14,6 @@
  * #-------------------------------------------------------------------------------
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
- * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
  * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.utils.dataframe;
@@ -34,10 +29,12 @@ import dmLab.utils.MathUtils;
 
 public class DataFrame implements Cloneable
 {
-	protected Column[] columns;
+	protected ColumnMetaInfo[] columnsMetaInfo;
 	protected Object[][] data;
 	protected HashMap<String,Integer> colNamesMap;
-
+	protected HashMap<Object,Integer> keyColMap;
+	public String separator = ", ";
+	
 	//******************************
 	protected DataFrame(){
 	}
@@ -53,78 +50,120 @@ public class DataFrame implements Cloneable
 	//******************************
 	public DataFrame(int rows, DataFrame df){
 		init(rows,df.cols());
-		setColumns(df.getColumns());
+		setColumns(df.getColumnsMetaInfo());
 	}
 	//******************************
 	protected void init(int rows, int cols){
-		columns = new Column[cols];
+		keyColMap = null;
+		columnsMetaInfo = new ColumnMetaInfo[cols];
 		data = new Object[rows][cols];
 		colNamesMap = new HashMap<String,Integer>();
-        for(int i=0;i<columns.length;i++){
+        for(int i=0;i<columnsMetaInfo.length;i++){
         	String colName = "x"+i;
-        	columns[i] = new Column(colName, Column.TYPE_NOMINAL);
+        	columnsMetaInfo[i] = new ColumnMetaInfo(colName, ColumnMetaInfo.TYPE_NOMINAL);
         	colNamesMap.put(colName, i);
         }		
 	}
 	//******************************
 	protected void initColNamesMap(){
 		colNamesMap = new HashMap<String,Integer>();	
-	    for(int i=0;i<columns.length;i++){
-	    	colNamesMap.put(columns[i].name, i);        	
+	    for(int i=0;i<columnsMetaInfo.length;i++){
+	    	colNamesMap.put(columnsMetaInfo[i].name, i);        	
 	    }
 	}
 	//******************************
-	public boolean setColumns(Column[] cols){
-		if(cols.length != columns.length)
+	public void setKeyColumn(int col) {
+		keyColMap = new HashMap<Object,Integer>();
+		final int rows = rows();
+		for(int i=0; i<rows; i++) {
+			keyColMap.put(data[i][col], i);
+		}
+	}
+	//******************************
+	public int getRowIdx(Object key) {
+		if(keyColMap == null) {
+			System.err.println("KeyColumn is not set for the DataFrame!");
+			return -2;
+		}else {
+			Integer idx = keyColMap.get(key);
+			if(idx == null)
+				return -1;
+			else
+				return idx;
+		}
+	}
+	//******************************
+	public boolean setColumns(ColumnMetaInfo[] cols){
+		if(cols.length != columnsMetaInfo.length)
 			return false;
 		
 		colNamesMap = new HashMap<String,Integer>();		
-        for(int i=0;i<columns.length;i++){
-        	columns[i].name = cols[i].name;
-        	columns[i].type = cols[i].type;
+        for(int i=0;i<columnsMetaInfo.length;i++){
+        	columnsMetaInfo[i].name = cols[i].name;
+        	columnsMetaInfo[i].type = cols[i].type;
         	colNamesMap.put(cols[i].name, i);        	
         }		
 		return true;
 	}
 	//******************************	
 	public boolean setColNames(String[] colNames){
-		if(colNames.length != columns.length)
+		if(colNames.length != columnsMetaInfo.length)
 			return false;
 		
 		colNamesMap = new HashMap<String,Integer>();		
-        for(int i=0;i<columns.length;i++){
-        	columns[i].name = colNames[i];
+        for(int i=0;i<columnsMetaInfo.length;i++){
+        	columnsMetaInfo[i].name = colNames[i];
         	colNamesMap.put(colNames[i], i);
         }
         return true;		
 	}
 	//******************************
 	public boolean setColTypes(short[] colTypes){
-		if(colTypes.length != columns.length)
+		if(colTypes.length != columnsMetaInfo.length)
 			return false;
 		
-        for(int i=0;i<columns.length;i++){
-        	columns[i].type = colTypes[i];
+        for(int i=0;i<columnsMetaInfo.length;i++){
+        	columnsMetaInfo[i].type = colTypes[i];
         }
         return true;		
 	}
 	//******************************
-	public Column[] getColumns(){
-		return columns;
+	public boolean setColType(int col, short colType){
+		if(col >= columnsMetaInfo.length)
+			return false;
+		
+        columnsMetaInfo[col].type = colType;
+        return true;		
+	}	
+	//******************************
+	public ColumnMetaInfo[] getColumnsMetaInfo(){
+		return columnsMetaInfo;
+	}
+	//******************************
+	public float[] getColumnNumeric(int col) {
+		if(columnsMetaInfo[col].type != ColumnMetaInfo.TYPE_NUMERIC)
+			return null;
+		
+		final int rows = rows();
+		float[] retCol = new float[rows];
+		for(int i=0;i<rows;i++) {			
+			retCol[i] = (float)data[i][col];
+		}
+		return retCol;
 	}
 	//******************************
 	public String[] getColNames(){
-		String[] colNames = new String[columns.length];
-        for(int i=0;i<columns.length;i++){
-        	colNames[i]=columns[i].name;
+		String[] colNames = new String[columnsMetaInfo.length];
+        for(int i=0;i<columnsMetaInfo.length;i++){
+        	colNames[i]=columnsMetaInfo[i].name;
         }
         return colNames;
 	}
 	//******************************
 	public short[] getColTypes(){
-		short[] colTypes = new short[columns.length];
-        for(int i=0;i<columns.length;i++){
-        	colTypes[i]=columns[i].type;
+		short[] colTypes = new short[columnsMetaInfo.length];
+        for(int i=0;i<columnsMetaInfo.length;i++){
+        	colTypes[i]=columnsMetaInfo[i].type;
         }
         return colTypes;		
 	}
@@ -186,7 +225,15 @@ public class DataFrame implements Cloneable
 	//******************************
 	public boolean set(int row, int col, Object cellValue)
 	{
-		data[row][col]=cellValue;
+		data[row][col] = cellValue;
+		return true;
+	}
+	//******************************
+	public boolean set(int row, int col, Object[] cellValue)
+	{
+		for(int i=0; i<cellValue.length; i++) {
+			data[row][col+i] = cellValue[i];
+		}
 		return true;
 	}
 	//******************************
@@ -252,7 +299,7 @@ public class DataFrame implements Cloneable
 		int dfRowIdx = 0;
 		for(int i=0;i<filter.length;i++){
 			if(filter[i]){
-				for(int j=0;j<columns.length;j++){
+				for(int j=0;j<columnsMetaInfo.length;j++){
 					df.data[dfRowIdx][j]=data[i][j];
 				}
 				dfRowIdx++;
@@ -263,21 +310,21 @@ public class DataFrame implements Cloneable
 	//******************************
 	public String toString(){
         StringBuffer tmp=new StringBuffer();
-        for(int i=0;i<columns.length;i++){
+        for(int i=0;i<columnsMetaInfo.length;i++){
         	if(i>0)
-        		tmp.append(", ");
-            tmp.append(columns[i].name);
+        		tmp.append(separator);
+            tmp.append(columnsMetaInfo[i].name);
         }
         tmp.append('\n');
         
         final int rows = rows();
         for(int i=0;i<rows;i++){
-            for(int j=0;j<columns.length;j++){
+            for(int j=0;j<columnsMetaInfo.length;j++){
             	if(data[i][j]!=null){
             		tmp.append(data[i][j]);
             	}            	
-            	if(j<columns.length-1)
-            		tmp.append(", ");
+            	if(j<columnsMetaInfo.length-1)
+            		tmp.append(separator);
             	else
             		tmp.append("\n");
             }
@@ -291,7 +338,7 @@ public class DataFrame implements Cloneable
         
 		final int rows = rows();
 		final int cols_old = cols();			
-		Column[] columns_old = columns.clone();
+		ColumnMetaInfo[] columns_old = columnsMetaInfo.clone();
 		Object[][] data_old = data.clone();
 		
 		init(rows(),cols()+df.cols());
@@ -299,9 +346,9 @@ public class DataFrame implements Cloneable
 		
         for(int j=0;j<cols_new;j++){
         	if(j<cols_old)
-        		columns[j] = columns_old[j];
+        		columnsMetaInfo[j] = columns_old[j];
         	else
-        		columns[j] = df.columns[j-cols_old];
+        		columnsMetaInfo[j] = df.columnsMetaInfo[j-cols_old];
         }		
         initColNamesMap();
         
@@ -323,7 +370,7 @@ public class DataFrame implements Cloneable
         
 		final int rows_old = rows();
 		final int cols = cols();
-		Column[] columns_old = columns.clone();
+		ColumnMetaInfo[] columns_old = columnsMetaInfo.clone();
 		Object[][] data_old = data.clone();
 		
 		init(rows()+df.rows(),cols());
@@ -341,7 +388,7 @@ public class DataFrame implements Cloneable
         }
 		
 		return true;	
-	}
+	}	
 	//******************************
 	public boolean mathOperation(float value, String operator){
 		final int rows = rows();
@@ -349,7 +396,7 @@ public class DataFrame implements Cloneable
 						
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
-            	if(columns[j].type == Column.TYPE_NUMERIC){
+            	if(columnsMetaInfo[j].type == ColumnMetaInfo.TYPE_NUMERIC){
             		data[i][j] = MathUtils.mathOperation((Float)data[i][j], value, operator);
             	}
             }
@@ -370,7 +417,7 @@ public class DataFrame implements Cloneable
 						
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
-            	if(columns[j].type == Column.TYPE_NUMERIC){
+            	if(columnsMetaInfo[j].type == ColumnMetaInfo.TYPE_NUMERIC){
             		data[i][j] = MathUtils.mathOperation((Float)data[i][j], (Float)df.data[i][j], operator);
             	}
             }
@@ -382,9 +429,9 @@ public class DataFrame implements Cloneable
 	public DataFrame clone()
 	{
 		DataFrame df = new DataFrame();		
-		df.columns=columns.clone();
-		for(int i=0;i<columns.length;i++){
-			df.columns[i] = columns[i].clone(); 
+		df.columnsMetaInfo=columnsMetaInfo.clone();
+		for(int i=0;i<columnsMetaInfo.length;i++){
+			df.columnsMetaInfo[i] = columnsMetaInfo[i].clone(); 
 		}
 		
 		df.initColNamesMap();

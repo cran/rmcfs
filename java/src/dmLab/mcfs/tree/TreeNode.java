@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,11 +15,6 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.mcfs.tree;
 
@@ -32,6 +27,8 @@ import dmLab.mcfs.attributesID.AttributesID;
 import dmLab.mcfs.tree.parser.TreeParser;
 import dmLab.utils.StringUtils;
 import dmLab.utils.condition.Condition;
+import dmLab.utils.condition.Rule;
+import dmLab.utils.condition.Ruleset;
 
 public class TreeNode
 {
@@ -41,22 +38,22 @@ public class TreeNode
     protected boolean leaf;
     protected String decision;
 
-    protected TreeNode parent=null;
+    protected TreeNode parent = null;
     protected ArrayList<TreeNode> kids;
 
     public J48NodeIndicators nodeIndicators;    
     public Condition condition;    
     //****************************************
-    public TreeNode(TreeNode parent,Integer nodeID)
+    public TreeNode(TreeNode parent, Integer nodeID)
     {
-        leaf=false;
-        decision=null;
-        this.parent=parent;
-        this.nodeID=nodeID;
+        leaf = false;
+        decision = null;
+        this.parent = parent;
+        this.nodeID = nodeID;
 
-        kids=new ArrayList<TreeNode>();
-        condition=new Condition();
-        nodeIndicators=new J48NodeIndicators();
+        kids = new ArrayList<TreeNode>();
+        condition = new Condition();
+        nodeIndicators = new J48NodeIndicators();
     }
     //****************************************
     public void setParent(TreeNode parent)
@@ -112,6 +109,56 @@ public class TreeNode
         for(Iterator<TreeNode> i=this.kids.iterator();i.hasNext();)
             tmp.append("\n").append( (i.next()).toString() );
         return tmp.toString();
+    }
+    //****************************************
+    public String toStringRule(String rule, int objectsNumber, float weight)
+    {
+        StringBuffer tmp = new StringBuffer();
+        StringBuffer current = new StringBuffer(rule);
+        
+        //do not print root node 
+        if(level>=0){
+        	if(level>=1)
+        		current.append(" AND ");    
+        	current.append(condition.toString());
+            if(leaf){
+            	tmp.append(current).append(" THEN class is ").append(decision).append(",");
+            	tmp.append(" ").append(decision).append(",");
+            	tmp.append(" ").append(String.format("%.3f", nodeIndicators.classProb)).append(",");
+            	tmp.append(" ").append(String.format("%.3f", nodeIndicators.cov/(float)objectsNumber)).append(",");
+            	tmp.append(" ").append(String.format("%.3f", nodeIndicators.classProb * nodeIndicators.cov/(float)objectsNumber)).append(",");
+            	tmp.append(" ").append(String.format("%.3f", weight)).append("\n");
+            }
+        }
+        
+        for(Iterator<TreeNode> i=this.kids.iterator(); i.hasNext();)
+            tmp.append( (i.next()).toStringRule(current.toString(), objectsNumber, weight) );
+        return tmp.toString();
+    }
+    //****************************************
+    public Ruleset toRuleset(Ruleset ruleset, Rule currentRule, int objectsNumber, float weight)
+    {        
+        if(currentRule == null)
+        	currentRule = new Rule(ruleset);
+        	
+        //do not print root node 
+        if(level>=0){
+        	currentRule.addCondition(condition);
+            if(leaf){
+            	currentRule.decisionClass = decision;
+            	currentRule.classProb = nodeIndicators.classProb;
+            	currentRule.cov = nodeIndicators.cov/(float)objectsNumber;
+            	currentRule.quality = nodeIndicators.classProb * nodeIndicators.cov/(float)objectsNumber;
+            	currentRule.weight = weight;
+            	ruleset.add(currentRule);
+            	currentRule = null;
+            }
+        }
+        
+        for(Iterator<TreeNode> i=this.kids.iterator(); i.hasNext();)
+            (i.next()).toRuleset(ruleset, currentRule.clone(), objectsNumber, weight);
+        
+        return ruleset;
     }
     //****************************************
     public ArrayList<TreeNode> getKids()
@@ -196,7 +243,7 @@ public class TreeNode
     //****************************************
     public void finalize(Tree tree)
     {
-        nodeID=tree.nodeIterator;
+        nodeID = tree.nodeIterator;
         tree.nodes.put(tree.nodeIterator++, this);
         final int size = kids.size();
         for(int i=0;i<size;i++)
@@ -217,7 +264,7 @@ public class TreeNode
             
             if(!addedConnections.contains(connectionLabel) && !StringUtils.equalsTo(startNode.condition.attributeName,kid.condition.attributeName))
             {
-                connections.addDependency(startNode.condition.attributeName, kid.condition.attributeName,1.0f/currentLevel);                                
+                connections.addID(startNode.condition.attributeName, kid.condition.attributeName,1.0f/currentLevel);                                
                 addedConnections.add(connectionLabel);
                 //****************  DEBUG
                 //System.out.println("Added connection : "+startNode.condition.attributeName+" "+kid.condition.attributeName+" waga "+Float.toString(1.0f/(float)currentLevel));
@@ -231,5 +278,3 @@ public class TreeNode
     }
     //****************************************
 }
-
-

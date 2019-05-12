@@ -1,6 +1,6 @@
 /*******************************************************************************
  * #-------------------------------------------------------------------------------
- * # Copyright (c) 2003-2016 IPI PAN.
+ * # dmLab 2003-2019
  * # All rights reserved. This program and the accompanying materials
  * # are made available under the terms of the GNU Public License v3.0
  * # which accompanies this distribution, and is available at
@@ -15,14 +15,10 @@
  * # Algorithm 'SLIQ' developed by Mariusz Gromada
  * # R Package developed by Michal Draminski & Julian Zubek
  * #-------------------------------------------------------------------------------
- * # If you want to use dmLab or MCFS/MCFS-ID, please cite the following paper:
- * # M.Draminski, A.Rada-Iglesias, S.Enroth, C.Wadelius, J. Koronacki, J.Komorowski 
- * # "Monte Carlo feature selection for supervised classification", 
- * # BIOINFORMATICS 24(1): 110-117 (2008)
- * #-------------------------------------------------------------------------------
  *******************************************************************************/
 package dmLab.experiment.classification;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
@@ -271,7 +267,7 @@ public class ClassificationBody
 			
 			String experimentLabel=classParams.label+Integer.toString(i+1);    
 			if(classParams.savePredictionResult)
-				savePredictionArray(trainArray,classParams.resFilesPATH+"//"+experimentLabel);
+				savePredictionArray(trainArray,classParams.resFilesPATH+File.separator+experimentLabel);
 
 			if(classParams.verbose){
 				System.out.println("\n##### CV "+Integer.toString(i+1)+" RESULT #####");                
@@ -389,7 +385,7 @@ public class ClassificationBody
 			}
 
 			if(classParams.savePredictionResult)
-				savePredictionArray(testArray, classParams.resFilesPATH+"//"+experimentLabel);
+				savePredictionArray(testArray, classParams.resFilesPATH+File.separator+experimentLabel);
 
 			if(classParams.verbose){
 				System.out.println("\n##### SPLIT "+Integer.toString(i+1)+" RESULT #####");                

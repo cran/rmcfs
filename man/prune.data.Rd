@@ -4,9 +4,9 @@
 \description{
    Selects columns from input data based on the highest RIs of attributes.
 }
-\usage{prune.data(data, mcfs_result, size = NA)}
+\usage{prune.data(x, mcfs_result, size = NA)}
 \arguments{
-  \item{data}{input data.frame.}
+  \item{x}{input data.frame.}
   \item{mcfs_result}{result from \code{\link{mcfs}} function.}
   \item{size}{number of top features to select from input data. If \code{size = NA}, then it is defined by 
     \code{mcfs_result$cutoff_value} parameter.}
