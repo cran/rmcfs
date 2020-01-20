@@ -1,5 +1,10 @@
 # rmcfs - changes
 
+Version 1.3.1
+=============
+* fixed an issue in fix.data() - function works faster
+* fixed an issue with tempdir on some old R versions and OS
+
 Version 1.3.0
 =============
 * two-stage feature selection implemented

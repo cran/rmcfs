@@ -58,7 +58,7 @@ mcfs <- function(formula, data,
     return(NULL)
 
   #in any case replace slash
-  tmp_dir <- fix.path(tempdir())
+  tmp_dir <- fix.path(temp_dir())
   
   #set the label
   #label <- paste0("input_", target)
@@ -344,14 +344,6 @@ fix.matrix <- function(m, na.char = '?'){
 ###############################
 #fix.data
 ###############################
-# x$mydate <- as.Date("2007-06-22")
-# x$myposix <- as.POSIXct(x$mydate)
-# x$diff <- x$mydate - as.Date("2010-06-22")
-# showme(x)
-# reshape2::melt(lapply(x, class))
-# x <- fix.data(x)
-# reshape2::melt(lapply(x, class))
-# showme(x) 
 fix.data <- function(x, 
                      type = c("all", "names", "values", "types"),
                      source_chars = c(" ", "'", ",", "/", "|", "#", 
@@ -383,8 +375,7 @@ fix.data <- function(x,
 ###############################
 #fix.data.values
 ###############################
-# data(alizadeh)
-# d <- alizadeh
+# alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", stringsAsFactors = FALSE)
 # d <- alizadeh[4000:ncol(alizadeh)]
 # d$art <- rep("aa|bb,cc##|dd",nrow(d))
 # d$art2 <- rep("  aac bb  ",nrow(d))
@@ -392,53 +383,42 @@ fix.data <- function(x,
 # fix.data.values(d)
 fix.data.values <- function(x, 
                             source_chars = c(" ", ",", "/", "|", "#", "-", "(", ")"), 
-                            destination_char = "_")
+                            destination_char = "_",
+                            nominal_class = c("character", "factor", "Date", "POSIXct", "POSIXt"))
 {
-  x[x == "?"] <- NA
-  nominal_class <- c("character", "factor", "Date", "POSIXct", "POSIXt")
-  df.class <- reshape2::melt(lapply(x, class))
-  colnames(df.class) <- c("classname", "colname")
-  nominalMask <- df.class$classname %in% nominal_class
-  
+  x[x == "?" | x == ""] <- NA
+  nominalMask <- as.character(lapply(x, class)) %in% nominal_class
   x.nominal <- x[,nominalMask, drop=F]
-  #dplyr version
-  #x.nominal <- x.nominal %>% mutate_each(funs(as.character)) %>% 
-  #mutate_each(funs(string.trim)) %>% 
-  #mutate_each(funs(string.empty.as.na))
-  #apply version
-  #x.nominal <- apply(x.nominal, c(1,2), FUN = as.character)
-  #x.nominal <- apply(x.nominal, c(1,2), FUN = string.trim)
-  #x.nominal <- apply(x.nominal, c(1,2), FUN = string.empty.as.na)
-
-  x.nominal <- apply(x.nominal, c(1,2), FUN = string.replace, sourceChars=source_chars, destinationChar=destination_char)
-  x[nominalMask] <- x.nominal
-  
+  x[nominalMask] <- as.data.frame(lapply(x.nominal, function(x) {string.replace(x, source_chars, destination_char)}), stringsAsFactors = F)
   return(x)
 }
 
 ###############################
 #fix.data.types
 ###############################
+# alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", stringsAsFactors = FALSE)
+# d <- alizadeh
+# d$art <- as.Date(rep("2020-01-01",nrow(d)))
+# d$art2 <- as.logical(round(runif(nrow(d))))
+# d$art3 <- as.factor(as.logical(round(runif(nrow(d)))))
+# d[,1] <- as.difftime(d[,1], units = "mins")
+# str(d[,c(1:5,4020:ncol(d))])
+# d <- fix.data.types(d)
+# str(d[,c(1:5,4020:ncol(d))])
 fix.data.types <- function(x, 
                            numeric_class = c("difftime"), 
                            nominal_class = c("factor", "logical", "Date", "POSIXct", "POSIXt"))
 {
-  df.class <- reshape2::melt(lapply(x, class))
-  colnames(df.class) <- c("classname", "colname")
-  fixCols.toNumeric <- unique(df.class$colname[df.class$classname %in% numeric_class])
-  fixCols.toNominal <- unique(df.class$colname[df.class$classname %in% nominal_class])
-  mask.toNumeric <- df.class$colname %in% fixCols.toNumeric
-  mask.toNominal <- df.class$colname %in% fixCols.toNominal
+  numericMask <- as.character(lapply(x, class)) %in% numeric_class
+  nominalMask <- as.character(lapply(x, class)) %in% nominal_class
   
-  if(any(mask.toNumeric)){
-      x.toCast <- x[,mask.toNumeric, drop=F]
-      x.toCast <- apply(x.toCast, c(1,2), FUN = as.numeric)
-      x[mask.toNumeric] <- x.toCast
+  if(any(numericMask)){
+    x.numeric <- x[,numericMask, drop=F]
+    x[numericMask] <- as.data.frame(lapply(x.numeric, as.numeric), stringsAsFactors = F)
   }
-  if(any(mask.toNominal)){
-      x.toCast <- x[,mask.toNominal, drop=F]
-      x.toCast <- apply(x.toCast, c(1,2), FUN = as.character)
-      x[mask.toNominal] <- x.toCast
+  if(any(nominalMask)){
+    x.nominal <- x[,nominalMask, drop=F]
+    x[nominalMask] <- as.data.frame(lapply(x.nominal, as.character), stringsAsFactors = F)
   }
   return(x)
 }
@@ -646,7 +626,7 @@ import.result <- function(path = "./", label = NA){
   
   if(File.exists(zip_file)){
     zip <- T
-    tmp_dir <- tempdir()
+    tmp_dir <- temp_dir()
     utils::unzip(zip_file, exdir = tmp_dir)
   }else{
     zip <- F
@@ -765,7 +745,7 @@ export.result <- function(mcfs_result, path = "./", label = "rmcfs", zip = TRUE)
     dir.create(path, showWarnings = F, recursive = T)
     
   if(zip){
-    tmp_dir <- tempdir()
+    tmp_dir <- temp_dir()
   }else{
     tmp_dir <- path
   }

@@ -23,7 +23,7 @@ read.adh <- function(file = ""){
 read.zip <- function(file, fileFormat){
   if(File.exists(file)){
     if(file.ext(file) == 'zip'){
-      tmp_dir <- tempdir()
+      tmp_dir <- temp_dir()
       utils::unzip(file, exdir = tmp_dir)
       file_path <- file.path(tmp_dir, paste0(drop.file.ext(basename(file)), ".", fileFormat))
     }else if(file.ext(file) == fileFormat){
@@ -281,7 +281,7 @@ write.zip <- function(x, file, target, chunk_size, zip, fileFormat)
   }
   
   if(zip){
-    tmp_dir <- tempdir()
+    tmp_dir <- temp_dir()
   }else{
     tmp_dir <- fileDir
   }

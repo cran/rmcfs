@@ -338,3 +338,24 @@ fix.path <- function(x){
   return(x)
 }
 
+###############################
+#split_path
+###############################
+split_path <- function(path) {
+  setdiff(strsplit(path,"/|\\\\")[[1]], "")
+} 
+
+###############################
+#temp_dir
+###############################
+temp_dir <- function(){
+  tmp_path <- tempdir()
+  tmp_split <- split_path(tmp_path)
+  if(startsWith(tmp_split[length(tmp_split)], "Rtmp")){
+    return(tmp_path)
+  }else{
+    tmp_path <- file.path(tmp_path, paste0("Rtmp",Sys.getpid()))
+    dir.create(tmp_path, showWarnings = FALSE)
+    return(tmp_path)
+  }
+}
