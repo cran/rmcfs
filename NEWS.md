@@ -1,5 +1,10 @@
 # rmcfs - changes
 
+Version 1.3.2
+=============
+* closeAllConnections() removed from the code
+* final data pruning is processed on R side (memory optimization)
+
 Version 1.3.1
 =============
 * fixed an issue in fix.data() - function works faster

@@ -315,7 +315,7 @@ public class MCFSExperiment implements Runnable
 				FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_RULESET, ripperResult);			
 		}
 
-		if(mcfsParams.saveResultFiles){
+		if(mcfsParams.saveResultFiles & mcfsParams.savePrunedData){
 			System.out.println("*** Saving pruned data ***");
 			//System.out.println("*** MDR DEBUG: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh");
 			//System.out.println("*** MDR DEBUG: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv");			

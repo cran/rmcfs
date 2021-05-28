@@ -8,7 +8,7 @@ function returns features sorted by RI as well as cutoff value, ID-Graph edges t
 }
 
 \references{M. Draminski, J. Koronacki (2018),"rmcfs: An R Package for Monte Carlo Feature Selection and Interdependency Discovery", \emph{Journal of Statistical Software, vol 85(12)}, 1-28, doi:10.18637/jss.v085.i12.
-URL: \url{http://www.jstatsoft.org/v85/i12/}}
+URL: \url{https://www.jstatsoft.org/v85/i12/}}
 
 \usage{
 mcfs(formula, data,

@@ -94,6 +94,8 @@ public class MCFSParams extends ExperimentParams
 	public float contrastCutoff;
 	public boolean zipResult;
     public boolean saveResultFiles;
+    public boolean savePrunedData;
+    
     public float minTopRankingSize;
     
 	//specific configuration of classifiers
@@ -174,6 +176,7 @@ public class MCFSParams extends ExperimentParams
 		
 		zipResult = true;
 		saveResultFiles = true;
+		savePrunedData = true;
 		
 		//specific configuration of classifiers
 		maxConnectionDepth = 5;
@@ -228,8 +231,9 @@ public class MCFSParams extends ExperimentParams
 		tmp.append("mcfs.contrastSize = "+ contrastSize).append('\n');
 		tmp.append("mcfs.contrastCutoff = "+ contrastCutoff).append('\n');
 		tmp.append('\n');				
-		tmp.append("mcfs.saveResultFiles = "+ saveResultFiles).append('\n');
 		tmp.append("mcfs.zipResult = "+ zipResult).append('\n');
+		tmp.append("mcfs.saveResultFiles = "+ saveResultFiles).append('\n');
+		tmp.append("mcfs.savePrunedData = "+ savePrunedData).append('\n');		
 		tmp.append('\n');		
 		tmp.append("j48.useGainRatio = "+ useGainRatio).append('\n');
 		tmp.append("j48.maxConnectionDepth = "+ maxConnectionDepth).append('\n');
@@ -290,6 +294,7 @@ public class MCFSParams extends ExperimentParams
 		contrastSize = Float.valueOf(properties.getProperty("mcfs.contrastSize", "0.1")).floatValue();
 		contrastCutoff = Float.valueOf(properties.getProperty("mcfs.contrastCutoff", "0.05")).floatValue();
 		zipResult = Boolean.valueOf(properties.getProperty("mcfs.zipResult", "true")).booleanValue();
+		savePrunedData = Boolean.valueOf(properties.getProperty("mcfs.savePrunedData", "true")).booleanValue();
 		
 		useGainRatio = Boolean.valueOf(properties.getProperty("j48.useGainRatio", "true")).booleanValue();        
 		maxConnectionDepth = Integer.valueOf(properties.getProperty("j48.maxConnectionDepth", "3")).intValue();
@@ -424,7 +429,8 @@ public class MCFSParams extends ExperimentParams
 
 	    saveResultFiles = p.saveResultFiles;
 		zipResult = p.zipResult;
-
+		savePrunedData = p.savePrunedData;
+		
 		wekaClassifierMode = p.wekaClassifierMode;
 		useGainRatio = p.useGainRatio;
 		maxConnectionDepth = p.maxConnectionDepth;

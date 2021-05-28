@@ -165,6 +165,16 @@ mcfs <- function(formula, data,
     }
   }
   
+  #if pruned data is not present -> it must be pruned here
+  if(!any(names(mcfsResult)=="data")){
+    prune_n <- mcfsResult$cutoff_value
+    if(prune_n == 0){
+      prune_n <- 2
+    }
+    #cat(paste0("Prunning the data [",prune_n,"].\n"))
+    mcfsResult$data <- data[, names(data) %in% c(target, head(mcfsResult$RI$attribute, prune_n))]
+  }    
+  
   #clean temp files
   tmp.files <- get.files.names(tmp_dir, ext=c('.zip','.run','.csv','.txt','.adx','.adh'), fullNames=T, recursive=F)
   if(length(tmp.files)>0)
@@ -255,6 +265,7 @@ default.params <- list(verbose = "false", debug = "false", mcfs.progressShow = "
                        mcfs.progressInterval = 10,
                        mcfs.u = 1, mcfs.v = 1,
                        mcfs.zipResult = F,
+                       mcfs.savePrunedData = F,
                        mcfs.seed = NA,
                        mcfs.threadsNumber = 4,
                        j48.useGainRatio = "true", j48.maxConnectionDepth = 5,
