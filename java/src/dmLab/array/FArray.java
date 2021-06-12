@@ -18,8 +18,10 @@
  *******************************************************************************/
 package dmLab.array;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import dmLab.array.domain.ADXDomain;
@@ -38,7 +40,8 @@ import dmLab.utils.ArrayUtils;
 public class FArray extends Array
 {	
 	protected float[][] valuesArray;
-	protected float[] decisionValues;
+	protected float[] decisionValues;	
+	protected HashMap<Float, int[]> decisionValuesTable;	
 	protected Domain[] domains;
 
 	public Dictionary dictionary;
@@ -76,7 +79,7 @@ public class FArray extends Array
 	//	********************************************
 	@Override
 	public FArray clone(boolean colMask[], boolean[] rowMask)
-	{		
+	{
 		final int srcColumns = colsNumber();
 		final int srcRows = rowsNumber();		
 		
@@ -146,6 +149,72 @@ public class FArray extends Array
 			}
 			currentColumn=0;
 			currentRow=0;
+			
+			if(dstArray.decAttrIdx == -1){
+				//if decision attribute is ignored set on the last one
+				dstArray.decAttrIdx = dstArray.colsNumber()-1; 
+				dstArray.setAllDecValues();
+			}
+		}
+		return dstArray;
+	}
+	//********************************
+	@Override
+	public FArray cloneByIdx(int colIdx[], int rowIdx[]) {
+		final int srcColumns = colsNumber();
+		final int srcRows = rowsNumber();		
+				
+		final int destColumns = colIdx.length;
+		final int destRows = rowIdx.length;		
+		FArray dstArray = null;
+		
+		if(srcColumns < destColumns)
+			System.err.println("Incorrect length of colIdx: "+colIdx.length);
+		else if(srcRows < destRows)
+			System.err.println("Incorrect length of rowMask: "+rowIdx.length);
+		else{
+			int currentDstRow = 0;
+			int currentDstColumn = 0;
+
+			dstArray = new FArray(destColumns, destRows);		
+			if(discRanges!=null)
+				dstArray.discRanges = new DiscRanges[destColumns];
+			if(domains!=null)
+				dstArray.domains = new Domain[destColumns];
+			
+			//copy attributes discRanges and domains
+			for(int i=0; i<colIdx.length; i++){
+				int currentSrcColumn = colIdx[i];
+				dstArray.attributes[currentDstColumn] = attributes[currentSrcColumn].clone();					
+				if(currentSrcColumn == decAttrIdx){
+					dstArray.decAttrIdx=currentDstColumn;
+					if(decisionValues!=null)
+						dstArray.decisionValues = decisionValues.clone();
+				}
+				if(discRanges!=null && discRanges[currentSrcColumn]!=null)
+					dstArray.discRanges[currentDstColumn] = discRanges[currentSrcColumn].clone();
+				
+				if(domains!=null && domains[currentSrcColumn]!=null)
+					dstArray.domains[currentDstColumn] = domains[currentSrcColumn].clone();
+				
+				currentDstColumn++;								
+			}
+						
+			//copy dictionary
+			dstArray.dictionary = dictionary.clone();
+
+			//copy values
+			currentDstRow=0;			
+			for(int j=0;j<rowIdx.length;j++){
+				int currentSrcRow = rowIdx[j];
+				currentDstColumn=0;				
+				for(int i=0; i<colIdx.length; i++){
+					int currentSrcColumn = colIdx[i];					
+						dstArray.valuesArray[currentDstColumn][currentDstRow] = valuesArray[currentSrcColumn][currentSrcRow]; 
+						currentDstColumn++;					
+				}
+				currentDstRow++;				
+			}
 			
 			if(dstArray.decAttrIdx == -1){
 				//if decision attribute is ignored set on the last one
@@ -394,6 +463,46 @@ public class FArray extends Array
 		}		
 		return true;
 	}
+	//********************************************		
+	public boolean calcDecisionValuesTable() {
+		if(!isTargetNominal())
+			return false;
+		
+		System.out.println("Calculation of DecisionValuesTable...");
+		
+		HashMap<Float, ArrayList<Integer>> decisionValuesTableTmp = new HashMap<Float, ArrayList<Integer>>();		
+		for(int i=0; i<decisionValues.length; i++) {
+			decisionValuesTableTmp.put(decisionValues[i], new ArrayList<Integer>());
+		}
+		final int rows =  valuesArray[decAttrIdx].length;
+		for(int i=0; i<rows;i++) {
+			float val = valuesArray[decAttrIdx][i];
+			decisionValuesTableTmp.get(val).add(i);
+		}
+		
+		decisionValuesTable = new HashMap<Float, int[]>();
+		for(int i=0; i<decisionValues.length; i++) {
+			Integer[] tmpInt = new Integer[1];
+			decisionValuesTable.put(decisionValues[i], ArrayUtils.Integer2int(decisionValuesTableTmp.get(decisionValues[i]).toArray(tmpInt)));
+		}
+		return true;
+	}
+	//********************************************
+	public HashMap<Float, int[]> getDecisionValuesTable(){
+		if(decisionValuesTable==null)
+			calcDecisionValuesTable();
+		return decisionValuesTable;
+	}
+	//********************************************
+	public int[] getDecisionValuesTableSize(){
+		if(decisionValuesTable==null)
+			calcDecisionValuesTable();
+		int [] decisionValuesTableSize = new int [decisionValues.length];
+		for(int i=0;i<decisionValues.length;i++) {
+			decisionValuesTableSize[i] = decisionValuesTable.get(decisionValues[i]).length; 		
+		}
+		return(decisionValuesTableSize);
+	}	
 	//********************************************	
 	@Override
 	public boolean findDomains()

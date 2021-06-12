@@ -19,7 +19,7 @@
 package dmLab.mcfs.mcfsEngine.modules;
 
 import java.util.Random;
-
+import dmLab.array.Array;
 import dmLab.array.FArray;
 import dmLab.array.functions.SelectFunctions;
 import dmLab.classifier.Classifier;
@@ -27,6 +27,7 @@ import dmLab.classifier.PredictionResult;
 import dmLab.mcfs.MCFSParams;
 import dmLab.mcfs.attributesID.AttributesID;
 import dmLab.mcfs.attributesRI.AttributesRI;
+import dmLab.utils.ArrayUtils;
 import dmLab.utils.cmatrix.ConfusionMatrix;
 import dmLab.utils.cmatrix.QualityMeasure;
 import dmLab.utils.statList.StatsList;
@@ -37,8 +38,7 @@ public class Projection
     private MCFSParams mcfsParams;
     private Split split;
     private StatsList splitsStats;
-    private SelectFunctions selectFunctions;
-    
+    private SelectFunctions selectFunctions;    
     //*************************************
     public Projection(MCFSParams mcfsParams, Random random)
     {
@@ -61,40 +61,39 @@ public class Projection
             confusionMatrix = null;
             splitsStats.addHeader("pearson,MAE,RMSE,SMAPE",',');
         }
-        
-        FArray projectionArray = null;
+                
         int projectionSize = mcfsParams.projectionSizeValue;
         
         if(projectionSize>=inputArray.colsNumber())
             projectionSize=inputArray.colsNumber()-1;
             
-        int [] colMask = selectFunctions.getColumnsMask(inputArray, projectionSize);
-        projectionArray = (FArray)SelectFunctions.selectColumns(inputArray, colMask);
-
+        int[] colMask = selectFunctions.getColumnsMask(inputArray, projectionSize);
+        int[] colIdx = Array.colMask2colIdx(colMask);
+        
         //add projection list of all selected attributes
         for(int i=0; i<attrRI.length; i++)
-        	attrRI[i].addProjections(projectionArray);
+        	attrRI[i].addProjections(inputArray.getColNames(colIdx, false));
 
-        //System.out.println("*** MDR DEBUG *** projectionArray \n"+projectionArray.info());        
-        //SPLIT LOOP
-        for (int j = 0; j < mcfsParams.splits; j++){            
-        	//System.out.println("*** MDR DEBUG *** SPLIT: " + j + " *** ");            
-            FArray balancedArray = projectionArray;
-            if(mcfsParams.tmpBalancedClassSizes != null){
-                //System.out.println("*** MDR DEBUG *** mcfsParams.tmpBalancedClassSizes# "+Arrays.toString(mcfsParams.tmpBalancedClassSizes));
-            	balancedArray = selectFunctions.balanceClasses(projectionArray, mcfsParams.tmpBalancedClassSizes);
-                //System.out.println("*** MDR DEBUG *** balancedArray# \n"+balancedArray.info());
+        //SPLIT LOOP        
+        for (int j = 0; j < mcfsParams.splits; j++){
+            int rowIdx[];
+            if(mcfsParams.splitSetClassSizes != null){
+                //System.out.println("*** MDR DEBUG *** mcfsParams.splitSetClassSizes# "+Arrays.toString(mcfsParams.splitSetClassSizes));
+                rowIdx = selectFunctions.balanceClassesIdx(inputArray, mcfsParams.splitSetClassSizes);
+                //System.out.println("*** MDR DEBUG *** selected rows# "+rowIdx.length+"\n");                                                
+            }else {
+            	rowIdx = ArrayUtils.seq(0, inputArray.rowsNumber());
             }
             
-            FArray limitedSizeArray = balancedArray;
-            if(mcfsParams.splitSetSize>0 && balancedArray.rowsNumber() > mcfsParams.splitSetSize){
-            	limitedSizeArray = (FArray)selectFunctions.selectRowsRandom(balancedArray, (float)mcfsParams.splitSetSize);
-            }
-        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+limitedSizeArray.info());
-        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+limitedSizeArray.toString());
-            
+        	//System.out.println("*** MDR DEBUG *** selected rows# "+rowIdx.length+"\n");            	            
+            FArray splitArray = inputArray.cloneByIdx(colIdx, rowIdx);
+        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+splitArray.info());
+        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+splitArray.toString());        	
+        	//System.out.println("*** MDR DEBUG *** limitedSizeArray# "+Arrays.toString(splitArray.getDecValuesStr()));        	
+        	//System.out.println("*** MDR DEBUG *** selected rows# "+Arrays.toString(splitArray.getDecisionValuesTableSize()) +"\n");
+        	
             //single prediction and confusion matrix
-            PredictionResult predRes = split.splitLoop(classifier, limitedSizeArray, attrRI, attrIDependencies);
+            PredictionResult predRes = split.splitLoop(classifier, splitArray, attrRI, attrIDependencies);
             if(inputArray.isTargetNominal()){            
 	            ConfusionMatrix matrix = predRes.getConfusionMatrix();            
 	            confusionMatrix.add(matrix);	            
@@ -108,16 +107,16 @@ public class Projection
 	            		(float)predRes.getPredQuality(QualityMeasure.RMSE),
 	            		(float)predRes.getPredQuality(QualityMeasure.SMAPE)};
 	            splitsStats.add(new StatsObject(stats));            	
-            }            
+            }
             
         }//end for
-                
+
         return confusionMatrix;
     }
     //*************************************
     public StatsList getSplitsStats()
     {
     	return splitsStats;
-    }
+    }    
     //*************************************
 }

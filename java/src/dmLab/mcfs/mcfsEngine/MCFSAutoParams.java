@@ -19,8 +19,8 @@
 package dmLab.mcfs.mcfsEngine;
 
 import java.util.Arrays;
-
 import dmLab.array.FArray;
+import dmLab.mcfs.MCFSParams;
 import dmLab.utils.ArrayUtils;
 import dmLab.utils.GeneralUtils;
 import dmLab.utils.MathUtils;
@@ -124,8 +124,9 @@ public class MCFSAutoParams {
 		return param;
 	}
 	//  ****************************************************
-	public static int[] getBalancedClassSizes(float balance, FArray array)
+	public static int[] getBalancedClassSizes(MCFSParams mcfsParams, FArray array)
 	{
+		float balance = mcfsParams.balance;
 		if(!array.isTargetNominal()){
 			return null;
 		}
@@ -171,4 +172,23 @@ public class MCFSAutoParams {
 		return balancedClassSizes;
 	}
 	//  ****************************************************
+	public static int[] getSplitSetClassSizes(MCFSParams mcfsParams, FArray array) {
+		int[] splitSetClassSizes = null;
+		int splitSetSize = mcfsParams.splitSetSize;
+		if(mcfsParams.balance <= 1 & (splitSetSize==0 | splitSetSize >= array.rowsNumber())) {
+			splitSetClassSizes = null;
+		}else {
+			int sum = MathUtils.sum(mcfsParams.balancedClassSizes);
+			if(sum > splitSetSize) {
+				splitSetClassSizes = mcfsParams.balancedClassSizes;
+				for(int i=0;i<splitSetClassSizes.length;i++) {
+					splitSetClassSizes[i] = (int)Math.ceil(splitSetSize * (float)splitSetClassSizes[i]/(float)sum);  
+				}				
+			}
+		}
+				
+		return(splitSetClassSizes);
+	}
+	//  ****************************************************
+	
 }

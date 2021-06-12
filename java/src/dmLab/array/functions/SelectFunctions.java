@@ -19,8 +19,10 @@
 package dmLab.array.functions;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -46,59 +48,28 @@ public class SelectFunctions
 		arrayUtils = new ArrayUtils(random);
 	}
 	//*************************************
-	public FArray balanceClasses(FArray srcArray, int[] balancedSizes)
+	public int[] balanceClassesIdx(FArray srcArray, int[] balancedSizes)
 	{
-		int decIndex = srcArray.getDecAttrIdx();
-		float[] decColumn = srcArray.getColumn(decIndex);
+		ArrayList<int[]> finalIdxList = new ArrayList<int[]>(); 
 		float[] decValues = srcArray.getDecValues();
-
-		if(srcArray.getDecValues().length != balancedSizes.length){
-			System.err.println("Error. balancedSizes.lenght does not equal to srcArray.getDecValues().length.");
+		HashMap<Float, int[]> decisionValuesTable = srcArray.getDecisionValuesTable();
+		int finalIdxArraySize = 0;
+		for(int i=0;i<decValues.length;i++) {
+			int[] currIdx = decisionValuesTable.get(decValues[i]);
+			int[] currIdxSelected = arrayUtils.randomSelectValues(currIdx, balancedSizes[i]);
+			finalIdxArraySize += currIdxSelected.length; 
+			finalIdxList.add(currIdxSelected);
 		}
+		int[] finalIdxArray = new int[finalIdxArraySize];
+		int k = 0;
+		for(int i=0;i<finalIdxList.size();i++) {
+			final int[] currIdx = finalIdxList.get(i);
+			for(int j=0;j<currIdx.length;j++)
+				finalIdxArray[k++] = currIdx[j];
+		}		
+		Arrays.sort(finalIdxArray);
 		
-		int[] splitMask = new int[srcArray.rowsNumber()];
-		for(int i=0; i<decValues.length; i++){
-			splitMask = selectRowsBalanced(decColumn, decValues[i], balancedSizes[i], splitMask);
-		}
-
-		//System.out.println(Arrays.toString(splitMask));
-		boolean[] colMask = new boolean[srcArray.colsNumber()];
-		Arrays.fill(colMask, true);
-		FArray dstArray = srcArray.clone(colMask, ArrayUtils.int2boolean(splitMask, 1));
-
-		return dstArray;
-	}
-	//	********************************************
-	//randomly selects n="selectionSize" rows from column[] where column[i]==value 
-	private int[] selectRowsBalanced(float column[], float value, int selectionSize, int splitMask[])
-	{
-		final int rows = column.length;
-		if(column.length!=splitMask.length)
-			return null;
-
-		IntegerList idList=new IntegerList(rows);
-		for(int i=0;i<rows;i++)
-			if(column[i]==value)
-				idList.add(i);
-
-		if(idList.size()==0){
-			//no one meets the condition
-		}else if(selectionSize >= idList.size()){
-			//select all
-			for(int i=0;i<rows;i++)
-				if(column[i]==value)
-					splitMask[i]=1;
-		}
-		else{
-			//there is need to randomly select events that meet the condition
-			int mask[]=new int[idList.size()];
-			arrayUtils.randomSelect(mask, selectionSize, 1, 0);
-			for(int i=0;i<mask.length;i++)
-				if(mask[i]==1)					
-					splitMask[idList.get(i)]=1;
-		}
-
-		return splitMask;
+		return finalIdxArray;
 	}
 	//********************************************
 	public FArray shuffleColumns(FArray srcArray){
@@ -283,18 +254,6 @@ public class SelectFunctions
 	// COLUMNS SELECTION
 	//********************************************
 	//**** function randomly selects attributes
-	@Deprecated
-	public int[] getColumnsMask_old(Array srcArray, int dstColumns)
-	{		
-		final int decisionIndex = srcArray.getDecAttrIdx();
-		final int srcColumns = srcArray.colsNumber();
-		int[] colMask = new int [srcColumns];
-		colMask = arrayUtils.randomSelect(colMask, dstColumns);			
-		colMask[decisionIndex] = 1; 
-				
-		return colMask;
-	}
-	//********************************************
 	public int[] getColumnsMask(Array srcArray, int dstColumns)
 	{	
 		int[] colMask = null;		
@@ -318,31 +277,33 @@ public class SelectFunctions
 		return colMask;
 	}
 	//********************************************
-	public static int[] getColumnsMask(Array srcArray, AttributesRI importances, int dstColumns)
+	public static int[] getColumnsIdx(Array srcArray, AttributesRI importances, int dstColumns)
 	{		
 		final int srcColumns = srcArray.colsNumber();
-		int[] colMask = new int [srcColumns];
+		int[] colIdx = null;
 
 		if(dstColumns >= srcColumns){
-			Arrays.fill(colMask, 1);
+			colIdx = ArrayUtils.seq(0, srcArray.colsNumber());			
 		}else{
+			//+1 for decision attribute
+			colIdx = new int [Math.min(srcColumns,dstColumns) + 1];
 			AttributesMetaInfo attrMetaInfo = srcArray.buildAttributesMetaInfo(false);
 			Ranking topRanking = importances.getTopRankingSize(importances.mainMeasureIdx, importances.getAttributesNumber());
-			String[] attributes = topRanking.getAttributesNames();
-			Arrays.fill(colMask, 0);
+			String[] attributes = topRanking.getAttributesNames();			
 			int i = 0;
-			int currAttr = dstColumns;
-			while(i<attributes.length && currAttr>0){
+			int currIdx = 0;
+			while(i<attributes.length && currIdx < (colIdx.length - 1)){
 				if(!ExtFunctions.isContrastAttribute(attributes[i])){
-					colMask[attrMetaInfo.getIndex(attributes[i])] = 1;
-					currAttr--;
+					//System.out.println("## DEBUG Attribute: "+ attributes[i]);
+					colIdx[currIdx++] = attrMetaInfo.getIndex(attributes[i]);
 				}
 				i++;
 			}
-			colMask[srcArray.getDecAttrIdx()] = 1;
+			colIdx[currIdx] = srcArray.getDecAttrIdx();
+			Arrays.sort(colIdx);
 		}
 		
-		return colMask;
+		return colIdx;
 	}
 	//********************************************
 	//function selects attributes; colMask=1 - select; colMask=0 - ignore
@@ -384,5 +345,5 @@ public class SelectFunctions
 		array = array.clone(colMask, rowMask);
 		return array;
 	}
-	//********************************************
+	//********************************************		
 }

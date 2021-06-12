@@ -76,8 +76,8 @@ public abstract class MCFSFramework implements Runnable
 		
 		//remove rows with empty class definition 
 		FArray inputArray = mcfsArrays.sourceArray;
-		mcfsArrays.sourceArray = (FArray)SelectFunctions.removeNaNRows(inputArray, inputArray.attributes[inputArray.getDecAttrIdx()].name);
-
+		mcfsArrays.sourceArray = (FArray)SelectFunctions.removeNaNRows(inputArray, inputArray.attributes[inputArray.getDecAttrIdx()].name);		
+		
 		run();
 		return true;
 	}
@@ -100,7 +100,7 @@ public abstract class MCFSFramework implements Runnable
 			mcfsParams.balance = 0;
 			mcfsParams.finalRuleset = false;
 		}
-
+		
 		if(mcfsParams.buildID)
 			System.out.println("MCFS-ID param: "+Params.intParamToString((mcfsParams.buildID) ? 1 : 0, "ID-Graph"));
 		if(mcfsParams.finalCV)
@@ -111,7 +111,8 @@ public abstract class MCFSFramework implements Runnable
 		if(mcfsParams.balance != 0)
 			System.out.println("MCFS-ID param: "+Params.intParamToString((int)mcfsParams.balance, "balance classes"));        
 
-		mcfsParams.tmpBalancedClassSizes = MCFSAutoParams.getBalancedClassSizes(mcfsParams.balance, inputArray);
+		mcfsParams.balancedClassSizes = MCFSAutoParams.getBalancedClassSizes(mcfsParams, inputArray);
+		mcfsParams.splitSetClassSizes = MCFSAutoParams.getSplitSetClassSizes(mcfsParams, inputArray);
 
 		if(mcfsParams.cutoffMethod.equalsIgnoreCase("contrast")){
 			System.out.println("Adding Contrast Attributes...");
@@ -124,6 +125,7 @@ public abstract class MCFSFramework implements Runnable
 
 		globalStats = new GlobalStats();
 		globalStats.init(inputArray, mcfsParams, experimentName, chartTitle);
+		inputArray.calcDecisionValuesTable();
 
 		Cutoff cutoff = new Cutoff(mcfsParams);
 		globalStats.setCutoff(cutoff);

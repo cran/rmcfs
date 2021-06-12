@@ -386,7 +386,7 @@ fix.data <- function(x,
 ###############################
 #fix.data.values
 ###############################
-# alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", stringsAsFactors = FALSE)
+# alizadeh <- read.csv(file="http://home.ipipan.waw.pl/m.draminski/files/data/alizadeh.csv", stringsAsFactors = FALSE)
 # d <- alizadeh[4000:ncol(alizadeh)]
 # d$art <- rep("aa|bb,cc##|dd",nrow(d))
 # d$art2 <- rep("  aac bb  ",nrow(d))
@@ -407,7 +407,7 @@ fix.data.values <- function(x,
 ###############################
 #fix.data.types
 ###############################
-# alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", stringsAsFactors = FALSE)
+# alizadeh <- read.csv(file="http://home.ipipan.waw.pl/m.draminski/files/data/alizadeh.csv", stringsAsFactors = FALSE)
 # d <- alizadeh
 # d$art <- as.Date(rep("2020-01-01",nrow(d)))
 # d$art2 <- as.logical(round(runif(nrow(d))))

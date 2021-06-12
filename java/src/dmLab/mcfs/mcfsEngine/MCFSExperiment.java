@@ -54,6 +54,7 @@ public class MCFSExperiment implements Runnable
 	protected MCFSFramework mcfs;
 	protected MCFSParams myParams;
 	protected Random random;
+	protected ArrayUtils arrayUtils;
 	public int topRankingSize = 0;	
 	//************************************
 	public MCFSExperiment(MCFSParams mcfsParams)
@@ -62,6 +63,7 @@ public class MCFSExperiment implements Runnable
 			System.out.println("MCFSExperiment Params: \n" + mcfsParams.toString());
 		
 		random = new Random(mcfsParams.seed);
+		arrayUtils = new ArrayUtils(random);
 		this.myParams = mcfsParams;
 	}
 	//************************************
@@ -75,8 +77,10 @@ public class MCFSExperiment implements Runnable
 			mcfsParamsP1.finalCV = false;
 			mcfsParamsP1.saveResultFiles = false;
 			mcfsParamsP1.zipResult = false;
+			mcfsParamsP1.savePrunedData = false;			
 			mcfsParamsP1.minTopRankingSize = 0.05f;
 			mcfsParamsP1.cutoffMethod = "contrast";
+			mcfsParamsP1.phase = 1;
 			mcfsParamsP1.filesufix_RI = MCFSParams.FILESUFIX_RI_PHASE_1;
 			System.out.println("****************************************************");
 			System.out.println("*** Running Phase I - Initial MCFS-ID filtering  ***");
@@ -100,8 +104,9 @@ public class MCFSExperiment implements Runnable
 			mcfsParamsP2.inputFilesPATH = input_phase2_file.getAbsoluteFile().getParent();
 			mcfsParamsP2.inputFileName = input_phase2_file.getName();
 			mcfsParamsP2.minTopRankingSize = 0f;
-			mcfsParamsP2.filesufix_RI = MCFSParams.FILESUFIX_RI_PHASE_2;
 			mcfsParamsP2.zipResult = false;
+			mcfsParamsP2.phase = 2;
+			mcfsParamsP2.filesufix_RI = MCFSParams.FILESUFIX_RI_PHASE_2;
 			System.out.println("***************************************************");
 			System.out.println("*** Running Phase II - Final MCFS-ID filtering  ***");
 			start(mcfsParamsP2);
@@ -250,6 +255,7 @@ public class MCFSExperiment implements Runnable
 				FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_TOPRANKING, topRanking.toString());
 			}
 		}
+		
 		//RUN FinalCV
 		if(mcfsParams.finalCV){
 			int topRankingSize = Math.max((int)mcfs.globalStats.getCutoff().getCutoffValue(mcfsParams.cutoffMethod),4);
@@ -287,14 +293,14 @@ public class MCFSExperiment implements Runnable
 			System.err.println(s);
 			topRankingSize = minTopRankingValue;
 		}
-
-		int[] topRankingColMask = SelectFunctions.getColumnsMask(mcfs.mcfsArrays.sourceArray, mcfs.globalStats.getAttrImportances()[0], topRankingSize);
-		FArray topRankingArray = (FArray)SelectFunctions.selectColumns(mcfs.mcfsArrays.sourceArray, topRankingColMask);
-
+		int[] topRankingColIdx = SelectFunctions.getColumnsIdx(mcfs.mcfsArrays.sourceArray, mcfs.globalStats.getAttrImportances()[0], topRankingSize);
+		int[] rowIdx = ArrayUtils.seq(0, mcfs.mcfsArrays.sourceArray.rowsNumber());											
+					
 		//RUN Final Rules
-		if(mcfsParams.finalRuleset && mcfs.mcfsArrays.sourceArray.isTargetNominal()){
+		if(mcfsParams.finalRuleset && mcfs.mcfsArrays.sourceArray.isTargetNominal()){			
 			System.out.println("");
 			System.out.println("*** Building final RIPPER ruleset on top "+ topRankingSize +" attributes ***");
+			FArray ripperArray = mcfs.mcfsArrays.sourceArray.cloneByIdx(topRankingColIdx, arrayUtils.randomSelectValues(rowIdx, mcfsParams.finalCVSetSize));
 			ClassificationBody classification = new ClassificationBody(random);
 			classification.setParameters(new ClassificationParams());
 			classification.classParams.verbose = false;
@@ -303,36 +309,41 @@ public class MCFSExperiment implements Runnable
 			classification.classParams.repetitions = 1;
 			classification.classParams.model = Classifier.RIPPER;			
 			classification.initClassifier();
-			classification.runTrainTest(topRankingArray, topRankingArray);
+			classification.runTrainTest(ripperArray, ripperArray);
 			String ripperResult = classification.classifier.toString(false) +"\n";
 			classification.initClassifier();
 			classification.classParams.folds = 	mcfsParams.finalCVfolds;
 			classification.classParams.repetitions = mcfsParams.finalCVRepetitions;
-			classification.runCV(topRankingArray);
+			classification.runCV(ripperArray);
 			ripperResult += "RIPPER CV Result (10 folds repeated "+ mcfsParams.finalCVRepetitions +" times)\n" + classification.predResult.toString();
 			System.out.println(classification.classifier.getPredResult().confusionMatrix.statsToString(2, false));
 			if(mcfsParams.saveResultFiles)
 				FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_RULESET, ripperResult);			
 		}
+		
+		FArray prunedArray = null;
+		if(mcfsParams.phase == 1 | mcfsParams.savePrunedData == true)
+			prunedArray = mcfs.mcfsArrays.sourceArray.cloneByIdx(topRankingColIdx, rowIdx);
 
 		if(mcfsParams.saveResultFiles & mcfsParams.savePrunedData){
 			System.out.println("*** Saving pruned data ***");
 			//System.out.println("*** MDR DEBUG: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh");
 			//System.out.println("*** MDR DEBUG: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv");			
-			FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh", topRankingArray.toADH());
-			FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv", topRankingArray.toCSV());
+			prunedArray = mcfs.mcfsArrays.sourceArray.cloneByIdx(topRankingColIdx, rowIdx);
+			FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh", prunedArray.toADH());
+			FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv", prunedArray.toCSV());
 		}
 
 		if(mcfsParams.saveResultFiles && mcfsParams.zipResult){
 			zipResult(mcfsParams);
 		}		
-
+		
 		long stop = System.currentTimeMillis();
 		float experimentTime = (stop-start)/1000.0f;
 		System.out.println("*** MCFS-ID Processing is done. Time: " + GeneralUtils.timeIntervalFormat(experimentTime) + " ***");
 		System.out.println();
 		
-		return topRankingArray;
+		return prunedArray;
 	}
 	//************************************
 	public GlobalStats getGlobalStats() {

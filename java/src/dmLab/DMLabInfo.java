@@ -22,8 +22,8 @@ import dmLab.utils.StringUtils;
 
 public class DMLabInfo
 {
-	public static String VERSION = "2.3.2";
-	public static String DATE = "2021.05.28";
+	public static String VERSION = "2.3.3";
+	public static String DATE = "2021.06.12";
 
 	public DMLabInfo()
 	{

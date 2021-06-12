@@ -19,12 +19,11 @@
 package dmLab.array;
 
 import java.util.HashSet;
-
+import java.util.ArrayList;
 import dmLab.array.functions.ExtFunctions;
 import dmLab.array.meta.Attribute;
 import dmLab.array.meta.AttributesMetaInfo;
 import dmLab.mcfs.MCFSParams;
-
 
 public abstract class Array implements Cloneable
 {
@@ -44,6 +43,20 @@ public abstract class Array implements Cloneable
 		decAttrIdx = -1;
 	}
 	//********************************
+	public static int[] colMask2colIdx(int[] colMask) {
+		ArrayList<Integer> colIdx = new ArrayList <Integer>(); 
+		for(int i=0;i<colMask.length;i++) {
+			if(colMask[i] == 1)
+				colIdx.add(i);
+		}
+		
+		int[] colIdxInt = new int[colIdx.size()];
+		for(int i=0;i<colIdx.size();i++) {
+			colIdxInt[i] = colIdx.get(i); 
+		}
+		return colIdxInt;
+	}
+	//********************************
 	public abstract void init(int cols, int rows);
 	//********************************
 	protected void initAttributes(int cols, int rows)
@@ -59,6 +72,8 @@ public abstract class Array implements Cloneable
 	public abstract Array clone();
 	//	********************************************
 	public abstract Array clone(boolean colMask[], boolean rowMask[]);
+	//	********************************************
+	public abstract Array cloneByIdx(int colIdx[], int rowIdx[]);
 	//	********************************************
 	public int getDecAttrIdx()
 	{
@@ -94,6 +109,24 @@ public abstract class Array implements Cloneable
 		}
 		return colNames;
 	}
+	//	********************************************
+	public String[] getColNames(int colIdx[], boolean includeDecision)
+    {				
+		ArrayList<String> colNames = new ArrayList<String>();		
+		int decIndex=getDecAttrIdx();
+		if(includeDecision)
+			decIndex = -1;
+		
+		for(int i=0;i<colIdx.length;i++){			
+			if(colIdx[i]!=decIndex) {
+				colNames.add(attributes[colIdx[i]].name);
+			}
+		}
+		
+		String[] colNamesArray = new String[1]; 
+		return colNames.toArray(colNamesArray);				
+    }
+
 	//	********************************************
 	//	**** return index of column by given name, returns -1 if column is not present
 	public int getColIndex(String colName)

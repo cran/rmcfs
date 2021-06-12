@@ -28,6 +28,7 @@ import dmLab.experiment.classification.ClassificationBody;
 import dmLab.experiment.classification.ClassificationParams;
 import dmLab.mcfs.attributesRI.AttributesRI;
 import dmLab.utils.cmatrix.QualityMeasure;
+import dmLab.utils.ArrayUtils;
 import dmLab.utils.cmatrix.ConfusionMatrix;
 import dmLab.utils.dataframe.ColumnMetaInfo;
 import dmLab.utils.dataframe.DataFrame;
@@ -36,6 +37,7 @@ public class MCFSFinalCV {
 
 	protected int[] algorithms;	
 	protected Random random;
+	protected ArrayUtils arrayUtils;
 	
 	public ConfusionMatrix[] j48ConfMatrix;
 	private ConfusionMatrix j48ConfMatrixTmp;
@@ -44,26 +46,25 @@ public class MCFSFinalCV {
 	public MCFSFinalCV(int[] algorithms, Random random){
 		this.algorithms = algorithms;
 		this.random = random;
+		this.arrayUtils = new ArrayUtils(random);
 	}
 	//************************************
 	public DataFrame run(FArray array, AttributesRI importances, int[] size, int cvFolds, int setSize, int repetitions)
 	{
-		this.j48ConfMatrix = new ConfusionMatrix[size.length];
-
-		SelectFunctions selectFunctions = new SelectFunctions(random);
+		this.j48ConfMatrix = new ConfusionMatrix[size.length];		
 		if(array.rowsNumber() <= setSize)
 			repetitions = 1;
 
 		DataFrame result_df=null;		
 		for(int i=0;i<size.length;i++){
 			int currSize = size[i];
-			if(currSize > 0 && currSize < array.colsNumber()){
-				FArray topRankingArray = (FArray)SelectFunctions.selectColumns(array, SelectFunctions.getColumnsMask(array, importances, currSize));
-		    	//System.out.println("***topRankingArray***\n"+topRankingArray.toString());		
-				System.out.println("*** "+topRankingArray.rowsNumber()+" objects and "+(topRankingArray.colsNumber()-1)+" input attributes ***");				
+			if(currSize > 0 && currSize < array.colsNumber()){				
+				int[] colIdx = SelectFunctions.getColumnsIdx(array, importances, currSize);
+				int[] rowIdx = ArrayUtils.seq(0, array.rowsNumber());				
+				//System.out.println("***columns number:  "+colIdx.length);				
 				DataFrame step_df=null;
-				for(int j=0; j<repetitions; j++){
-					FArray rep_array = (FArray)selectFunctions.selectRowsRandom(topRankingArray, setSize);
+				for(int j=0; j<repetitions; j++){					
+					FArray rep_array = array.cloneByIdx(colIdx, arrayUtils.randomSelectValues(rowIdx,setSize));
 					if(repetitions > 1)
 						System.out.println("*** CV Repetition = " + (j+1) + " ["+rep_array.rowsNumber() +" x "+rep_array.colsNumber()+"]");
 					

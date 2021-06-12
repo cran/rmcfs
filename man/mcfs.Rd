@@ -161,7 +161,7 @@ mcfs(formula, data,
   # The data are from the lymphoma/leukemia study of A. Alizadeh et al., Nature 403:503-511 (2000), 
   # http://llmpp.nih.gov/lymphoma/index.shtml
   
-  alizadeh <- read.csv(file="http://www.ipipan.eu/staff/m.draminski/files/data/alizadeh.csv", 
+  alizadeh <- read.csv(file="http://home.ipipan.waw.pl/m.draminski/files/data/alizadeh.csv", 
                         stringsAsFactors = FALSE)
   showme(alizadeh)
   

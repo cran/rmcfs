@@ -111,9 +111,11 @@ public class MCFSParams extends ExperimentParams
 	public boolean useDiversityMeasure;
 	
 	//temporary params
-	public int[] tmpBalancedClassSizes;
+	public int[] balancedClassSizes;
+	public int[] splitSetClassSizes;
 	public int projectionsValue;
 	public int projectionSizeValue;
+	public int phase;
 	
 	//*************************************
 	public MCFSParams()
@@ -188,7 +190,10 @@ public class MCFSParams extends ExperimentParams
 		wekaClassifierMode = WekaClassifier.MEMORY;
 
 		//temporary params initiation
-		tmpBalancedClassSizes = null;
+		balancedClassSizes = null;
+		splitSetClassSizes = null;
+		phase = 2;
+		
 		return true;
 	}
 	//*************************************************

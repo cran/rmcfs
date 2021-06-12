@@ -39,25 +39,42 @@ public class ArrayUtils
 	//*****************************************
 	public ArrayUtils(Random random){
 		this.random = random;
-	}	
+	}
 	//*****************************************
-	public int[] randomSelect(int array[], int size){
-		return randomSelect(array, size, 1, 0);
+	public int[] randomSelect(int mask[], int size){
+		return randomSelect(mask, size, 1, 0);
 	}
 	//*****************************************
 	// used by ADX, train/test split and class balancing task
-	public int[] randomSelect(int[] array, int posValuesNumber, int posValue, int negValue)
+	public int[] randomSelect(int[] mask, int posValuesNumber, int posValue, int negValue)
 	{
-		int negValuesNumber = array.length-posValuesNumber;		
-		if(posValuesNumber < (array.length)/2.0){
-			Arrays.fill(array, negValue);
-			randomFill(array, posValuesNumber, posValue);
+		int negValuesNumber = mask.length-posValuesNumber;
+		if(posValuesNumber >= mask.length) {
+			Arrays.fill(mask, posValue);
+		}else if(posValuesNumber < (mask.length)/2.0){
+			Arrays.fill(mask, negValue);
+			randomFill(mask, posValuesNumber, posValue);
 		}else{  
 			//If I have to pick less then a half of events
-			Arrays.fill(array, posValue);
-			randomFill(array, negValuesNumber, negValue);
+			Arrays.fill(mask, posValue);
+			randomFill(mask, negValuesNumber, negValue);
 		}
-		return array;
+		return mask;
+	}
+	//*****************************************
+	public int[] randomSelectValues(int array[], int size){
+		if(size>=array.length)
+			return array;
+		
+		int[] mask = new int[array.length];
+		int[] retArray = new int[size];
+		randomSelect(mask, size, 1, 0);
+		int retArrayIdx=0;
+		for(int i=0;i<mask.length;i++) {
+			if(mask[i]==1)
+				retArray[retArrayIdx++] = array[i];
+		}
+		return(retArray);
 	}
 	//*****************************************
 	//method fills array randomly with values from range [0,maxValue)
@@ -189,6 +206,14 @@ public class ArrayUtils
 			if(array[i]==value)
 				counter++;
 		return counter;
+	}
+	//*********************************************
+	public static int[] seq(int start, int stop) {
+		int[] array = new int[stop-start];
+		int val = start;
+		for(int i=start;i<stop;i++)
+			array[i] = val++;  
+		return array;
 	}
 	//*********************************************
 	public static double[] toDoubleArray(String arrayStr) throws NumberFormatException

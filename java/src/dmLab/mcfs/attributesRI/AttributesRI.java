@@ -127,6 +127,17 @@ public class AttributesRI
         	}
         }        
     }
+  //**********************************************    
+    public void addProjections(String[] colNames)
+    {        
+    	int measureIdx = getMeasureIndex(ImportanceMeasure.MEASURE_PROJECTIONS);
+    	ImportanceMeasure measure = measures.get(measureIdx);
+
+    	for(int i=0; i<colNames.length; i++){
+    		int attributeIndex = attrMap.getItem(colNames[i]);
+    		importances[attributeIndex][measureIdx] += measure.calcAttrImportance();
+    	}        
+    }
 //**********************************************
     public boolean sumImportances(AttributesRI ri)
     {

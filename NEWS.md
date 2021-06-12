@@ -1,5 +1,10 @@
 # rmcfs - changes
 
+Version 1.3.3
+=============
+* Extreme speedup and memory optimization for the data with large number of rows
+* mcfs help Alizadeh data link updated
+
 Version 1.3.2
 =============
 * closeAllConnections() removed from the code

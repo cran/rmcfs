@@ -123,7 +123,14 @@ public class SArray extends Array
 		}
 		return dstArray;
 	}
-	//********************************	
+	//********************************
+	@Override
+	@Deprecated
+	public SArray cloneByIdx(int colIdx[], int rowIdx[]) {
+		System.err.println("NOT Implemented!");
+		return clone();
+	}
+	//********************************		
 	@Override
 	public void cbind(Array array)
 	{
