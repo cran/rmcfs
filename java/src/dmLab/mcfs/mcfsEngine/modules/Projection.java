@@ -83,6 +83,8 @@ public class Projection
                 //System.out.println("*** MDR DEBUG *** selected rows# "+rowIdx.length+"\n");                                                
             }else {
             	rowIdx = ArrayUtils.seq(0, inputArray.rowsNumber());
+            	if(mcfsParams.splitSetSize < rowIdx.length)              	
+            		rowIdx = selectFunctions.arrayUtils.randomSelectValues(rowIdx, mcfsParams.splitSetSize);            	
             }
             
         	//System.out.println("*** MDR DEBUG *** selected rows# "+rowIdx.length+"\n");            	            

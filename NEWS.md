@@ -1,5 +1,11 @@
 # rmcfs - changes
 
+Version 1.3.4
+=============
+* fixed a nullpointerexception for numeric target variable
+* fixed a buildId param setting (always True)
+* fixed a splitSetSize param setting for numeric target variable
+
 Version 1.3.3
 =============
 * Extreme speedup and memory optimization for the data with large number of rows

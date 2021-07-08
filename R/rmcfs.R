@@ -57,9 +57,10 @@ mcfs <- function(formula, data,
   if(check_data(data) == FALSE)
     return(NULL)
 
-  #in any case replace slash
+  #set up temp dir
+  #tmp_dir <- "~/TEMP/"
   tmp_dir <- fix.path(temp_dir())
-  
+
   #set the label
   #label <- paste0("input_", target)
   label <- "input"

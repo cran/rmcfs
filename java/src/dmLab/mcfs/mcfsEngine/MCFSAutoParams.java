@@ -172,7 +172,10 @@ public class MCFSAutoParams {
 		return balancedClassSizes;
 	}
 	//  ****************************************************
-	public static int[] getSplitSetClassSizes(MCFSParams mcfsParams, FArray array) {
+	public static int[] getSplitSetClassSizes(MCFSParams mcfsParams, FArray array) {		
+		if(!array.isTargetNominal()){
+			return null;
+		}		
 		int[] splitSetClassSizes = null;
 		int splitSetSize = mcfsParams.splitSetSize;
 		if(mcfsParams.balance <= 1 & (splitSetSize==0 | splitSetSize >= array.rowsNumber())) {

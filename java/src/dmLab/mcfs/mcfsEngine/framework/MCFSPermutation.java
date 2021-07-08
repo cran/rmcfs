@@ -39,7 +39,7 @@ public class MCFSPermutation extends MCFSFramework implements Runnable
 	@Override
     public void run()
 	{
-		mcfsParams.buildID = true;
+		//mcfsParams.buildID = true;
 		mcfsParams.finalCV = false;
 		mcfsParams.finalRuleset = false;
 		mcfsParams.cutoffMethod = "mean";
