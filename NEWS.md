@@ -1,5 +1,9 @@
 # rmcfs - changes
 
+Version 1.3.5
+=============
+* fixed a java 17 compatibility issue
+
 Version 1.3.4
 =============
 * fixed a nullpointerexception for numeric target variable

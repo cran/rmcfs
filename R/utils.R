@@ -3,12 +3,13 @@
 ###############################
 #library(rJava)
 #get.JavaVersion()
-get.JavaVersion <- function()
-{
+get.JavaVersion <- function(){
   .jinit()
   jv <- .jcall("java/lang/System", "S", "getProperty", "java.runtime.version")
-  if(startsWith(jv,'11+')){
-    jvn <- 11
+  #create all possible java versions from 11 to 99
+  jversions <- paste0(11:99, "+")
+  if(any(startsWith(jv,jversions))){
+    jvn <- as.numeric(stringi::stri_replace_all(jversions[startsWith(jv,jversions)], "", fixed="+"))
   }else if(substr(jv, 1L, 2L) == "1.") {
     #looks like its Oracle JDK 1.x
     #jvn <- as.numeric(paste0(strsplit(jv, "[.]")[[1L]][1:2], collapse = "."))
