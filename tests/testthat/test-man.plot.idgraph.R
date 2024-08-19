@@ -2,6 +2,7 @@ context("man.plot.idgraph")
 
 ##################################################################
 test_that("man build.idgraph", {
+  skip_on_cran()
   options(java.parameters = "-Xmx4g")
   require(testthat)
   require(rmcfs)

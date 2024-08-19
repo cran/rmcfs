@@ -2,6 +2,7 @@ context("man.build.idgraph")
 
 ##################################################################
 test_that("man build.idgraph", {
+  skip_on_cran()
   options(java.parameters = "-Xmx4g")
   require(testthat)
   require(rJava)
@@ -23,7 +24,7 @@ test_that("man build.idgraph", {
   
   # Export graph to graphML (XML structure)
   path <- tempdir()
-  igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
+  igraph::write_graph(gid, file = file.path(path, "artificial.graphml"), 
                       format = "graphml", prefixAttr = FALSE)
   
 })

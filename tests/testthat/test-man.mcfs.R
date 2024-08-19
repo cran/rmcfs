@@ -2,6 +2,7 @@ context("man.mcfs")
 
 ##################################################################
 test_that("man mcfs artificial", {
+  skip_on_cran()
   options(java.parameters = "-Xmx4g")
   require(testthat)
   require(rmcfs)
@@ -64,7 +65,7 @@ test_that("man mcfs artificial", {
   
   # Export graph to graphML (XML structure)
   path <- tempdir()
-  igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
+  igraph::write_graph(gid, file = file.path(path, "artificial.graphml"), 
                       format = "graphml", prefixAttr = FALSE)
   
   # Export and import results to/from csv files

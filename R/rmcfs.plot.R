@@ -14,7 +14,7 @@ plot.mcfs <- function(x, type = c("features", "ri", "id", "distances", "cv", "cm
                       cex = 1, 
                       ...){
   mcfs_result <- x
-  if(class(mcfs_result) != "mcfs"){
+  if(!inherits(mcfs_result,"mcfs")){
     stop("Input object is not 'mcfs' class.")
   }
   
@@ -270,12 +270,12 @@ mcfs.plot.distances <- function(mcfs_result, size = NA, cex = 1)
     axis(1, at = ticks, labels=labs, las=2, cex.axis=cex)
     
     lines(distances$commonPart , col = color[2], type="l")
-    distance <- scale.vector(distances$distance,y_lim_right[1],y_lim_right[2])
+    distance <- scaleVector(distances$distance,y_lim_right[1],y_lim_right[2])
     lines(distance, col = color[1], type="l")
     
     #left axis
     labs <- seq(y_lim_left[1], y_lim_left[2], by=1)
-    ticks <- scale.vector(labs,y_lim_right[1],y_lim_right[2])
+    ticks <- scaleVector(labs,y_lim_right[1],y_lim_right[2])
     axis(side=2, at = ticks, labels = labs, cex.axis=cex, tcl = -0.5)
     #right axis
     labs <- seq(y_lim_right[1],y_lim_right[2],by=0.1)
@@ -627,7 +627,7 @@ dye.idgraph <- function(idgraph, color = "darkred")
   colfunc <- grDevices::colorRampPalette(c(color, "white"))
   mycolors <- colfunc(1000)
   sat <- igraph::vertex_attr(idgraph, "sat", index = V(idgraph))
-  sat <- round(scale.vector(sat, 1, 1000))
+  sat <- round(scaleVector(sat, 1, 1000))
   idgraph <- set_vertex_attr(idgraph, "color", value = mycolors[sat])
   return(idgraph)  
 }
@@ -636,9 +636,9 @@ dye.idgraph <- function(idgraph, color = "darkred")
 ###############################
 autocurve.idgraph <- function(idgraph, start = 0.5)
 {
-  cm <- igraph::count.multiple(idgraph)
-  mut <- igraph::is.mutual(idgraph)  #are connections mutual?
-  el <- apply(igraph::get.edgelist(idgraph, names = FALSE), 1, paste, collapse = ":")
+  cm <- igraph::count_multiple(idgraph)
+  mut <- igraph::which_mutual(idgraph)  #are connections mutual?
+  el <- apply(igraph::as_edgelist(idgraph, names = FALSE), 1, paste, collapse = ":")
   ord <- order(el)
   res <- numeric(length(ord))
   p <- 1
@@ -711,7 +711,7 @@ export.plots <- function(mcfs_result, data = NULL, idgraph = NULL, path, label =
   #save ID-Graph (if exists)
   if(!is.null(idgraph)){
     id_label <- paste0(label,"_n",length(igraph::V(idgraph)),"_e",length(igraph::E(idgraph)))
-    write.graph(idgraph, file=file.path(path,paste0(id_label,".graphml")), format="graphml", prefixAttr=F)
+    igraph::write_graph(idgraph, file=file.path(path,paste0(id_label,".graphml")), format="graphml", prefixAttr=F)
     open.plot.file(filename=file.path(path,paste0(id_label,"_IDgraph.", plot_format)), width=image_height, height=image_height)
     plot.idgraph(idgraph, label_dist = 1, color = color, cex=cex)
     dev.off()

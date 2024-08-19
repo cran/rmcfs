@@ -21,6 +21,9 @@ package dmLab.array.saver;
 import dmLab.array.Array;
 import dmLab.array.meta.Attribute;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public class Array2ADX extends Array2String
 {	
 	public Array2ADX()
@@ -37,15 +40,35 @@ public class Array2ADX extends Array2String
 		
 		StringBuffer buffer=new StringBuffer();
 		buffer.append("attributes").append('\n');
-		buffer.append('{').append('\n');
+		buffer.append("{").append('\n');
 		buffer.append(attributesToString(array));
-		buffer.append('}').append('\n');
+		buffer.append("}").append('\n');
 		
 		buffer.append("events").append('\n');
-		buffer.append('{').append('\n');
+		buffer.append("{").append('\n');
 		buffer.append(eventsToString(array));
-		buffer.append('}').append('\n');				
+		buffer.append("}").append('\n');
+
 		return buffer.toString();
+	}
+	//************************************
+	public boolean toWriter(Array array, BufferedWriter fileWriter){
+		if(isEmpty(array))
+			return false;
+		try {
+			fileWriter.write("attributes" + '\n');
+			fileWriter.write("{" + '\n');
+			fileWriter.write(attributesToString(array));
+			fileWriter.write("}" + '\n');
+			fileWriter.write("events"  + '\n');
+			fileWriter.write("{" + '\n');
+			eventsToWriter(array, fileWriter);
+			fileWriter.write("}"  + '\n');
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		return true;
 	}
 	//************************************
 	@Override

@@ -65,6 +65,10 @@ public abstract class MCFSFramework implements Runnable
 		return true;
 	}
 	//*************************************
+	public void clearArrays(){
+		mcfsArrays = new MCFSArrays();
+	}
+	//*************************************
 	public boolean run(MCFSParams mcfsParams)
 	{
 		this.mcfsParams = mcfsParams.clone();

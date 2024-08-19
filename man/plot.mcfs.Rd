@@ -21,7 +21,7 @@
     \item{type}{
     \itemize{
         \item\code{features} plots top features set along with their RI. It is a horizontal barplot that shows important features in red color and unimportant in grey.
-    \item\code{ri} {plots top features set with their RIs as well as max RI obtained from permutation experiments. Red color denotes important features.}
+    \item\code{ri} plots top features set with their RIs as well as max RI obtained from permutation experiments. Red color denotes important features.
     \item\code{id} plots top ID values obtained from the MCFS-ID.
     \item\code{distances} plots distances (convergence diagnostics of the algorithm) between subsequent feature rankings obtained during the MCFS-ID experiment.
     \item\code{cv} plots cross validation results based on top features.

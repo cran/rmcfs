@@ -18,9 +18,7 @@
  *******************************************************************************/
 package dmLab.mcfs.mcfsEngine;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -88,17 +86,27 @@ public class MCFSExperiment implements Runnable
 			FArray tmpArray = start(mcfsParamsP1);
 			if(tmpArray == null)
 				return;
-			
+
+			mcfs.clearArrays();
+			if(mcfsParamsP1.verbose)
+				System.out.println(GeneralUtils.getMemStatus("G"));
+
 			AttributesRI ri_phase1 = mcfs.globalStats.getAttrImportances()[0];
 			// save ranking from phase 1
+			//System.out.println("MDR DEBUG: save ranking from phase 1");
 			File ri_phase1_file = new File(mcfsParamsP1.resFilesPATH + File.separator + mcfsParamsP1.getExperimentName() + "_" + ri_phase1.label + "_" + mcfsParamsP1.filesufix_RI);
 			//System.out.println("MDR DEBUG: ri_phase1_file: " + ri_phase1_file);
 			FileUtils.saveString(ri_phase1_file.getAbsolutePath(), ri_phase1.toString());
 
 			// save data for phase 2
+			//System.out.println("MDR DEBUG: save data for phase 2");
 			File input_phase2_file = new File(mcfsParamsP1.tmpPATH + File.separator + FileUtils.dropFileExtension(new File(mcfsParamsP1.inputFileName)) + ".adx");
 			//System.out.println("MDR DEBUG: input_phase2_file: " + input_phase2_file);
-			FileUtils.saveString(input_phase2_file.getAbsolutePath(), tmpArray.toString());
+			//FileUtils.saveString(input_phase2_file.getAbsolutePath(), tmpArray.toString());
+			BufferedWriter fileWriter = FileUtils.openFileWriter(new File(input_phase2_file.getAbsolutePath()));
+			tmpArray.writeADX(fileWriter);
+			FileUtils.closeFileWriter(fileWriter);
+			tmpArray = null;
 
 			MCFSParams mcfsParamsP2 = myParams.clone();
 			mcfsParamsP2.inputFilesPATH = input_phase2_file.getAbsoluteFile().getParent();
@@ -111,13 +119,16 @@ public class MCFSExperiment implements Runnable
 			System.out.println("*** Running Phase II - Final MCFS-ID filtering  ***");
 			start(mcfsParamsP2);
 
-			AttributesRI ri_phase2 = getGlobalStats().getAttrImportances()[0];			
+			mcfs.clearArrays();
+			if(mcfsParamsP2.verbose)
+				System.out.println(GeneralUtils.getMemStatus("G"));
 
+			AttributesRI ri_phase2 = getGlobalStats().getAttrImportances()[0];
 			//combine two rankings into one
 			DataFrame df_ri_phase1 = ri_phase1.toDataFrame(ri_phase1.getMeasuresNamesBasic());
 			DataFrame df_ri_phase2 = ri_phase2.toDataFrame(ri_phase2.getMeasuresNamesBasic());
 			DataFrame ri_final = combineRankings(df_ri_phase1, df_ri_phase2);
-			
+
 			//save ranking from phase 2 and the final ranking
 			//System.out.println(ri_final.toString());			
 			File ri_final_file = new File(mcfsParamsP2.resFilesPATH + File.separator + mcfsParamsP2.getExperimentName()+"_"+ri_phase2.label+"_"+MCFSParams.FILESUFIX_RI);
@@ -252,6 +263,8 @@ public class MCFSExperiment implements Runnable
 			topRanking = importancesClassic.getTopRankingSize(mainMeasureIndex, topRankingSize);
 			System.out.println("*** Final Important attributes (based on "+topRankingMethod+") = "+topRanking.size());            
 			if(topRanking!=null){
+				if(mcfsParams.verbose)
+					System.out.println("Saving topRanking file...");
 				FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_TOPRANKING, topRanking.toString());
 			}
 		}
@@ -322,27 +335,37 @@ public class MCFSExperiment implements Runnable
 		}
 		
 		FArray prunedArray = null;
-		if(mcfsParams.phase == 1 | mcfsParams.savePrunedData == true)
+		if(mcfsParams.phase == 1 | mcfsParams.savePrunedData) {
+			//System.out.println("*** MDR DEBUG Pruning data A ***");
 			prunedArray = mcfs.mcfsArrays.sourceArray.cloneByIdx(topRankingColIdx, rowIdx);
+		}
 
 		if(mcfsParams.saveResultFiles & mcfsParams.savePrunedData){
-			System.out.println("*** Saving pruned data ***");
-			//System.out.println("*** MDR DEBUG: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh");
-			//System.out.println("*** MDR DEBUG: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv");			
-			prunedArray = mcfs.mcfsArrays.sourceArray.cloneByIdx(topRankingColIdx, rowIdx);
+			//System.out.println("*** MDR DEBUG Pruning data B ***");
+			if (prunedArray == null)
+				prunedArray = mcfs.mcfsArrays.sourceArray.cloneByIdx(topRankingColIdx, rowIdx);
+			if(mcfsParams.verbose) {
+				System.out.println("*** Saving pruned data ***");
+				System.out.println("Saving File: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh");
+				System.out.println("Saving File: " + mcfsParams.resFilesPATH+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv");
+			}
 			FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".adh", prunedArray.toADH());
 			FileUtils.saveString(mcfsParams.resFilesPATH+File.separator+experimentName+"_"+MCFSParams.FILESUFIX_DATA + ".csv", prunedArray.toCSV());
 		}
 
 		if(mcfsParams.saveResultFiles && mcfsParams.zipResult){
+			if(mcfsParams.verbose)
+				System.out.println("*** Zipping result files ***");
 			zipResult(mcfsParams);
 		}		
 		
 		long stop = System.currentTimeMillis();
 		float experimentTime = (stop-start)/1000.0f;
 		System.out.println("*** MCFS-ID Processing is done. Time: " + GeneralUtils.timeIntervalFormat(experimentTime) + " ***");
+		if(mcfsParams.verbose)
+			System.out.println(GeneralUtils.getMemStatus("G"));
 		System.out.println();
-		
+
 		return prunedArray;
 	}
 	//************************************

@@ -68,25 +68,46 @@ public class GeneralUtils
 		return retString;
 	}
 	//**************************************
-	public static String getMemStatus()
+	public static String getMemStatus() {
+		return getMemStatus("M");
+	}
+	//**************************************
+	public static String getMemStatus(String unit)
 	{
 		System.gc();
+		float  unit_float =  1000000f;
+		String unit_str = unit;
+		int precision = 2;
+
+		if (unit.equalsIgnoreCase("K"))
+			unit_float =  1000f;
+		else if (unit.equalsIgnoreCase("M"))
+			unit_float =  1000000f;
+		else if (unit.equalsIgnoreCase("G"))
+			unit_float =  1000000000f;
+		else if (unit.equalsIgnoreCase("T"))
+			unit_float =  1000000000000f;
+		else {
+			unit_float = 1000000f;
+			unit_str = "M";
+		}
+
 		// Get current size of heap in bytes
-		double totalMemory = Runtime.getRuntime().totalMemory()/1000000.0;
+		double totalMemory = Runtime.getRuntime().totalMemory()/unit_float;
 
 		// Get maximum size of heap in bytes. The heap cannot grow beyond this size.
 		// Any attempt will result in an OutOfMemoryException.
-		double maxMemory = Runtime.getRuntime().maxMemory()/1000000.0;
+		double maxMemory = Runtime.getRuntime().maxMemory()/unit_float;
 
 		// Get amount of free memory within the heap in bytes. This size will increase
 		// after garbage collection and decrease as new objects are created.
-		double freeMemory = Runtime.getRuntime().freeMemory()/1000000.0;
+		double freeMemory = Runtime.getRuntime().freeMemory()/unit_float;
 		double usedMemory=maxMemory-freeMemory;
 
-		return " - MEMORY Status - "+"free: "+GeneralUtils.formatFloat(freeMemory,2)
-				+"M used: "+GeneralUtils.formatFloat(usedMemory,2)			
-				+"M total: "+GeneralUtils.formatFloat(totalMemory,2)
-				+"M max: "+GeneralUtils.formatFloat(maxMemory,2)+"M";
+		return "MEMORY Status - "+"free: " + GeneralUtils.formatFloat(freeMemory,precision) + unit_str +
+				" used: " + GeneralUtils.formatFloat(usedMemory,precision) + unit_str +
+				" total: " + GeneralUtils.formatFloat(totalMemory,precision) + unit_str +
+				" max: " + GeneralUtils.formatFloat(maxMemory,precision) + unit_str;
 	}
 	//******************************
 	public static String getCurrDateTime()

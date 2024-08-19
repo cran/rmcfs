@@ -7,8 +7,8 @@ should define a classification problem with discrete/nominal class labels. This
 function returns features sorted by RI as well as cutoff value, ID-Graph edges that denote interdependencies (ID), evaluation of top features and other statistics.
 }
 
-\references{M. Draminski, J. Koronacki (2018),"rmcfs: An R Package for Monte Carlo Feature Selection and Interdependency Discovery", \emph{Journal of Statistical Software, vol 85(12)}, 1-28, doi:10.18637/jss.v085.i12.
-URL: \url{https://www.jstatsoft.org/v85/i12/}}
+\references{M. Draminski, J. Koronacki (2018),"rmcfs: An R Package for Monte Carlo Feature Selection and Interdependency Discovery", \emph{Journal of Statistical Software, vol 85(12)}, 1-28, \doi{10.18637/jss.v085.i12}} 
+ 
 
 \usage{
 mcfs(formula, data,
@@ -85,6 +85,9 @@ mcfs(formula, data,
   ####################################
   ######### Artificial data ##########
   ####################################
+  # Set VM size for Java
+  options(java.parameters = "-Xmx8g")
+  library(rmcfs)
   
   # create input data and review it
   adata <- artificial.data(rnd_features = 10)
@@ -144,12 +147,24 @@ mcfs(formula, data,
 
   # Export graph to graphML (XML structure)
   path <- tempdir()
-  igraph::write.graph(gid, file = file.path(path, "artificial.graphml"), 
+  igraph::write_graph(gid, file = file.path(path, "artificial.graphml"), 
               format = "graphml", prefixAttr = FALSE)
   
   # Export and import results to/from csv files
   export.result(result, path = path, label = "artificial")
   result <- import.result(path = path, label = "artificial")
+
+  # Find out how many trees with the given attribute has been built (and nodes based the 
+  # attribute in total). Notice that result$RI$projections keeps the number of subsets where
+  # the feature was randomly picked. The value: result$RI$projections*result$params$mcfs.splits
+  # is the total number of trees for a given attribute that could be built based on the attribute.
+  # This normalization takes into the consideration not the full number of st trees
+  # but only the fraction that is trained on datasets with the attribute.
+
+  
+  result$RI$classifiers*(result$RI$projections*result$params$mcfs.splits)	
+  result$RI$nodes*(result$RI$projections*result$params$mcfs.splits)
+
 
   ####################################
   ########## Alizadeh data ###########

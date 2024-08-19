@@ -18,6 +18,7 @@
  *******************************************************************************/
 package dmLab.array;
 
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -626,6 +627,12 @@ public class FArray extends Array
 	public String toCSV(){
 		Array2CSV container2CSV = new Array2CSV();
 		return container2CSV.toString(this);
+	}
+	//  ********************************************
+	public boolean writeADX(BufferedWriter fileWriter){
+		Array2ADX container2ADX = new Array2ADX();
+		container2ADX.toWriter(this, fileWriter);
+		return true;
 	}
 	//  ********************************************
 	public String info(){

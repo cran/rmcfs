@@ -26,7 +26,7 @@ public class MCFS
 	//	*************************************
 	public static void main(String[] args)
 	{		
-		DMLabInfo dmLabInfo = new DMLabInfo();      
+		DMLabInfo dmLabInfo = new DMLabInfo();
 		System.out.println(dmLabInfo.toString());
 		
 		String paramsFileName;

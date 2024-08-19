@@ -19,8 +19,8 @@ mcfs <- function(formula, data,
                  seed = NA,
                  threadsNumber = 4)
 {
-  if(get.JavaVersion() < 7){
-    mystop("Java 7 or higher is needed for this package but not available.")
+  if(get.JavaVersion() < 8){
+    mystop("Java 8 or higher is needed for this package but not available.")
     return(NULL)
   }
   if(!cutoffMethod[1] %in% c("permutations", "criticalAngle", "kmeans", "mean")){
@@ -58,8 +58,9 @@ mcfs <- function(formula, data,
     return(NULL)
 
   #set up temp dir
-  #tmp_dir <- "~/TEMP/"
   tmp_dir <- fix.path(temp_dir())
+  #DEBUG
+  #tmp_dir <- "~/TEMP/"
 
   #set the label
   #label <- paste0("input_", target)
@@ -71,6 +72,7 @@ mcfs <- function(formula, data,
   params$inputFileName <- paste0(label, ".adh")
   params$inputFilesPATH <- file.path(tmp_dir, 'rmcfs_data')
   params$resFilesPATH <- file.path(tmp_dir, 'rmcfs_result')
+  params$tmpPATH <- file.path(tmp_dir, 'rmcfs_tmp')
   params$mcfs.projections <- projections
   params$mcfs.projectionSize <- projectionSize
   #params$mcfs.projectionSize <- get.projectionSize(length(cols), projectionSize)
@@ -102,8 +104,10 @@ mcfs <- function(formula, data,
 
   dir.create(params$inputFilesPATH, showWarnings = FALSE)
   dir.create(params$resFilesPATH, showWarnings = FALSE)
+  dir.create(params$tmpPATH, showWarnings = FALSE)
   clean.dir(params$inputFilesPATH)
   clean.dir(params$resFilesPATH)
+  clean.dir(params$tmpPATH)
   
   #for DEBUG switch these two to TRUE
   #params$verbose <- T
@@ -345,7 +349,7 @@ check_data <- function(data)
 fix.matrix <- function(m, na.char = '?'){
   m[is.na(m)] <- na.char
   m[is.infinite(m)] <- na.char
-  if(class(m[1,1])=="character"){
+  if(inherits(m[1,1],"character")){
     m[] <- string.trim(m)
     m[m=="Inf"] <- na.char
     m[m=="-Inf"] <- na.char
@@ -440,7 +444,7 @@ fix.data.types <- function(x,
 ###############################
 prune.data <- function(x, mcfs_result, size = NA){
   
-  if(class(mcfs_result)!="mcfs"){
+  if(!inherits(mcfs_result,"mcfs")){
     mystop("Input object is not 'mcfs' class.")
     return(NULL)
   }
@@ -741,8 +745,8 @@ import.result <- function(path = "./", label = NA){
 ###############################
 export.result <- function(mcfs_result, path = "./", label = "rmcfs", zip = TRUE){
 
-  if(class(mcfs_result) != "mcfs"){
-    mystop("Input object is not 'mcfs' class.")
+  if(!inherits(mcfs_result,"mcfs")){
+    mystop("Input object is not the 'mcfs' class.")
     return(NULL)
   }
   
@@ -881,7 +885,7 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA,
                           self_ID = FALSE, outer_ID = FALSE, orphan_nodes = FALSE,
                           size_ID_mult = 3, size_ID_max = 100) {
 
-  if(class(mcfs_result)!="mcfs"){
+  if(!inherits(mcfs_result,"mcfs")){
     mystop("Input object is not 'mcfs' class.")
     return(NULL)
   }
@@ -906,7 +910,7 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA,
   #add weightNorm and color columns to ranking
   ranking <- mcfs_result$RI  
   ranking$attribute <- as.character(ranking$attribute)  
-  ranking$color <- scale.vector(ranking$RI, 0, 1)
+  ranking$color <- scaleVector(ranking$RI, 0, 1)
   ranking$color <- abs(ranking$color-1)
   
   interdeps <- mcfs_result$ID[!is.na(mcfs_result$ID$weight),]
@@ -919,8 +923,8 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA,
   if(!self_ID)
     interdeps <- interdeps[interdeps$edge_a != interdeps$edge_b,]
   
-  interdeps$weightNorm <- scale.vector(interdeps$weight, plot_minW, plot_maxW)
-  interdeps$color <- scale.vector(interdeps$weight, 0, 1)
+  interdeps$weightNorm <- scaleVector(interdeps$weight, plot_minW, plot_maxW)
+  interdeps$color <- scaleVector(interdeps$weight, 0, 1)
   interdeps$color <- abs(interdeps$color-1)
   
   #select interdeps to plot
@@ -968,19 +972,19 @@ build.idgraph <- function(mcfs_result, size = NA, size_ID = NA,
     #create graph based on nodes and edges data.frames
     g <- igraph::graph_from_data_frame(interdeps, directed=TRUE, vertices=nodes_df)
     
-    from <- NULL
-    to <- NULL
+    .from <- NULL
+    .to <- NULL
     vertex.attributes <- NULL
     #set size of the nodes based on number of connections
     #V(g)[3]
     #E(g)[from(3)]
     #E(g)[to(3)]
     m <- 1:length(igraph::V(g))
-    vertexSizeFrom <- sapply(m, function(x) length(igraph::E(g)[from(x)]))
-    vertexSizeTo <- sapply(m, function(x) length(igraph::E(g)[to(x)]))
+    vertexSizeFrom <- sapply(m, function(x) length(igraph::E(g)[.from(x)]))
+    vertexSizeTo <- sapply(m, function(x) length(igraph::E(g)[.to(x)]))
     vertexSize <- vertexSizeFrom + vertexSizeTo
     #V(g)$edges <- vertexSize
-    V(g)$size <- scale.vector(vertexSize, vertexMinSize, vertexMaxSize)
+    V(g)$size <- scaleVector(vertexSize, vertexMinSize, vertexMaxSize)
   }
 
   class(g) <- append("idgraph", class(g))
@@ -1020,7 +1024,7 @@ get.min.ID <- function(mcfs_result, size = NA, size_ID = NA, size_ID_mult = 3, s
 ###############################
 print.mcfs <- function(x, ...){
   mcfs_result <- x
-  if(class(mcfs_result)!="mcfs"){
+  if(!inherits(mcfs_result,"mcfs")){
     stop("Input object is not 'mcfs' class.")
     return(NULL)
   }

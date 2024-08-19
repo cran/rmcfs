@@ -21,6 +21,9 @@ package dmLab.array.saver;
 import dmLab.array.Array;
 import dmLab.utils.StringUtils;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public abstract class Array2String
 {
 	protected char separator=',';
@@ -58,6 +61,24 @@ public abstract class Array2String
 			}
 		}
 		return buffer.toString();		
+	}
+//************************************
+	public boolean eventsToWriter(Array container, BufferedWriter fileWriter) throws IOException {
+		final int eventsNumber=container.rowsNumber();
+		final int attributesNumber=container.colsNumber();
+		for(int i=0;i<eventsNumber;i++) {
+			for(int j=0;j<attributesNumber;j++){
+				String value=container.readValueStr(j, i);
+				if(value==null || value.length()==0 || value.equalsIgnoreCase("null"))
+					value=nullLabel;
+				fileWriter.write(value);
+				if(j!=attributesNumber-1)
+					fileWriter.write(separator);
+				else
+					fileWriter.write('\n');
+			}
+		}
+		return true;
 	}
 //************************************
 	protected boolean isEmpty(Array container)

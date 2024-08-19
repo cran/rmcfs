@@ -175,11 +175,11 @@ const.features <- function(x){
 }
 
 ###############################
-#scale.vector
+#scaleVector
 ###############################
-#scale.vector(c(-0.4,0,1,10),-10,5)
-#scale.vector(c(-0.4,0,1,10))
-scale.vector<-function(x, min = 0, max = 1)
+#scaleVector(c(-0.4,0,1,10),-10,5)
+#scaleVector(c(-0.4,0,1,10))
+scaleVector<-function(x, min = 0, max = 1)
 {
   minTmp <- min(x)
   maxTmp <- max(x)
@@ -195,7 +195,7 @@ normalize <- function(data, min = 0, max = 1)
 {
   if(!is.data.frame(data))
     stop("Only data frames are handled")
-  apply(data, 2, scale.vector, min = min, max = max)
+  apply(data, 2, scaleVector, min = min, max = max)
 }
 
 ###############################

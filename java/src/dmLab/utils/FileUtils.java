@@ -18,15 +18,7 @@
  *******************************************************************************/
 package dmLab.utils;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -224,6 +216,34 @@ public class FileUtils {
 			return extracted.toArray(f);
 		}
 	}
+	//********************************
+	public static BufferedWriter openFileWriter(File file)
+	{
+		BufferedWriter fileWriter;
+		try{
+			//fileWriter = new BufferedWriter(new FileWriter(file));
+			fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file.toString()), "utf-8"));
+		}
+		catch (Exception e) {
+			System.err.println("Error opening file. File: "+file.toString());
+			return null;
+		}
+		return fileWriter;
+	}
+	//	************************************************
+	public static boolean closeFileWriter(BufferedWriter fileWriter)
+	{
+		try{
+			if(fileWriter != null)
+				fileWriter.close();
+		}
+		catch (Exception e) {
+			System.err.println("Error closing file.");
+			return false;
+		}
+		return true;
+	}
+
 	//********************************
 	public static BufferedReader openFile(File file)
 	{      	

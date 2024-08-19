@@ -47,8 +47,7 @@ public class Projection
         selectFunctions = new SelectFunctions(random);
     }
     //*************************************
-    public ConfusionMatrix projectionLoop(Classifier classifier, FArray inputArray,
-            AttributesRI attrRI[], AttributesID attrIDependencies)
+    public ConfusionMatrix projectionLoop(Classifier classifier, FArray inputArray, AttributesRI attrRI[], AttributesID attrIDependencies)
     {    	
         splitsStats = new StatsList();
      

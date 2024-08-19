@@ -4,6 +4,7 @@ context("mcfs")
 #devtools::use_test("test.mcfs")
 
 test_that("read/write adx/adh", {
+  skip_on_cran()
   options(java.parameters = "-Xmx4g")
   require(testthat)
   require(rmcfs)
@@ -33,7 +34,7 @@ test_that("read/write adx/adh", {
   expect_true(all(attr(adata, 'attr_weights') == attr(adata_ref, 'attr_weights')))
   expect_true(all(attr(adata, 'target') == attr(adata_ref, 'target')))
   expect_true(all(round(adata[,1:adata_size], digits = 5) == round(adata_ref[,1:adata_size], digits = 5)))
-  expect_true(all(adata[,(adata_size+1):(adata_size+5)] == adata_ref[,31:35]), expect_true())
+  expect_true(all(adata[,(adata_size+1):(adata_size+5)] == adata_ref[,31:35]))
   
   file_tmp <- file.path(path, "adx_file.adh")
   file_zip <- file.path(path, "adx_file.zip")

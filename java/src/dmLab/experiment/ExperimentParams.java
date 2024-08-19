@@ -128,8 +128,7 @@ public class ExperimentParams extends Params implements Cloneable
 		inputFilesPATH = properties.getProperty("inputFilesPATH", ExperimentParams.DEFAULT_DATA_PATH);
 		resFilesPATH = properties.getProperty("resFilesPATH", ExperimentParams.DEFAULT_RES_PATH);
 		classifierCfgPATH = properties.getProperty("classifierCfgPATH", ExperimentParams.DEFAULT_CFG_PATH);
-		//tmpPATH = properties.getProperty("tmpPATH", ExperimentParams.DEFAULT_TMP_PATH);
-		
+		tmpPATH = properties.getProperty("tmpPATH", tmpPATH);
 		inputFileName = properties.getProperty("inputFileName", "inputFile.adx");        
 		inputFiles = StringUtils.tokenizeArray(inputFileName);        
 		if(inputFiles == null){

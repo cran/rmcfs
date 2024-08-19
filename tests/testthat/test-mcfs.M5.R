@@ -4,6 +4,7 @@ context("mcfs")
 #devtools::use_test("test.mcfs")
 
 test_that("MCFS artificial data M5", {
+  skip_on_cran()
   options(java.parameters = "-Xmx4g")
   require(testthat)
   require(rmcfs)
@@ -23,7 +24,7 @@ test_that("MCFS artificial data M5", {
                  threadsNumber = 1, seed = 1)
   
   expect_that(result, is_a("mcfs"))
-  expect_that(all(c('RI','ID') %in% names(result)), is_true())
+  expect_true(all(c('RI','ID') %in% names(result)))
   expect_that(result$params$mcfs.cutoffPermutations, equals(0))
   expect_that(result$cutoff_value, equals(9))
   expect_that(nrow(result$distances), equals(20))

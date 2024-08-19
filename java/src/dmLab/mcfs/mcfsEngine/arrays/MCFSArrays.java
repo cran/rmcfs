@@ -23,6 +23,7 @@ import java.io.File;
 import dmLab.array.FArray;
 import dmLab.array.loader.File2Array;
 import dmLab.mcfs.MCFSParams;
+import dmLab.utils.GeneralUtils;
 
 public class MCFSArrays
 {
@@ -54,7 +55,10 @@ public class MCFSArrays
         
         //System.out.println("### DEBUG ### InputArray\n" + sourceArray.toString());
         initArrays();
-        
+
+        //if(mcfsParams.verbose)
+        System.out.println(GeneralUtils.getMemStatus("G"));
+
         return true;
     }
 //  *************************************
@@ -64,5 +68,9 @@ public class MCFSArrays
 	        sourceArray.fixAttributesNames(true);
     	}    	
     }
-//  *************************************    
+//  *************************************
+    public void removeArrays() {
+        sourceArray = null;
+    }
+//  *************************************
 }

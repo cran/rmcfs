@@ -56,9 +56,10 @@ public class Split
         //System.out.println("*** MDR DEBUG *** trainArray# "+trainArray.info());
         //System.out.println("*** MDR DEBUG *** testArray# "+testArray.info());
         //System.out.println("Training...");
-        classifier.train(trainArray);
-        
-        //System.out.println("### DEBUG ### \n"+classifier.toString()+"\n"); 
+        classifier.train(trainArray);        
+        //System.out.println("### DEBUG ### \n"+classifier.toString()+"\n");
+        //System.out.println("### DEBUG ### "+classifier.toString().split("\r\n|\r|\n").length);
+                        
         //System.out.println("Testing...");
         classifier.test(testArray);
         
@@ -67,8 +68,10 @@ public class Split
         classifier.add_RI(attrRI);
         
         //add ID edges 
-        if(attrIDependencies!=null)
-            classifier.add_ID(attrIDependencies, mcfsParams);               
+        if(attrIDependencies!=null) {
+            classifier.add_ID(attrIDependencies, mcfsParams);
+            //System.out.println("### DEBUG ### \n"+attrIDependencies.toConnString());
+        }
         //System.out.println("### DEBUG ### \n"+attrRI[0].toString());
             
         return predResult;

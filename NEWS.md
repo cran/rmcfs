@@ -1,5 +1,11 @@
 # rmcfs - changes
 
+Version 1.3.6
+=============
+* iGraph >2.0.3 compatibility updates 
+* various memory optimization changes (mode=2 OutOfMemoryError fixed)
+* reference links to publication updated
+
 Version 1.3.5
 =============
 * fixed a java 17 compatibility issue

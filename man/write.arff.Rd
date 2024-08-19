@@ -3,7 +3,7 @@
 \title{Writes data to ARFF}
 \description{
   Exports data into ARFF format. This format is used by Weka 
-  Data Mining software \url{http://www.cs.waikato.ac.nz/ml/weka/}.
+  Data Mining software \url{https://git.cms.waikato.ac.nz/weka/weka}.
 }
 \usage{write.arff(x, file = "", target = NA, chunk_size=100000, zip = FALSE)}
 \arguments{
